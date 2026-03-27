@@ -1,0 +1,1 @@
+from .models import Usuario, Pelicula, Vista, EntradaDiario, MeGusta, Watchlist, PeliculaFavorita
