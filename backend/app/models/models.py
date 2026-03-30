@@ -30,6 +30,8 @@ class Vista(Base):
     puntuacion = Column(Integer, nullable=True)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
 
+    pelicula = relationship("Pelicula")
+
     __table_args__ = (
         CheckConstraint("puntuacion >= 1 AND puntuacion <= 10", name="check_puntuacion"),
         UniqueConstraint("id_usuario", "id_pelicula", name="unique_usuario_pelicula_vista"), 
@@ -68,6 +70,8 @@ class PeliculaFavorita(Base):
     orden = Column(Integer, nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
 
+    pelicula = relationship("Pelicula")
+    
     __table_args__ = (
         CheckConstraint("orden >= 1 AND orden <= 4", name="check_orden"),
         UniqueConstraint("id_usuario", "id_pelicula", name="unique_usuario_pelicula_fav"),

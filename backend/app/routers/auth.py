@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, status, HTTPException
 from fastapi.security.oauth2 import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 
 from .. import database, schemas, models, utils, oauth2
 
@@ -12,7 +13,7 @@ router = APIRouter(
 @router.post('/registro', status_code=status.HTTP_201_CREATED, response_model=schemas.UserOut)
 def crear_usuario(usuario: schemas.UserCreate, db: Session = Depends(database.get_db)):
     
-    usuario_existente = db.query(models.Usuario).filter(models.Usuario.email == usuario.email).first()
+    usuario_existente = db.execute(select(models.Usuario).where(models.Usuario.email == usuario.email)).scalar_one_or_none()
     if usuario_existente:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
                             detail="Ese email ya está registrado")

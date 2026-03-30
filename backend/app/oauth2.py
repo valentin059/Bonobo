@@ -4,6 +4,7 @@ from . import schemas, database, models
 from fastapi import Depends, status, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 from .config import settings
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='api/auth/login')
@@ -39,6 +40,6 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 
     token_data = verify_access_token(token, credentials_exception)
 
-    user = db.query(models.Usuario).filter(models.Usuario.id == token_data.id).first()
+    user = db.execute(select(models.Usuario).where(models.Usuario.id == token_data.id)).scalar_one_or_none()
 
     return user
