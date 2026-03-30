@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import auth
+from .routers import auth, peliculas
 
 app = FastAPI(title="Bonobo API")
 
@@ -15,6 +15,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+app.include_router(peliculas.router)
 
 @app.get("/")
 def root():
