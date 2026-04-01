@@ -28,16 +28,16 @@ def get_mi_perfil(db: Session = Depends(database.get_db),
         select(func.count(models.Seguidor.id)).where(models.Seguidor.id_seguidor == current_user.id)
     ).scalar()
 
-    return {
-        "id": current_user.id,
-        "username": current_user.username,
-        "bio": current_user.bio,
-        "avatar_url": current_user.avatar_url,
-        "total_vistas": total_vistas,
-        "seguidores": seguidores,
-        "seguidos": seguidos,
-        "yo_sigo": None
-    }
+    return schemas.UserProfile(
+        id=current_user.id,
+        username=current_user.username,
+        bio=current_user.bio,
+        avatar_url=current_user.avatar_url,
+        total_vistas=total_vistas,
+        seguidores=seguidores,
+        seguidos=seguidos,
+        yo_sigo=None
+    )
 
 
 @router.put("/me", response_model=schemas.UserOut)
@@ -115,16 +115,16 @@ def get_perfil(id: int,
             )
         ).scalar_one_or_none() is not None
 
-    return {
-        "id": usuario.id,
-        "username": usuario.username,
-        "bio": usuario.bio,
-        "avatar_url": usuario.avatar_url,
-        "total_vistas": total_vistas,
-        "seguidores": seguidores,
-        "seguidos": seguidos,
-        "yo_sigo": yo_sigo
-    }
+    return schemas.UserProfile(
+        id=usuario.id,
+        username=usuario.username,
+        bio=usuario.bio,
+        avatar_url=usuario.avatar_url,
+        total_vistas=total_vistas,
+        seguidores=seguidores,
+        seguidos=seguidos,
+        yo_sigo=yo_sigo
+    )
 
 
 # --- LISTAS DEL USUARIO ---
@@ -210,6 +210,8 @@ def get_watchlist(id: int, skip: int = 0, limit: int = 20,
 
 @router.get("/{id}/diario/pelicula/{tmdb_id}", response_model=list[schemas.EntradaDiarioDetalle])
 def get_diario_pelicula(id: int, tmdb_id: int,
+                        skip: int = 0,
+                        limit: int = Query(20, ge=1, le=100),
                         db: Session = Depends(database.get_db)):
 
     if not db.execute(select(models.Usuario).where(models.Usuario.id == id)).scalar_one_or_none():
@@ -230,30 +232,38 @@ def get_diario_pelicula(id: int, tmdb_id: int,
             models.EntradaDiario.id_pelicula == pelicula.id
         )
         .order_by(models.EntradaDiario.fecha_visionado.desc())
+        .offset(skip)
+        .limit(limit)
     ).scalars().all()
 
-    result = []
-    for entrada in entradas:
-        total_likes = db.execute(
-            select(func.count(models.LikeResena.id)).where(
-                models.LikeResena.id_entrada_diario == entrada.id
-            )
-        ).scalar()
-        total_comentarios = db.execute(
-            select(func.count(models.ComentarioResena.id)).where(
-                models.ComentarioResena.id_entrada_diario == entrada.id
-            )
-        ).scalar()
-        result.append(schemas.EntradaDiarioDetalle(
+    if not entradas:
+        return []
+
+    entrada_ids = [e.id for e in entradas]
+
+    likes_counts = dict(db.execute(
+        select(models.LikeResena.id_entrada_diario, func.count(models.LikeResena.id))
+        .where(models.LikeResena.id_entrada_diario.in_(entrada_ids))
+        .group_by(models.LikeResena.id_entrada_diario)
+    ).all())
+
+    comments_counts = dict(db.execute(
+        select(models.ComentarioResena.id_entrada_diario, func.count(models.ComentarioResena.id))
+        .where(models.ComentarioResena.id_entrada_diario.in_(entrada_ids))
+        .group_by(models.ComentarioResena.id_entrada_diario)
+    ).all())
+
+    return [
+        schemas.EntradaDiarioDetalle(
             id=entrada.id,
             fecha_visionado=entrada.fecha_visionado,
             resena=entrada.resena,
             created_at=entrada.created_at,
-            total_likes=total_likes,
-            total_comentarios=total_comentarios
-        ))
-
-    return result
+            total_likes=likes_counts.get(entrada.id, 0),
+            total_comentarios=comments_counts.get(entrada.id, 0)
+        )
+        for entrada in entradas
+    ]
 
 
 @router.get("/{id}/listas", response_model=list[schemas.ListaOut])
@@ -274,24 +284,27 @@ def get_listas_usuario(id: int,
 
     listas = db.execute(query).scalars().all()
 
-    from sqlalchemy import func as _func
-    result = []
-    for lista in listas:
-        total = db.execute(
-            select(_func.count(models.ListaPelicula.id)).where(
-                models.ListaPelicula.id_lista == lista.id
-            )
-        ).scalar()
-        result.append(schemas.ListaOut(
+    if not listas:
+        return []
+
+    lista_ids = [l.id for l in listas]
+    counts = dict(db.execute(
+        select(models.ListaPelicula.id_lista, func.count(models.ListaPelicula.id))
+        .where(models.ListaPelicula.id_lista.in_(lista_ids))
+        .group_by(models.ListaPelicula.id_lista)
+    ).all())
+
+    return [
+        schemas.ListaOut(
             id=lista.id,
             nombre=lista.nombre,
             descripcion=lista.descripcion,
             es_publica=lista.es_publica,
-            total_peliculas=total,
+            total_peliculas=counts.get(lista.id, 0),
             created_at=lista.created_at
-        ))
-
-    return result
+        )
+        for lista in listas
+    ]
 
 
 @router.get("/{id}/favoritas", response_model=list[schemas.FavoritaOut])

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query, status, Depends
 from sqlalchemy.orm import Session
-from sqlalchemy import select, func
+from sqlalchemy import select, func, and_
+from collections import defaultdict
 import httpx
 from typing import Optional
 from .. import services, schemas, models, database, oauth2
@@ -110,30 +111,40 @@ def get_resenas_amigos(tmdb_id: int,
     if not seguidos_ids:
         return []
 
+    # 1 query: vistas de amigos para esta película, con datos del usuario
+    rows_vistas = db.execute(
+        select(models.Vista, models.Usuario)
+        .join(models.Usuario, models.Vista.id_usuario == models.Usuario.id)
+        .where(
+            models.Vista.id_usuario.in_(seguidos_ids),
+            models.Vista.id_pelicula == pelicula.id
+        )
+    ).all()
+
+    if not rows_vistas:
+        return []
+
+    user_ids_con_vista = [row.Vista.id_usuario for row in rows_vistas]
+
+    # 1 query: todas las entradas de diario de estos amigos para esta película
+    todas_entradas = db.execute(
+        select(models.EntradaDiario)
+        .where(
+            models.EntradaDiario.id_usuario.in_(user_ids_con_vista),
+            models.EntradaDiario.id_pelicula == pelicula.id
+        )
+        .order_by(models.EntradaDiario.fecha_visionado.desc())
+    ).scalars().all()
+
+    entradas_por_usuario = defaultdict(list)
+    for e in todas_entradas:
+        entradas_por_usuario[e.id_usuario].append(e)
+
     result = []
-    for user_id in seguidos_ids:
-        vista = db.execute(
-            select(models.Vista).where(
-                models.Vista.id_usuario == user_id,
-                models.Vista.id_pelicula == pelicula.id
-            )
-        ).scalar_one_or_none()
-
-        if not vista:
-            continue
-
-        usuario = db.execute(
-            select(models.Usuario).where(models.Usuario.id == user_id)
-        ).scalar_one_or_none()
-
-        entradas = db.execute(
-            select(models.EntradaDiario)
-            .where(
-                models.EntradaDiario.id_usuario == user_id,
-                models.EntradaDiario.id_pelicula == pelicula.id
-            )
-            .order_by(models.EntradaDiario.fecha_visionado.desc())
-        ).scalars().all()
+    for row in rows_vistas:
+        vista = row.Vista
+        usuario = row.Usuario
+        entradas = entradas_por_usuario.get(vista.id_usuario, [])
 
         ultima_resena = None
         ultima_entrada_id = None
@@ -144,7 +155,7 @@ def get_resenas_amigos(tmdb_id: int,
                 break
 
         result.append(schemas.ResenaAmigo(
-            id_usuario=user_id,
+            id_usuario=vista.id_usuario,
             username=usuario.username,
             avatar_url=usuario.avatar_url,
             puntuacion=vista.puntuacion,
@@ -170,8 +181,36 @@ def get_resenas_generales(tmdb_id: int,
     if not pelicula:
         return []
 
-    entradas = db.execute(
-        select(models.EntradaDiario)
+    likes_sub = (
+        select(func.count(models.LikeResena.id))
+        .where(models.LikeResena.id_entrada_diario == models.EntradaDiario.id)
+        .correlate(models.EntradaDiario)
+        .scalar_subquery()
+        .label("total_likes")
+    )
+
+    comments_sub = (
+        select(func.count(models.ComentarioResena.id))
+        .where(models.ComentarioResena.id_entrada_diario == models.EntradaDiario.id)
+        .correlate(models.EntradaDiario)
+        .scalar_subquery()
+        .label("total_comentarios")
+    )
+
+    rows = db.execute(
+        select(
+            models.EntradaDiario,
+            models.Usuario.username,
+            models.Usuario.avatar_url,
+            models.Vista.puntuacion,
+            likes_sub,
+            comments_sub
+        )
+        .join(models.Usuario, models.EntradaDiario.id_usuario == models.Usuario.id)
+        .outerjoin(models.Vista, and_(
+            models.Vista.id_usuario == models.EntradaDiario.id_usuario,
+            models.Vista.id_pelicula == pelicula.id
+        ))
         .where(
             models.EntradaDiario.id_pelicula == pelicula.id,
             models.EntradaDiario.resena.isnot(None)
@@ -179,53 +218,32 @@ def get_resenas_generales(tmdb_id: int,
         .order_by(models.EntradaDiario.created_at.desc())
         .offset(skip)
         .limit(limit)
-    ).scalars().all()
+    ).all()
 
-    result = []
-    for entrada in entradas:
-        usuario = db.execute(
-            select(models.Usuario).where(models.Usuario.id == entrada.id_usuario)
-        ).scalar_one_or_none()
-
-        vista = db.execute(
-            select(models.Vista).where(
-                models.Vista.id_usuario == entrada.id_usuario,
-                models.Vista.id_pelicula == pelicula.id
+    # Batch yo_di_like si hay usuario autenticado
+    mis_likes = set()
+    if current_user and rows:
+        entrada_ids = [row.EntradaDiario.id for row in rows]
+        mis_likes = set(db.execute(
+            select(models.LikeResena.id_entrada_diario)
+            .where(
+                models.LikeResena.id_usuario == current_user.id,
+                models.LikeResena.id_entrada_diario.in_(entrada_ids)
             )
-        ).scalar_one_or_none()
+        ).scalars().all())
 
-        total_likes = db.execute(
-            select(func.count(models.LikeResena.id)).where(
-                models.LikeResena.id_entrada_diario == entrada.id
-            )
-        ).scalar()
-
-        total_comentarios = db.execute(
-            select(func.count(models.ComentarioResena.id)).where(
-                models.ComentarioResena.id_entrada_diario == entrada.id
-            )
-        ).scalar()
-
-        yo_di_like = None
-        if current_user:
-            yo_di_like = db.execute(
-                select(models.LikeResena).where(
-                    models.LikeResena.id_usuario == current_user.id,
-                    models.LikeResena.id_entrada_diario == entrada.id
-                )
-            ).scalar_one_or_none() is not None
-
-        result.append(schemas.ResenaGeneral(
-            id=entrada.id,
-            id_usuario=entrada.id_usuario,
-            username=usuario.username,
-            avatar_url=usuario.avatar_url,
-            fecha_visionado=entrada.fecha_visionado,
-            resena=entrada.resena,
-            puntuacion=vista.puntuacion if vista else None,
-            total_likes=total_likes,
-            total_comentarios=total_comentarios,
-            yo_di_like=yo_di_like
-        ))
-
-    return result
+    return [
+        schemas.ResenaGeneral(
+            id=row.EntradaDiario.id,
+            id_usuario=row.EntradaDiario.id_usuario,
+            username=row.username,
+            avatar_url=row.avatar_url,
+            fecha_visionado=row.EntradaDiario.fecha_visionado,
+            resena=row.EntradaDiario.resena,
+            puntuacion=row.puntuacion,
+            total_likes=row.total_likes,
+            total_comentarios=row.total_comentarios,
+            yo_di_like=row.EntradaDiario.id in mis_likes if current_user else None
+        )
+        for row in rows
+    ]

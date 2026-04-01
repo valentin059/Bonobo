@@ -64,29 +64,26 @@ def get_comentarios(id_entrada: int,
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail="Entrada de diario no encontrada.")
 
-    comentarios = db.execute(
-        select(models.ComentarioResena)
+    rows = db.execute(
+        select(models.ComentarioResena, models.Usuario)
+        .join(models.Usuario, models.ComentarioResena.id_usuario == models.Usuario.id)
         .where(models.ComentarioResena.id_entrada_diario == id_entrada)
         .order_by(models.ComentarioResena.created_at.asc())
         .offset(skip)
         .limit(limit)
-    ).scalars().all()
+    ).all()
 
-    result = []
-    for c in comentarios:
-        usuario = db.execute(
-            select(models.Usuario).where(models.Usuario.id == c.id_usuario)
-        ).scalar_one_or_none()
-        result.append(schemas.ComentarioOut(
+    return [
+        schemas.ComentarioOut(
             id=c.id,
             id_usuario=c.id_usuario,
-            username=usuario.username,
-            avatar_url=usuario.avatar_url,
+            username=u.username,
+            avatar_url=u.avatar_url,
             texto=c.texto,
             created_at=c.created_at
-        ))
-
-    return result
+        )
+        for c, u in rows
+    ]
 
 
 @router_comentarios.delete("/{id_comentario}", status_code=status.HTTP_204_NO_CONTENT)

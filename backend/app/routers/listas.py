@@ -77,26 +77,24 @@ def get_lista(id_lista: int,
         select(models.Usuario).where(models.Usuario.id == lista.id_usuario)
     ).scalar_one_or_none()
 
-    entradas = db.execute(
-        select(models.ListaPelicula)
+    rows = db.execute(
+        select(models.ListaPelicula, models.Pelicula)
+        .join(models.Pelicula, models.ListaPelicula.id_pelicula == models.Pelicula.id)
         .where(models.ListaPelicula.id_lista == id_lista)
         .order_by(models.ListaPelicula.created_at.asc())
         .offset(skip)
         .limit(limit)
-    ).scalars().all()
+    ).all()
 
-    peliculas = []
-    for entrada in entradas:
-        pelicula = db.execute(
-            select(models.Pelicula).where(models.Pelicula.id == entrada.id_pelicula)
-        ).scalar_one_or_none()
-        if pelicula:
-            peliculas.append(schemas.PeliculaCache(
-                tmdb_id=pelicula.tmdb_id,
-                titulo=pelicula.titulo,
-                poster_url=pelicula.poster_url,
-                anio_estreno=pelicula.anio_estreno
-            ))
+    peliculas = [
+        schemas.PeliculaCache(
+            tmdb_id=row.Pelicula.tmdb_id,
+            titulo=row.Pelicula.titulo,
+            poster_url=row.Pelicula.poster_url,
+            anio_estreno=row.Pelicula.anio_estreno
+        )
+        for row in rows
+    ]
 
     total = db.execute(
         select(func.count(models.ListaPelicula.id)).where(
