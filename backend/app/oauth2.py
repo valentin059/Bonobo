@@ -8,6 +8,7 @@ from sqlalchemy import select
 from .config import settings
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='api/auth/login')
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl='api/auth/login', auto_error=False)
 
 SECRET_KEY = settings.secret_key
 ALGORITHM = settings.algorithm
@@ -30,6 +31,19 @@ def verify_access_token(token: str, credentials_exception):
     except JWTError:
         raise credentials_exception
     return token_data
+
+def get_optional_user(token: str = Depends(oauth2_scheme_optional), db: Session = Depends(database.get_db)):
+    if not token:
+        return None
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: int = payload.get("user_id")
+        if user_id is None:
+            return None
+        return db.execute(select(models.Usuario).where(models.Usuario.id == user_id)).scalar_one_or_none()
+    except JWTError:
+        return None
+
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)):
     credentials_exception = HTTPException(

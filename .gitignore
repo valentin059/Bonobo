@@ -209,3 +209,6 @@ __marimo__/
 # Postman
 .postman
 postman/
+
+#Claude Code
+memory/

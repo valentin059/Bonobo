@@ -26,12 +26,21 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     id: Optional[int] = None 
 
+class UsuarioResumen(BaseModel):
+    id: int
+    username: str
+    avatar_url: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
+
 class UserProfile(BaseModel):
     id: int
     username: str
     bio: Optional[str] = None
     avatar_url: Optional[str] = None
     total_vistas: int
+    seguidores: int = 0
+    seguidos: int = 0
+    yo_sigo: Optional[bool] = None
     model_config = ConfigDict(from_attributes=True)
 
 class UserUpdate(BaseModel):

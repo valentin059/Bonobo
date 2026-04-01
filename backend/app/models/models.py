@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, Date, ForeignKey, CheckConstraint, UniqueConstraint
+from sqlalchemy import Boolean, Column, Integer, String, Text, Date, ForeignKey, CheckConstraint, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.sqltypes import TIMESTAMP
 from sqlalchemy.sql.expression import text
@@ -71,9 +71,71 @@ class PeliculaFavorita(Base):
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
 
     pelicula = relationship("Pelicula")
-    
+
     __table_args__ = (
         CheckConstraint("orden >= 1 AND orden <= 4", name="check_orden"),
         UniqueConstraint("id_usuario", "id_pelicula", name="unique_usuario_pelicula_fav"),
-        UniqueConstraint("id_usuario", "orden", name="unique_usuario_orden_fav"), 
+        UniqueConstraint("id_usuario", "orden", name="unique_usuario_orden_fav"),
+    )
+
+
+# ── Nivel 2 ────────────────────────────────────────────────────────────────
+
+class Seguidor(Base):
+    __tablename__ = "seguidores"
+    id = Column(Integer, primary_key=True, nullable=False)
+    id_seguidor = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False)
+    id_seguido = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
+
+    __table_args__ = (
+        UniqueConstraint("id_seguidor", "id_seguido", name="unique_seguidor_seguido"),
+        CheckConstraint("id_seguidor != id_seguido", name="check_no_autofollow"),
+    )
+
+
+class ComentarioResena(Base):
+    __tablename__ = "comentarios_resena"
+    id = Column(Integer, primary_key=True, nullable=False)
+    id_usuario = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False)
+    id_entrada_diario = Column(Integer, ForeignKey("entradas_diario.id", ondelete="CASCADE"), nullable=False)
+    texto = Column(Text, nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
+
+    usuario = relationship("Usuario")
+
+
+class LikeResena(Base):
+    __tablename__ = "likes_resena"
+    id = Column(Integer, primary_key=True, nullable=False)
+    id_usuario = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False)
+    id_entrada_diario = Column(Integer, ForeignKey("entradas_diario.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
+
+    __table_args__ = (
+        UniqueConstraint("id_usuario", "id_entrada_diario", name="unique_usuario_entrada_like"),
+    )
+
+
+class Lista(Base):
+    __tablename__ = "listas"
+    id = Column(Integer, primary_key=True, nullable=False)
+    id_usuario = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False)
+    nombre = Column(String(100), nullable=False)
+    descripcion = Column(Text, nullable=True)
+    es_publica = Column(Boolean, nullable=False, server_default=text("true"))
+    created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
+
+
+class ListaPelicula(Base):
+    __tablename__ = "listas_peliculas"
+    id = Column(Integer, primary_key=True, nullable=False)
+    id_lista = Column(Integer, ForeignKey("listas.id", ondelete="CASCADE"), nullable=False)
+    id_pelicula = Column(Integer, ForeignKey("peliculas.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
+
+    pelicula = relationship("Pelicula")
+
+    __table_args__ = (
+        UniqueConstraint("id_lista", "id_pelicula", name="unique_lista_pelicula"),
     )

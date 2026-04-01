@@ -21,9 +21,9 @@ def get_or_create_pelicula(tmdb_id: int, db: Session):
             )
         pelicula = models.Pelicula(
             tmdb_id=tmdb_id,
-            titulo=datos["titulo"],
-            poster_url=datos["poster_url"],
-            anio_estreno=datos["anio_estreno"]
+            titulo=datos.titulo,
+            poster_url=datos.poster_url,
+            anio_estreno=datos.anio_estreno
         )
         db.add(pelicula)
         db.commit()

@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict, Field
-from datetime import date
+from datetime import date, datetime
 from typing import Optional
 
 
@@ -73,6 +73,74 @@ class PaginadoEstrenos(BaseModel):
     results: list[PeliculaEstreno]
     total: int
     page: int
+
+class ListaCreate(BaseModel):
+    nombre: str = Field(..., min_length=1, max_length=100)
+    descripcion: Optional[str] = None
+    es_publica: bool = True
+
+class ListaUpdate(BaseModel):
+    nombre: Optional[str] = Field(None, min_length=1, max_length=100)
+    descripcion: Optional[str] = None
+    es_publica: Optional[bool] = None
+
+class ListaOut(BaseModel):
+    id: int
+    nombre: str
+    descripcion: Optional[str] = None
+    es_publica: bool
+    total_peliculas: int = 0
+    created_at: datetime
+
+class ListaDetalle(BaseModel):
+    id: int
+    id_usuario: int
+    username: str
+    nombre: str
+    descripcion: Optional[str] = None
+    es_publica: bool
+    peliculas: list[PeliculaCache]
+    total_peliculas: int = 0
+
+class ComentarioCreate(BaseModel):
+    texto: str = Field(..., min_length=1, max_length=1000)
+
+class ComentarioOut(BaseModel):
+    id: int
+    id_usuario: int
+    username: str
+    avatar_url: Optional[str] = None
+    texto: str
+    created_at: datetime
+
+class ResenaAmigo(BaseModel):
+    id_usuario: int
+    username: str
+    avatar_url: Optional[str] = None
+    puntuacion: Optional[int] = None
+    ultima_resena: Optional[str] = None
+    ultima_entrada_id: Optional[int] = None
+    total_entradas: int = 0
+
+class ResenaGeneral(BaseModel):
+    id: int
+    id_usuario: int
+    username: str
+    avatar_url: Optional[str] = None
+    fecha_visionado: date
+    resena: Optional[str] = None
+    puntuacion: Optional[int] = None
+    total_likes: int = 0
+    total_comentarios: int = 0
+    yo_di_like: Optional[bool] = None
+
+class EntradaDiarioDetalle(BaseModel):
+    id: int
+    fecha_visionado: date
+    resena: Optional[str] = None
+    created_at: datetime
+    total_likes: int = 0
+    total_comentarios: int = 0
 
 class PeliculaDetalle(BaseModel):
     tmdb_id: int
