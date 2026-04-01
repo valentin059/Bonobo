@@ -35,8 +35,7 @@ def crear_usuario(usuario: schemas.UserCreate, db: Session = Depends(database.ge
 @router.post('/login', response_model=schemas.Token)
 def login(user_credentials: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(database.get_db)):
 
-    user = db.query(models.Usuario).filter(
-        models.Usuario.email == user_credentials.username).first()
+    user = db.execute(select(models.Usuario).where(models.Usuario.email == user_credentials.username)).scalar_one_or_none()
 
     if not user:
         raise HTTPException(

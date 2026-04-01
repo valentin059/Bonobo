@@ -41,6 +41,39 @@ class EstadoUsuarioPelicula(BaseModel):
     me_gusta: bool = False
     en_watchlist: bool = False
 
+class PersonaCast(BaseModel):
+    nombre: Optional[str] = None
+    personaje: Optional[str] = None
+    foto: Optional[str] = None
+
+class PeliculaResumen(BaseModel):
+    tmdb_id: int
+    titulo: Optional[str] = None
+    poster_url: Optional[str] = None
+    anio_estreno: Optional[int] = None
+    descripcion: Optional[str] = None
+
+class PeliculaCartelera(PeliculaResumen):
+    puntuacion: Optional[float] = None
+
+class PeliculaEstreno(PeliculaResumen):
+    fecha_exacta: Optional[str] = None
+
+class PaginadoPeliculas(BaseModel):
+    results: list[PeliculaResumen]
+    total: int
+    page: int
+
+class PaginadoCartelera(BaseModel):
+    results: list[PeliculaCartelera]
+    total: int
+    page: int
+
+class PaginadoEstrenos(BaseModel):
+    results: list[PeliculaEstreno]
+    total: int
+    page: int
+
 class PeliculaDetalle(BaseModel):
     tmdb_id: int
     titulo: Optional[str] = None
@@ -50,5 +83,5 @@ class PeliculaDetalle(BaseModel):
     generos: list[str] = []
     duracion: Optional[int] = None
     puntuacion: Optional[float] = None
-    reparto: list[dict] = []
+    reparto: list[PersonaCast] = []
     estado_usuario: Optional[EstadoUsuarioPelicula] = None

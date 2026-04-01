@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, Query, status, Depends
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from sqlalchemy import select
@@ -32,8 +32,8 @@ def get_optional_user(token: str = Depends(oauth2_scheme),
         return None
 
 
-@router.get("/buscar")
-def buscar_peliculas(q: str, skip: int = 0, limit: int = 20):
+@router.get("/buscar", response_model=schemas.PaginadoPeliculas)
+def buscar_peliculas(q: str, skip: int = 0, limit: int = Query(20, ge=1, le=100)):
     try:
         return services.buscar_peliculas(q, skip, limit)
     except httpx.HTTPError:
@@ -43,8 +43,8 @@ def buscar_peliculas(q: str, skip: int = 0, limit: int = 20):
         )
 
 
-@router.get("/cartelera")
-def obtener_cartelera(skip: int = 0, limit: int = 20):
+@router.get("/cartelera", response_model=schemas.PaginadoCartelera)
+def obtener_cartelera(skip: int = 0, limit: int = Query(20, ge=1, le=100)):
     try:
         return services.obtener_cartelera(skip, limit)
     except httpx.HTTPError:
@@ -54,8 +54,8 @@ def obtener_cartelera(skip: int = 0, limit: int = 20):
         )
 
 
-@router.get("/estrenos")
-def obtener_estrenos(skip: int = 0, limit: int = 20):
+@router.get("/estrenos", response_model=schemas.PaginadoEstrenos)
+def obtener_estrenos(skip: int = 0, limit: int = Query(20, ge=1, le=100)):
     try:
         return services.obtener_estrenos(skip, limit)
     except httpx.HTTPError:
@@ -109,5 +109,4 @@ def obtener_detalle(tmdb_id: int,
         else:
             estado = schemas.EstadoUsuarioPelicula()
 
-    datos["estado_usuario"] = estado
-    return datos
+    return datos.model_copy(update={"estado_usuario": estado})
