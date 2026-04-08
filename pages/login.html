@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Iniciar sesión — BONOBO</title>
+  <!-- La ruta al CSS usa ../ porque esta página está dentro de /pages/ -->
+  <link rel="stylesheet" href="../css/main.css" />
+</head>
+<body>
+
+<!-- Contenedor principal de la página de autenticación: layout de dos columnas -->
+<div class="pagina-auth">
+
+  <!-- ===================== COLUMNA IZQUIERDA: FORMULARIO ===================== -->
+  <div class="auth-izquierda">
+    <div class="auth-formulario">
+
+      <!-- Logo pequeño en la parte superior del formulario -->
+      <div class="auth-superior">
+        <div class="auth-marca"></div>
+        <!-- Símbolo de dos líneas definido por CSS con ::before y ::after -->
+        <span class="auth-nombre">Bonobo</span>
+      </div>
+
+      <!-- Título y subtítulo de bienvenida -->
+      <h1 class="auth-titulo">Bienvenido<br>de vuelta</h1>
+      <p class="auth-subtitulo">Inicia sesión para continuar tu diario cinematográfico</p>
+
+      <!-- Caja de error: oculta por defecto, el JS la muestra si las credenciales fallan -->
+      <div class="auth-error" id="authErr"></div>
+
+      <!-- Campo de email -->
+      <div class="grupo-campo">
+        <label class="campo-etiqueta" for="correo">Email</label>
+        <input class="campo-texto" type="email" id="correo" placeholder="tu@email.com" autocomplete="email" />
+        <!-- autocomplete="email" ayuda al navegador a autocompletar el email guardado -->
+      </div>
+
+      <!-- Campo de contraseña con enlace "¿Olvidaste tu contraseña?" -->
+      <div class="grupo-campo">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+          <label class="campo-etiqueta" for="contrasena" style="margin-bottom:0">Contraseña</label>
+          <!-- Enlace a la página de recuperación de contraseña -->
+          <a href="olvide-contrasena.html" class="enlace-olvide">¿Olvidaste tu contraseña?</a>
+        </div>
+        <input class="campo-texto" type="password" id="contrasena" placeholder="••••••••" autocomplete="current-password" />
+        <!-- type="password" oculta los caracteres escritos -->
+      </div>
+
+      <!-- Botón principal de envío del formulario -->
+      <button class="btn-enviar" id="btnIniciarSesion">Iniciar sesión</button>
+
+      <!-- Separador horizontal -->
+      <hr class="auth-separador" />
+      <!-- Enlace para ir a la página de registro si no tiene cuenta -->
+      <p class="auth-cambiar">¿No tienes cuenta? <a href="registro.html">Regístrate gratis</a></p>
+      <!-- Enlace para volver a la página principal sin iniciar sesión -->
+      <a class="auth-volver" href="../index.html">← Volver al inicio</a>
+
+    </div>
+  </div>
+
+  <!-- ===================== COLUMNA DERECHA: MOSAICO CINEMÁTICO ===================== -->
+  <!-- Panel decorativo con imágenes de películas de Unsplash como fondo -->
+  <div class="auth-derecha">
+
+    <!-- Grid de 15 imágenes de películas que forman el mosaico de fondo -->
+    <!-- Son las mismas imágenes usadas en las tarjetas del catálogo -->
+    <div class="auth-derecha-mosaico">
+      <img src="https://images.unsplash.com/photo-1635805737707-575885ab0820?w=300&q=60" alt="" />
+      <img src="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300&q=60" alt="" />
+      <img src="https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=300&q=60" alt="" />
+      <img src="https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=300&q=60" alt="" />
+      <img src="https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=300&q=60" alt="" />
+      <img src="https://images.unsplash.com/photo-1485846234645-a62644f84728?w=300&q=60" alt="" />
+      <img src="https://images.unsplash.com/photo-1509347528160-9a9e33742cdb?w=300&q=60" alt="" />
+      <img src="https://images.unsplash.com/photo-1604076850742-4c7221f3101b?w=300&q=60" alt="" />
+      <img src="https://images.unsplash.com/photo-1531259683007-016a7b628fc3?w=300&q=60" alt="" />
+      <img src="https://images.unsplash.com/photo-1510511459019-5dda7724fd87?w=300&q=60" alt="" />
+      <img src="https://images.unsplash.com/photo-1501854140801-50d01698950b?w=300&q=60" alt="" />
+      <img src="https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=300&q=60" alt="" />
+      <img src="https://images.unsplash.com/photo-1525268323446-0505b6fe7778?w=300&q=60" alt="" />
+      <img src="https://images.unsplash.com/photo-1524712245354-2c4e5e7121c0?w=300&q=60" alt="" />
+      <img src="https://images.unsplash.com/photo-1635805737707-575885ab0820?w=300&q=60" alt="" />
+    </div>
+
+    <!-- Velo oscuro semitransparente sobre el mosaico para que la cita sea legible -->
+    <div class="auth-derecha-velo"></div>
+
+    <!-- Cita cinematográfica centrada sobre el velo -->
+    <div class="auth-derecha-cita">
+      <p class="auth-cita-texto">"El cine es<br>un espejo que<br>nos refleja."</p>
+      <p class="auth-cita-subtitulo">— BONOBO · Diario Cinematográfico</p>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Se cargan solo data.js y auth.js, sin ui.js ni social.js ya que no hacen falta aquí -->
+<script src="../js/data.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+  // Si el usuario ya tiene sesión activa, lo redirige directamente al inicio sin mostrar el login
+  // Auto-redirect desactivado: permite visitar login aunque haya sesión activa
+
+  // Evento click del botón "Iniciar sesión"
+  document.getElementById('btnIniciarSesion').addEventListener('click', () => {
+    const correo    = document.getElementById('correo').value.trim();
+    const contrasena = document.getElementById('contrasena').value;
+    const errorEl   = document.getElementById('authErr');
+    // Oculta el mensaje de error anterior antes de intentar de nuevo
+    errorEl.style.display = 'none';
+
+    // Validación básica: comprueba que ambos campos estén rellenos antes de llamar a AUTENTICACION
+    if (!correo || !contrasena) { errorEl.textContent = 'Rellena todos los campos.'; errorEl.style.display = 'block'; return; }
+
+    // Intenta hacer login con las credenciales introducidas
+    const resultado = AUTENTICACION.iniciarSesion(correo, contrasena);
+    if (resultado.ok) { window.location.href = '../index.html'; }  // Éxito: redirige al inicio
+    else { errorEl.textContent = resultado.err; errorEl.style.display = 'block'; } // Error: muestra el mensaje
+  });
+
+  // Permite enviar el formulario pulsando Enter, sin necesidad de hacer click en el botón
+  document.addEventListener('keydown', e => { if(e.key === 'Enter') document.getElementById('btnIniciarSesion').click(); });
+</script>
+</body>
+</html>

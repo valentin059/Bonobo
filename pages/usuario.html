@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Perfil — BONOBO</title>
+  <link rel="stylesheet" href="../css/main.css" />
+</head>
+<body>
+
+<!-- ===================== BARRA LATERAL ===================== -->
+<aside class="barra-lateral">
+  <div class="sb-logo">
+    <a href="../index.html" class="sb-logo-enlace"><div class="sb-logo-marca"></div>
+      <div class="sb-nombre-marca"><div class="sb-nombre">BONOBO</div><div class="sb-subtitulo">DIARIO CINEMATOGRÁFICO</div></div>
+    </a>
+  </div>
+  <div class="sb-xp" id="sXp" style="display:none">
+    <div class="sb-xp-fila"><span class="sb-xp-nivel" id="sLevel">NIVEL 1</span><span class="sb-xp-numero" id="sXpNum">0 XP</span></div>
+    <div class="sb-xp-pista"><div class="sb-xp-relleno" id="sXpFill" style="width:0%"></div></div>
+    <div class="sb-xp-siguiente" id="sXpNext"></div>
+  </div>
+  <nav class="sb-nav">
+    <a href="../index.html"        class="nav-elemento"><span class="nav-icono">◈</span> Explorar</a>
+    <a href="perfil.html"          class="nav-elemento" id="navPerfil"><span class="nav-icono">◎</span> Mi Perfil</a>
+    <a href="diario.html"          class="nav-elemento" id="navDiario"><span class="nav-icono">◻</span> Diario</a>
+    <a href="watchlist.html"       class="nav-elemento" id="navWatchlist"><span class="nav-icono">◷</span> Watchlist</a>
+    <a href="listas.html"          class="nav-elemento" id="navListas"><span class="nav-icono">▤</span> Listas</a>
+    <a href="logros.html"          class="nav-elemento" id="navLogros"><span class="nav-icono">◆</span> Logros<span class="nav-insignia" id="logrosBadge" style="display:none">0</span></a>
+    <a href="buscar-usuarios.html" class="nav-elemento" id="navBuscar"><span class="nav-icono">⊕</span> Buscar</a>
+    <!-- Ningún ítem tiene "activo" porque esta página es el perfil de OTRO usuario,
+         no corresponde a ninguna sección fija del menú del usuario actual -->
+  </nav>
+  <div class="sb-estadisticas" id="sStats" style="display:none">
+    <div class="sb-estadistica"><div class="sb-stat-numero" id="stVistas">0</div><div class="sb-stat-etiqueta">Vistas</div></div>
+    <div class="sb-estadistica"><div class="sb-stat-numero" id="stResenas">0</div><div class="sb-stat-etiqueta">Reseñas</div></div>
+    <div class="sb-estadistica"><div class="sb-stat-numero" id="stWatchlist">0</div><div class="sb-stat-etiqueta">Watchlist</div></div>
+    <div class="sb-estadistica"><div class="sb-stat-numero" id="stLogros">0</div><div class="sb-stat-etiqueta">Logros</div></div>
+  </div>
+  <div class="sb-auth" id="sAuth"><a href="login.html" class="btn-iniciar-sesion">Iniciar sesión</a><a href="registro.html" class="btn-registro">Registrarse</a></div>
+  <div class="sb-usuario" id="sUser" style="display:none"><div class="sb-avatar"></div><div><div class="sb-u-nombre" id="sUsername">—</div><button class="sb-u-cerrar" id="btnLogout">Cerrar sesión</button></div></div>
+</aside>
+
+<!-- ===================== CONTENIDO PRINCIPAL ===================== -->
+<main class="contenido-principal">
+
+  <!-- Topbar con enlace de volver y título dinámico (el JS lo rellena con el nombreUsuario) -->
+  <div class="barra-superior">
+    <a href="buscar-usuarios.html" style="color:var(--apagado);font-size:13px;margin-right:12px">← Volver</a>
+    <!-- El JS actualiza este h2 con el nombreUsuario del perfil que se está visitando -->
+    <h2 style="font-family:var(--fuente-display);font-size:22px;font-weight:900;letter-spacing:-.3px;" id="tituloPagina">Perfil</h2>
+  </div>
+
+  <!-- Contenedor vacío que el JS rellena con todo el contenido del perfil público -->
+  <div class="pagina-contenido" id="contenidoPagina"></div>
+</main>
+
+<script src="../js/data.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/ui.js"></script>
+<script src="../js/social.js"></script>
+<script>
+// Función principal que construye y renderiza el perfil público de otro usuario
+function renderizarPerfilUsuario() {
+  // Lee el parámetro ?u= de la URL para saber qué usuario mostrar
+  // Ej: usuario.html?u=bladi_movies → nombreUsuario = "bladi_movies"
+  const parametros    = new URLSearchParams(window.location.search);
+  const nombreUsuario = parametros.get('u');
+  const el            = document.getElementById('contenidoPagina');
+  const usuarioActual = AUTENTICACION.obtenerUsuarioActual();
+
+  // Si no hay parámetro u= en la URL, muestra error
+  if (!nombreUsuario) { el.innerHTML = '<p style="color:var(--apagado)">Usuario no especificado.</p>'; return; }
+
+  // Busca al usuario objetivo en la lista de usuarios registrados
+  const usuarioObjetivo = AUTENTICACION.obtenerUsuarios().find(u => u.nombreUsuario === nombreUsuario);
+  if (!usuarioObjetivo) { el.innerHTML = '<div class="vacio"><div class="vacio-icono">👤</div><div class="vacio-titulo">Usuario no encontrado</div></div>'; return; }
+
+  // Actualiza el título de la pestaña y el h2 del topbar con el nombreUsuario real
+  document.title = `${nombreUsuario} — BONOBO`;
+  document.getElementById('tituloPagina').textContent = nombreUsuario;
+
+  // Si el usuario está viendo su propio perfil, lo redirige a perfil.html
+  const soyYo = usuarioActual && usuarioActual.nombreUsuario === nombreUsuario;
+  if (soyYo) { window.location.href = 'perfil.html'; return; }
+
+  // Carga los datos del usuario objetivo y calcula nivel y progreso XP
+  const datos      = AUTENTICACION.obtenerDatosUsuario(nombreUsuario);
+  const nivel      = Math.max(1, Math.floor(datos.xp / 100));
+  const xpPct      = datos.xp % 100;
+  const leSigo     = usuarioActual ? SOCIAL.estaSiguiendo(nombreUsuario) : false;
+  const seguidores = SOCIAL.obtenerSeguidores(nombreUsuario).length;
+  const seguidos   = (datos.seguidos || []).length;
+  const av         = usuarioObjetivo.avatar || datos.avatar;
+
+  // ── Favoritas del usuario objetivo ──
+  const htmlFavoritas = (datos.favoritas || []).map(id => {
+    const pelicula = PELICULAS.find(mv => mv.id === id);
+    if (!pelicula) return '';
+    return `<div class="favorita-tile" onclick="abrirModal(${pelicula.id})">
+      <img src="${pelicula.imagen}" alt="${pelicula.titulo}" />
+      <div class="favorita-gradiente"></div>
+      <div class="favorita-nombre">${pelicula.titulo}</div>
+    </div>`;
+  }).join('') || '<p style="color:var(--apagado);font-size:12px">Sin favoritas configuradas.</p>';
+
+  // ── Últimas 8 películas vistas por el usuario objetivo ──
+  const peliculasVistas = PELICULAS.filter(m => datos.vistas.some(v => v.idPelicula === m.id)).slice(0, 8);
+  const htmlVistas = peliculasVistas.length === 0
+    ? '<p style="color:var(--apagado);font-size:12px">Aún no ha marcado ninguna película.</p>'
+    : `<div class="vistas-mini">${peliculasVistas.map(pelicula => {
+        const vista = datos.vistas.find(v => v.idPelicula === pelicula.id);
+        return `<div class="vista-mini-tile" onclick="abrirModal(${pelicula.id})">
+          <div class="vista-mini-poster">
+            <img src="${pelicula.imagen}" alt="${pelicula.titulo}" loading="lazy" />
+            ${vista?.puntuacion ? `<span class="tarjeta-insignia insignia-puntuacion">${vista.puntuacion}</span>` : ''}
+            <span class="tarjeta-insignia insignia-vista">VISTA</span>
+          </div>
+          <p class="vista-mini-titulo">${pelicula.titulo}</p>
+        </div>`;
+      }).join('')}</div>`;
+
+  // ── Listas públicas del usuario objetivo ──
+  // Solo muestra las listas marcadas como públicas, las privadas no son visibles
+  const listasPublicas = typeof LISTAS !== 'undefined' ? LISTAS.obtenerPublicas(nombreUsuario) : [];
+  const htmlListasPublicas = listasPublicas.length === 0
+    ? '<p style="color:var(--apagado);font-size:12px">No tiene listas públicas.</p>'
+    : `<div style="display:flex;flex-direction:column;gap:10px">${listasPublicas.map(lista => `
+        <div style="background:var(--superficie2);border:1px solid var(--borde);border-radius:var(--radio-peq);padding:12px 14px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-family:var(--fuente-ui);font-size:12px;font-weight:700;color:var(--texto)">${lista.nombre}</span>
+            <span style="font-size:10px;color:var(--apagado)">${lista.peliculas.length} pelis</span>
+          </div>
+          ${lista.descripcion ? `<p style="font-size:11px;color:var(--tenue);margin-top:4px">${lista.descripcion}</p>` : ''}
+          <!-- Miniaturas de las primeras 5 películas de la lista como vista previa -->
+          <div style="display:flex;gap:6px;margin-top:8px;overflow-x:auto">
+            ${lista.peliculas.slice(0,5).map(id => {
+              const peli = PELICULAS.find(m => m.id === id);
+              return peli ? `<img src="${peli.imagen}" title="${peli.titulo}" style="width:36px;height:54px;object-fit:cover;border-radius:3px;flex-shrink:0" />` : '';
+            }).join('')}
+          </div>
+        </div>`).join('')}</div>`;
+
+  // ── Últimas 5 entradas del diario que tengan reseña escrita ──
+  // Solo muestra entradas con texto, las entradas sin reseña son privadas implícitamente
+  const entradasDiario = datos.diario.filter(e => e.resena).slice(-5).reverse();
+  const htmlDiario = entradasDiario.length === 0
+    ? '<p style="color:var(--apagado);font-size:12px">Sin reseñas escritas aún.</p>'
+    : entradasDiario.map(e => {
+        const pelicula = PELICULAS.find(mv => mv.id === e.idPelicula);
+        return `<div class="entrada-diario" style="margin-bottom:14px">
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <!-- Miniatura clicable del póster que abre el modal de la película -->
+            ${pelicula ? `<img src="${pelicula.imagen}" style="width:44px;border-radius:4px;flex-shrink:0" onclick="abrirModal(${pelicula.id})" />` : ''}
+            <div>
+              <p style="font-family:var(--fuente-ui);font-size:11px;font-weight:700;color:var(--acento-claro)">${pelicula?.titulo || 'Película'}</p>
+              <p style="font-size:10px;color:var(--apagado);margin-bottom:6px">${e.fecha}</p>
+              <!-- Reseña truncada a 200 caracteres con "…" si es más larga -->
+              <p style="font-size:12px;color:var(--tenue);line-height:1.6">${e.resena.substring(0,200)}${e.resena.length>200?'…':''}</p>
+              <div style="margin-top:8px;display:flex;gap:10px;align-items:center">
+                <!-- Si hay sesión: botones interactivos de like y comentarios -->
+                <!-- Si no hay sesión: contadores estáticos sin interacción -->
+                ${usuarioActual ? `<button class="resena-btn-like ${SOCIAL.yoLeDiLike(nombreUsuario,e.id)?'liked':''}" onclick="alternarLikeResena('${nombreUsuario}',${e.id},this)">
+                  ${SOCIAL.yoLeDiLike(nombreUsuario,e.id)?'❤️':'♡'} <span>${(e.likes||[]).length}</span>
+                </button>
+                <button class="resena-btn-comentarios" onclick="alternarSeccionComentarios('uc-${nombreUsuario}-${e.id}')">
+                  💬 ${(e.comentarios||[]).length}
+                </button>` : `<span style="color:var(--apagado);font-size:11px">❤️ ${(e.likes||[]).length} · 💬 ${(e.comentarios||[]).length}</span>`}
+              </div>
+              <!-- Sección de comentarios oculta por defecto — se despliega al pulsar 💬 -->
+              <!-- Prefijo "uc-" diferencia estos IDs de los del modal de película -->
+              <div class="resena-comentarios" id="uc-${nombreUsuario}-${e.id}" style="display:none">
+                ${renderizarListaComentarios(nombreUsuario, e.id)}
+                ${usuarioActual ? `<div class="resena-formulario-comentario">
+                  <input type="text" class="resena-comentario-input" placeholder="Escribe un comentario…" id="uci-${nombreUsuario}-${e.id}" />
+                  <button class="resena-comentario-enviar" onclick="enviarComentarioUsuario('${nombreUsuario}',${e.id})">Enviar</button>
+                </div>` : ''}
+              </div>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+
+  // ── Inyecta todo el HTML del perfil público en el contenedor de la página ──
+  el.innerHTML = `
+    <!-- Cabecera de perfil: avatar, nombre, nivel, bio, XP y estadísticas -->
+    <div class="perfil-tarjeta">
+      <!-- Avatar: imagen si tiene, inicial si no -->
+      <div class="perfil-avatar" style="${av ? `background-image:url(${av});background-size:cover;background-position:center;font-size:0` : ''}">
+        ${av ? '' : nombreUsuario[0].toUpperCase()}
+      </div>
+      <div style="flex:1;min-width:0">
+        <p class="perfil-nombre">${nombreUsuario}<span class="perfil-nivel">Nv.${nivel}</span></p>
+        <p class="perfil-bio">${usuarioObjetivo.bio || 'Cinéfilo en progreso 🎬'}</p>
+        <div class="perfil-xp-fila">
+          <div class="perfil-xp-pista"><div class="perfil-xp-relleno" style="width:${xpPct}%"></div></div>
+          <span class="perfil-xp-etiqueta">${datos.xp} XP</span>
+        </div>
+      </div>
+      <!-- Estadísticas: vistas, seguidores y siguiendo (sin logros a diferencia del perfil propio) -->
+      <div class="perfil-estadisticas">
+        <div class="perfil-stat"><div class="perfil-stat-numero">${datos.vistas.length}</div><div class="perfil-stat-etiqueta">Vistas</div></div>
+        <div class="perfil-stat"><div class="perfil-stat-numero">${seguidores}</div><div class="perfil-stat-etiqueta">Seguidores</div></div>
+        <div class="perfil-stat"><div class="perfil-stat-numero">${seguidos}</div><div class="perfil-stat-etiqueta">Siguiendo</div></div>
+      </div>
+    </div>
+
+    <!-- Botón seguir/dejar de seguir (solo si hay sesión) o enlace al login si no la hay -->
+    ${usuarioActual ? `<div style="margin-bottom:24px">
+      <button id="botonSeguir" class="btn-seguir-grande ${leSigo?'siguiendo':''}"
+        onclick="alternarSeguirPagina('${nombreUsuario}')">
+        ${leSigo ? '✓ Siguiendo' : '+ Seguir'}
+      </button>
+    </div>` : `<div style="margin-bottom:24px">
+      <a href="login.html" class="btn-seguir-grande">Inicia sesión para seguir</a>
+    </div>`}
+
+    <!-- Sección: películas favoritas del usuario -->
+    <div class="seccion-titulo" style="padding:0;margin-bottom:14px">
+      <span class="seccion-icono">⭐</span><span class="seccion-texto">Películas favoritas</span><div class="seccion-linea"></div>
+    </div>
+    <div class="favoritas-grid" style="margin-bottom:36px">${htmlFavoritas}</div>
+
+    <!-- Sección: últimas 8 películas vistas -->
+    <div class="seccion-titulo" style="padding:0;margin-bottom:14px">
+      <span class="seccion-icono">◈</span><span class="seccion-texto">Películas vistas (${datos.vistas.length})</span><div class="seccion-linea"></div>
+    </div>
+    <div style="margin-bottom:36px">${htmlVistas}</div>
+
+    <!-- Sección: listas públicas del usuario (las privadas no aparecen) -->
+    <div class="seccion-titulo" style="padding:0;margin-bottom:14px">
+      <span class="seccion-icono">▤</span><span class="seccion-texto">Listas públicas</span><div class="seccion-linea"></div>
+    </div>
+    <div style="margin-bottom:36px" id="seccionListasPublicas">${htmlListasPublicas}</div>
+
+    <!-- Sección: últimas 5 reseñas escritas con likes y comentarios interactivos -->
+    <div class="seccion-titulo" style="padding:0;margin-bottom:14px">
+      <span class="seccion-icono">✍️</span><span class="seccion-texto">Últimas reseñas</span><div class="seccion-linea"></div>
+    </div>
+    <div style="margin-bottom:36px">${htmlDiario}</div>
+  `;
+}
+
+// Alterna el estado de seguir/dejar de seguir desde el botón grande del perfil
+function alternarSeguirPagina(nombreUsuario) {
+  const usuarioActual = AUTENTICACION.obtenerUsuarioActual();
+  // Si no hay sesión, redirige al login
+  if (!usuarioActual) { window.location.href='login.html'; return; }
+  const boton = document.getElementById('botonSeguir');
+  if (SOCIAL.estaSiguiendo(nombreUsuario)) {
+    SOCIAL.dejarDeSeguir(nombreUsuario);
+    // Restaura el estilo del botón al estado "no siguiendo"
+    boton.className='btn-seguir-grande'; boton.textContent='+ Seguir';
+  } else {
+    SOCIAL.seguir(nombreUsuario);
+    // Actualiza el botón al estado "siguiendo"
+    boton.className='btn-seguir-grande siguiendo'; boton.textContent='✓ Siguiendo';
+  }
+  // Actualiza el sidebar por si se ha desbloqueado algún logro
+  inicializarSidebar();
+}
+
+// Versión de enviarComentario para los comentarios en esta página
+// Usa el prefijo "uci-" para no colisionar con los inputs del modal de película
+function enviarComentarioUsuario(nombrePropietario, idEntrada) {
+  const campo = document.getElementById(`uci-${nombrePropietario}-${idEntrada}`);
+  if (!campo || !campo.value.trim()) return;
+  SOCIAL.agregarComentario(nombrePropietario, idEntrada, campo.value);
+  notificacion('💬 Comentario enviado');
+  // Re-renderiza la sección de comentarios para mostrar el nuevo comentario
+  const seccion = document.getElementById(`uc-${nombrePropietario}-${idEntrada}`);
+  if (seccion) {
+    const usuario = AUTENTICACION.obtenerUsuarioActual();
+    // Regenera la lista de comentarios y el formulario vacío de nuevo
+    seccion.innerHTML = renderizarListaComentarios(nombrePropietario, idEntrada)
+      + (usuario ? `<div class="resena-formulario-comentario">
+          <input type="text" class="resena-comentario-input" placeholder="Escribe un comentario…" id="uci-${nombrePropietario}-${idEntrada}" />
+          <button class="resena-comentario-enviar" onclick="enviarComentarioUsuario('${nombrePropietario}',${idEntrada})">Enviar</button>
+        </div>` : '');
+    seccion.style.display = 'block';
+  }
+}
+
+// Espera a que el DOM esté listo antes de renderizar el perfil e inicializar el sidebar
+document.addEventListener('DOMContentLoaded', renderizarPerfilUsuario);
+</script>
+</body>
+</html>

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mi Perfil — BONOBO</title>
+  <link rel="stylesheet" href="../css/main.css" />
+</head>
+<body>
+
+<!-- ===================== BARRA LATERAL (idéntica en todas las páginas interiores) ===================== -->
+<aside class="barra-lateral">
+  <div class="sb-logo">
+    <a href="../index.html" class="sb-logo-enlace"><div class="sb-logo-marca"></div>
+      <div class="sb-nombre-marca"><div class="sb-nombre">BONOBO</div><div class="sb-subtitulo">DIARIO CINEMATOGRÁFICO</div></div>
+    </a>
+  </div>
+  <div class="sb-xp" id="sXp" style="display:none">
+    <div class="sb-xp-fila"><span class="sb-xp-nivel" id="sLevel">NIVEL 1</span><span class="sb-xp-numero" id="sXpNum">0 XP</span></div>
+    <div class="sb-xp-pista"><div class="sb-xp-relleno" id="sXpFill" style="width:0%"></div></div>
+    <div class="sb-xp-siguiente" id="sXpNext"></div>
+  </div>
+  <nav class="sb-nav">
+    <a href="../index.html"        class="nav-elemento"><span class="nav-icono">◈</span> Explorar</a>
+    <a href="perfil.html"          class="nav-elemento activo" id="navPerfil"><span class="nav-icono">◎</span> Mi Perfil</a>
+    <!-- "activo" marca esta página como la sección actual en el menú -->
+    <a href="diario.html"          class="nav-elemento" id="navDiario"><span class="nav-icono">◻</span> Diario</a>
+    <a href="watchlist.html"       class="nav-elemento" id="navWatchlist"><span class="nav-icono">◷</span> Watchlist</a>
+    <a href="listas.html"          class="nav-elemento" id="navListas"><span class="nav-icono">▤</span> Listas</a>
+    <a href="logros.html"          class="nav-elemento" id="navLogros"><span class="nav-icono">◆</span> Logros<span class="nav-insignia" id="logrosBadge" style="display:none">0</span></a>
+    <a href="buscar-usuarios.html" class="nav-elemento" id="navBuscar"><span class="nav-icono">⊕</span> Buscar</a>
+  </nav>
+  <div class="sb-estadisticas" id="sStats" style="display:none">
+    <div class="sb-estadistica"><div class="sb-stat-numero" id="stVistas">0</div><div class="sb-stat-etiqueta">Vistas</div></div>
+    <div class="sb-estadistica"><div class="sb-stat-numero" id="stResenas">0</div><div class="sb-stat-etiqueta">Reseñas</div></div>
+    <div class="sb-estadistica"><div class="sb-stat-numero" id="stWatchlist">0</div><div class="sb-stat-etiqueta">Watchlist</div></div>
+    <div class="sb-estadistica"><div class="sb-stat-numero" id="stLogros">0</div><div class="sb-stat-etiqueta">Logros</div></div>
+  </div>
+  <div class="sb-auth" id="sAuth"><a href="login.html" class="btn-iniciar-sesion">Iniciar sesión</a><a href="registro.html" class="btn-registro">Registrarse</a></div>
+  <div class="sb-usuario" id="sUser" style="display:none"><div class="sb-avatar"></div><div><div class="sb-u-nombre" id="sUsername">—</div><button class="sb-u-cerrar" id="btnLogout">Cerrar sesión</button></div></div>
+</aside>
+
+<!-- ===================== CONTENIDO PRINCIPAL ===================== -->
+<main class="contenido-principal">
+
+  <!-- Topbar con título de la página y botón para ir a editar el perfil -->
+  <div class="barra-superior">
+    <h2 style="font-family:var(--fuente-display);font-size:22px;font-weight:900;letter-spacing:-.3px;">Mi Perfil</h2>
+    <!-- Botón "Editar perfil" alineado a la derecha con margin-left:auto -->
+    <a href="editar-perfil.html" style="
+      margin-left:auto;padding:8px 16px;border-radius:var(--radio-peq);
+      border:1px solid var(--borde2);color:var(--tenue);font-size:11px;
+      font-family:var(--fuente-ui);font-weight:700;letter-spacing:1px;text-transform:uppercase">
+      ✏️ Editar perfil
+    </a>
+  </div>
+
+  <!-- Contenedor vacío que el JS rellena con todo el contenido del perfil -->
+  <div class="pagina-contenido" id="contenidoPagina"></div>
+</main>
+
+<script src="../js/data.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/ui.js"></script>
+<script src="../js/social.js"></script>
+<script>
+// Función principal que construye y renderiza toda la página de perfil
+function renderizarPerfil() {
+  const usuario = AUTENTICACION.obtenerUsuarioActual();
+  const el      = document.getElementById('contenidoPagina');
+
+  // Si no hay sesión activa, muestra un mensaje de acceso restringido
+  if (!usuario) {
+    el.innerHTML = `<div class="vacio"><div class="vacio-icono">🔒</div>
+      <div class="vacio-titulo">Acceso restringido</div>
+      <p class="vacio-texto"><a href="login.html">Inicia sesión</a> para ver tu perfil</p></div>`;
+    return;
+  }
+
+  // Obtiene los datos del usuario y calcula nivel y progreso de XP
+  const datos     = AUTENTICACION.obtenerDatosUsuario(usuario.nombreUsuario);
+  const nivel     = Math.max(1, Math.floor(datos.xp / 100)); // Nivel mínimo 1
+  const xpPct     = datos.xp % 100;                          // XP dentro del nivel actual (0-99)
+  const av        = usuario.avatar || datos.avatar;           // Avatar del objeto usuario o de sus datos
+  // Obtiene el número de seguidores y seguidos para mostrar en las estadísticas
+  const seguidores = SOCIAL.obtenerSeguidores(usuario.nombreUsuario).length;
+  const seguidos   = (datos.seguidos || []).length;
+
+  // ── Construcción del HTML de las 4 favoritas ──
+  // Genera un slot para cada posición (0-3), con película si existe o vacío si no
+  const htmlFavoritas = [0,1,2,3].map(i => {
+    const id       = datos.favoritas[i];
+    const pelicula = id ? PELICULAS.find(mv => mv.id === id) : null;
+    if (pelicula) return `<div class="favorita-tile" onclick="abrirModal(${pelicula.id})">
+      <img src="${pelicula.imagen}" alt="${pelicula.titulo}" />
+      <div class="favorita-gradiente"></div>
+      <!-- Gradiente oscuro para que el título sea legible sobre la imagen -->
+      <div class="favorita-nombre">${pelicula.titulo}</div>
+    </div>`;
+    // Slot vacío: borde punteado con icono y texto "VACÍO"
+    return `<div class="favorita-tile vacio"><span style="font-size:22px">⭐</span><span>VACÍO</span></div>`;
+  }).join('');
+
+  // ── Construcción del HTML de películas vistas ──
+  // Filtra el catálogo para obtener solo las películas que el usuario ha visto
+  const peliculasVistas = PELICULAS.filter(m => datos.vistas.some(v => v.idPelicula === m.id));
+  const htmlVistas = peliculasVistas.length === 0
+    ? '<p style="color:var(--apagado);font-size:12px">Aún no has marcado ninguna película como vista.</p>'
+    : `<div class="vistas-mini">${peliculasVistas.map(pelicula => {
+        const vista = datos.vistas.find(v => v.idPelicula === pelicula.id);
+        return `<div class="vista-mini-tile" onclick="abrirModal(${pelicula.id})">
+          <div class="vista-mini-poster">
+            <img src="${pelicula.imagen}" alt="${pelicula.titulo}" loading="lazy" />
+            ${vista?.puntuacion ? `<span class="tarjeta-insignia insignia-puntuacion">${vista.puntuacion}</span>` : ''}
+            <!-- Muestra la puntuación del usuario si ha valorado la película -->
+            <span class="tarjeta-insignia insignia-vista">VISTA</span>
+          </div>
+          <p class="vista-mini-titulo">${pelicula.titulo}</p>
+        </div>`;
+      }).join('')}</div>`;
+
+  // ── Construcción del HTML de listas personalizadas ──
+  // Comprueba que LISTAS esté disponible antes de usarlo
+  const todasListas = typeof LISTAS !== 'undefined' ? LISTAS.obtenerTodas(usuario.nombreUsuario) : [];
+  const htmlListas = todasListas.length === 0
+    ? `<p style="color:var(--apagado);font-size:12px;margin-bottom:16px">Aún no tienes listas. <a href="listas.html" style="color:var(--acento)">Crear una →</a></p>`
+    : `<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">${todasListas.slice(0,4).map(lista => `
+        <!-- Muestra máximo 4 listas, cada una como un enlace a la página de listas -->
+        <a href="listas.html" style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--superficie2);border:1px solid var(--borde);border-radius:var(--radio-peq);text-decoration:none;transition:border-color .15s">
+          <span style="font-family:var(--fuente-ui);font-size:12px;font-weight:700;color:var(--texto);flex:1">${lista.nombre}</span>
+          <span style="font-size:10px;color:var(--apagado)">${lista.peliculas.length} pelis</span>
+          <!-- Icono de candado o globo según si la lista es pública o privada -->
+          <span style="font-size:10px;color:var(--apagado)">${lista.esPublica ? '🌐' : '🔒'}</span>
+        </a>`).join('')}
+      ${todasListas.length > 4 ? `<a href="listas.html" style="font-size:11px;color:var(--acento);padding:4px 0">+${todasListas.length-4} listas más →</a>` : ''}
+      <!-- Si hay más de 4 listas, muestra un enlace con el número de listas restantes -->
+    </div>`;
+
+  // ── Inyecta todo el HTML del perfil en el contenedor de la página ──
+  el.innerHTML = `
+    <!-- Cabecera de perfil: avatar, nombre, nivel, bio, XP y estadísticas -->
+    <div class="perfil-tarjeta">
+      <!-- Avatar: si tiene imagen la muestra de fondo, si no muestra la inicial del nombreUsuario -->
+      <div class="perfil-avatar" style="${av ? `background-image:url(${av});background-size:cover;background-position:center;font-size:0` : ''}">
+        ${av ? '' : usuario.nombreUsuario[0].toUpperCase()}
+      </div>
+      <div style="flex:1;min-width:0">
+        <!-- Nombre de usuario con pastilla de nivel -->
+        <p class="perfil-nombre">${usuario.nombreUsuario}<span class="perfil-nivel">Nv.${nivel}</span></p>
+        <!-- Bio del usuario o texto por defecto si no tiene -->
+        <p class="perfil-bio">${usuario.bio || 'Cinéfilo en progreso 🎬'}</p>
+        <!-- Barra de progreso de XP con el porcentaje calculado -->
+        <div class="perfil-xp-fila">
+          <div class="perfil-xp-pista"><div class="perfil-xp-relleno" style="width:${xpPct}%"></div></div>
+          <span class="perfil-xp-etiqueta">${datos.xp} XP</span>
+        </div>
+      </div>
+      <!-- Cuatro contadores: películas vistas, seguidores, siguiendo y logros -->
+      <div class="perfil-estadisticas">
+        <div class="perfil-stat"><div class="perfil-stat-numero">${datos.vistas.length}</div><div class="perfil-stat-etiqueta">Vistas</div></div>
+        <div class="perfil-stat"><div class="perfil-stat-numero">${seguidores}</div><div class="perfil-stat-etiqueta">Seguidores</div></div>
+        <div class="perfil-stat"><div class="perfil-stat-numero">${seguidos}</div><div class="perfil-stat-etiqueta">Siguiendo</div></div>
+        <div class="perfil-stat"><div class="perfil-stat-numero">${datos.logros.length}</div><div class="perfil-stat-etiqueta">Logros</div></div>
+      </div>
+    </div>
+
+    <!-- Sección: Películas favoritas (máximo 4) -->
+    <div class="seccion-titulo" style="padding:0;margin-bottom:14px">
+      <span class="seccion-icono">⭐</span>
+      <span class="seccion-texto">Películas favoritas</span>
+      <div class="seccion-linea"></div>
+      <a href="editar-perfil.html" style="font-size:10px;color:var(--apagado)">Editar →</a>
+    </div>
+    <div class="favoritas-grid" style="margin-bottom:36px">${htmlFavoritas}</div>
+
+    <!-- Sección: Todas las películas vistas por el usuario -->
+    <div class="seccion-titulo" style="padding:0;margin-bottom:14px">
+      <span class="seccion-icono">◈</span>
+      <span class="seccion-texto">Películas vistas (${peliculasVistas.length})</span>
+      <div class="seccion-linea"></div>
+    </div>
+    ${htmlVistas}
+
+    <!-- Sección: Listas personalizadas del usuario (máximo 4 en vista previa) -->
+    <div class="seccion-titulo" style="padding:0;margin-bottom:14px;margin-top:36px">
+      <span class="seccion-icono">▤</span>
+      <span class="seccion-texto">Mis listas (${todasListas.length})</span>
+      <div class="seccion-linea"></div>
+      <a href="listas.html" style="font-size:10px;color:var(--apagado)">Ver todas →</a>
+    </div>
+    ${htmlListas}
+  `;
+}
+
+// Espera a que el DOM esté listo antes de renderizar el perfil e inicializar el sidebar
+document.addEventListener('DOMContentLoaded', renderizarPerfil);
+</script>
+</body>
+</html>
