@@ -5,21 +5,26 @@ from typing import Optional
 from .. import database, models, schemas, oauth2
 from ..routers.acciones import get_or_create_pelicula
 
+# Todas las rutas de este router empiezan por /api/listas
+# y gestionan las listas de películas creadas por los usuarios
 router = APIRouter(
     prefix="/api/listas",
     tags=["Listas"]
 )
 
 
+# Comprueba si el usuario tiene permiso para ver una lista privada.
+# Si la lista es privada y el usuario no es el dueño, lanza un error 403.
 def _check_acceso_lista(lista: models.Lista,
                         current_user: Optional[models.Usuario]) -> None:
-    """Lanza 403 si la lista es privada y el usuario no es el dueño."""
     if not lista.es_publica:
         if not current_user or current_user.id != lista.id_usuario:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                                 detail="Esta lista es privada.")
 
 
+# Construye el schema ListaOut para una lista, calculando el número de películas que contiene.
+# Es una función auxiliar para no repetir este código en varios endpoints.
 def _lista_out(lista: models.Lista, db: Session) -> schemas.ListaOut:
     total = db.execute(
         select(func.count(models.ListaPelicula.id)).where(
@@ -36,8 +41,10 @@ def _lista_out(lista: models.Lista, db: Session) -> schemas.ListaOut:
     )
 
 
-# ── CRUD de listas ─────────────────────────────────────────────────────────
+# ─── CRUD DE LISTAS ───────────────────────────────────────────────────────
 
+# POST /api/listas
+# Crea una nueva lista para el usuario autenticado.
 @router.post("", response_model=schemas.ListaOut, status_code=status.HTTP_201_CREATED)
 def crear_lista(lista_data: schemas.ListaCreate,
                 db: Session = Depends(database.get_db),
@@ -56,6 +63,9 @@ def crear_lista(lista_data: schemas.ListaCreate,
     return _lista_out(lista, db)
 
 
+# GET /api/listas/{id_lista}
+# Devuelve el detalle completo de una lista, incluyendo sus películas.
+# Si la lista es privada, solo puede verla su dueño.
 @router.get("/{id_lista}", response_model=schemas.ListaDetalle)
 def get_lista(id_lista: int,
               skip: int = 0,
@@ -71,12 +81,15 @@ def get_lista(id_lista: int,
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail="Lista no encontrada.")
 
+    # Verificamos que el usuario puede ver esta lista
     _check_acceso_lista(lista, current_user)
 
+    # Obtenemos los datos del usuario dueño de la lista
     dueno = db.execute(
         select(models.Usuario).where(models.Usuario.id == lista.id_usuario)
     ).scalar_one_or_none()
 
+    # Obtenemos las películas de la lista con un join (por orden de creación)
     rows = db.execute(
         select(models.ListaPelicula, models.Pelicula)
         .join(models.Pelicula, models.ListaPelicula.id_pelicula == models.Pelicula.id)
@@ -96,6 +109,7 @@ def get_lista(id_lista: int,
         for row in rows
     ]
 
+    # Contamos el total de películas (independiente de la paginación)
     total = db.execute(
         select(func.count(models.ListaPelicula.id)).where(
             models.ListaPelicula.id_lista == id_lista
@@ -114,6 +128,8 @@ def get_lista(id_lista: int,
     )
 
 
+# PUT /api/listas/{id_lista}
+# Edita el nombre, descripción o visibilidad de una lista. Solo puede hacerlo su dueño.
 @router.put("/{id_lista}", response_model=schemas.ListaOut)
 def editar_lista(id_lista: int,
                  lista_data: schemas.ListaUpdate,
@@ -132,6 +148,7 @@ def editar_lista(id_lista: int,
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail="No puedes editar esta lista.")
 
+    # Solo actualizamos los campos que se envíen
     if lista_data.nombre is not None:
         lista.nombre = lista_data.nombre
     if lista_data.descripcion is not None:
@@ -145,6 +162,8 @@ def editar_lista(id_lista: int,
     return _lista_out(lista, db)
 
 
+# DELETE /api/listas/{id_lista}
+# Elimina una lista y todas sus películas (CASCADE en la BD). Solo puede hacerlo su dueño.
 @router.delete("/{id_lista}", status_code=status.HTTP_204_NO_CONTENT)
 def eliminar_lista(id_lista: int,
                    db: Session = Depends(database.get_db),
@@ -166,8 +185,11 @@ def eliminar_lista(id_lista: int,
     db.commit()
 
 
-# ── Películas en lista ─────────────────────────────────────────────────────
+# ─── PELÍCULAS EN LISTA ───────────────────────────────────────────────────
 
+# POST /api/listas/{id_lista}/peliculas/{tmdb_id}
+# Añade una película a una lista. Solo puede hacerlo el dueño de la lista.
+# Si la película no existe en nuestra BD, se crea automáticamente (caché de TMDB).
 @router.post("/{id_lista}/peliculas/{tmdb_id}", status_code=status.HTTP_201_CREATED)
 def añadir_pelicula_lista(id_lista: int,
                           tmdb_id: int,
@@ -186,8 +208,10 @@ def añadir_pelicula_lista(id_lista: int,
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail="No puedes modificar esta lista.")
 
+    # Buscamos la película en nuestra BD o la creamos si no existe
     pelicula = get_or_create_pelicula(tmdb_id, db)
 
+    # Comprobamos que la película no esté ya en la lista
     ya_existe = db.execute(
         select(models.ListaPelicula).where(
             models.ListaPelicula.id_lista == id_lista,
@@ -205,6 +229,8 @@ def añadir_pelicula_lista(id_lista: int,
     return {"detail": "Película añadida a la lista."}
 
 
+# DELETE /api/listas/{id_lista}/peliculas/{tmdb_id}
+# Elimina una película de una lista. Solo puede hacerlo el dueño de la lista.
 @router.delete("/{id_lista}/peliculas/{tmdb_id}", status_code=status.HTTP_200_OK)
 def quitar_pelicula_lista(id_lista: int,
                           tmdb_id: int,
@@ -231,6 +257,7 @@ def quitar_pelicula_lista(id_lista: int,
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail="Película no encontrada.")
 
+    # Buscamos la entrada en la tabla intermedia listas_peliculas
     entrada = db.execute(
         select(models.ListaPelicula).where(
             models.ListaPelicula.id_lista == id_lista,
