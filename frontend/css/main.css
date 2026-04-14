@@ -1,1025 +1,1159 @@
-/* ═══════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════
    BONOBO — Diario Cinematográfico
-   Estética: Dark Cinema · Electric Violet · Modern
-   Fonts: Bebas Neue · Syne · Plus Jakarta Sans
-   ═══════════════════════════════════════════════ */
+   Estética: Dark Cinema · Ámbar dorado · Minimalista
+   Fuentes: Bebas Neue (display) · Inter (cuerpo)
+   ═══════════════════════════════════════════════════════════ */
 
-/* Importa las tres fuentes de Google Fonts:
-   - Bebas Neue: títulos grandes y números (fd)
-   - Syne: etiquetas, botones y textos destacados (fu)
-   - Plus Jakarta Sans: texto general del cuerpo (ff) */
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap');
 
-/* ── VARIABLES GLOBALES ──
-   Define todos los colores, tamaños y fuentes como variables reutilizables.
-   Cambiar un valor aquí lo aplica en toda la app automáticamente */
+/* ── VARIABLES GLOBALES ─────────────────────────────────────────────────────
+   Todos los colores y medidas del sistema en un solo lugar.
+   Cambiar un valor aquí lo aplica en toda la app. */
 :root {
-  /* Colores de fondo — van de más oscuro a más claro */
-  --fondo:          #07070d; /* Fondo principal, casi negro azulado */
-  --superficie:     #0c0c18; /* Superficies como el sidebar y las tarjetas */
-  --superficie2:    #111120; /* Superficies secundarias, ligeramente más claras */
-  --borde:      #18183a; /* Borde sutil entre elementos */
-  --borde2:     #22224a; /* Borde ligeramente más visible */
+    /* Fondos — de más oscuro a más claro */
+    --bg:        #0e0e12;
+    --surface:   #16161e;
+    --surface2:  #1e1e2a;
+    --surface3:  #26263a;
 
-  /* Colores de acento — el violeta eléctrico característico de la app */
-  --acento:      #8b5cf6; /* Violeta principal */
-  --acento-claro:   #a78bfa; /* Violeta más claro para textos sobre fondos oscuros */
-  --acento-fondo:   rgba(139, 92, 246, 0.08); /* Fondo violeta muy tenue */
-  --acento-halo: rgba(139, 92, 246, 0.28); /* Halo luminoso para sombras */
+    /* Bordes */
+    --border:    #2a2a3c;
+    --border2:   #36364e;
 
-  /* Colores de texto */
-  --texto:        #f0f0ff; /* Texto principal, blanco azulado */
-  --tenue:         #9090b8; /* Texto secundario, gris azulado */
-  --apagado:       #50507a; /* Texto apagado, para placeholders y metadatos */
+    /* Textos */
+    --text:      #e8e8f2;
+    --muted:     #7878a0;
+    --faint:     #46466a;
 
-  /* Colores de estado y acento */
-  --rojo:         #ff4d6d; /* Error, eliminar, like activo */
-  --cian:        #22d3ee; /* Información, watchlist activa */
-  --dorado:        #fbbf24; /* Estrellas, puntuaciones */
-  --verde:       #10d9a0; /* Éxito, película vista */
+    /* Acento principal: ámbar/dorado — da sensación de cine, diferente del morado de la versión anterior */
+    --accent:        #e8a020;
+    --accent-hover:  #f0b030;
+    --accent-bg:     rgba(232, 160, 32, 0.10);
+    --accent-border: rgba(232, 160, 32, 0.25);
 
-  /* Medidas y radios */
-  --barra-lateral-ancho:     224px;   /* Ancho fijo del sidebar */
-  --radio:           12px;    /* Radio de borde estándar */
-  --radio-peq:        8px;     /* Radio de borde pequeño */
+    /* Colores de estado */
+    --watched:   #22c55e;   /* verde — película vista */
+    --liked:     #f43f5e;   /* rojo — me gusta */
+    --wl:        #38bdf8;   /* azul — watchlist */
+    --rating:    #f59e0b;   /* ámbar — estrellas y puntuaciones */
 
-  /* Alias de fuentes para uso rápido */
-  --fuente-display: 'Bebas Neue', cursive;          /* Fuente display: títulos grandes */
-  --fuente-ui: 'Syne', sans-serif;             /* Fuente UI: botones y etiquetas */
-  --fuente-cuerpo: 'Plus Jakarta Sans', sans-serif;/* Fuente body: texto general */
+    /* Errores y éxito */
+    --error:     #f43f5e;
+    --success:   #22c55e;
+
+    /* Medidas */
+    --navbar-h:  56px;
+    --radius:    10px;
+    --radius-sm: 6px;
+    --radius-lg: 16px;
+
+    /* Fuentes */
+    --font-display: 'Bebas Neue', cursive;
+    --font-body:    'Inter', sans-serif;
 }
 
-/* ── RESET GLOBAL ──
-   Elimina los márgenes y paddings por defecto del navegador
-   y usa box-sizing: border-box para que el padding no desborde los elementos */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* ── RESET ──────────────────────────────────────────────────────────────────
+   Elimina márgenes y paddings por defecto del navegador. */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
 
-/* Activa el scroll suave al navegar a anclas (#id) */
 html { scroll-behavior: smooth; }
 
-/* Estilos base del body: fondo oscuro, color de texto, fuente y layout flex para sidebar + main */
 body {
-  background: var(--fondo); color: var(--texto); font-family: var(--fuente-cuerpo);
-  font-size: 13px; line-height: 1.6; display: flex; min-height: 100vh; overflow-x: hidden;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+    /* Textura de grano sutil para dar efecto cinematográfico */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
 }
 
-/* Capa de ruido/grano filmico superpuesta en toda la pantalla.
-   Es un SVG con filtro de ruido fractal renderizado como imagen de fondo.
-   pointer-events:none permite hacer click a través de ella */
-body::after {
-  content: ''; position: fixed; inset: 0; z-index: 9998; pointer-events: none; opacity: 0.032;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-}
-
-/* Elimina el subrayado de los links y hereda el color del texto padre */
 a { text-decoration: none; color: inherit; }
+button { font-family: var(--font-body); cursor: pointer; border: none; background: none; }
+img { display: block; max-width: 100%; }
 
-/* Botones: hereda la fuente del body, muestra cursor de mano, sin borde ni fondo por defecto */
-button { font-family: var(--fuente-cuerpo); cursor: pointer; border: none; background: none; }
-
-/* Inputs y textareas heredan la fuente del body */
-input, textarea { font-family: var(--fuente-cuerpo); }
-
-/* Las imágenes son block por defecto para evitar el espacio inferior fantasma */
-img { display: block; }
-
-/* ── SCROLLBAR PERSONALIZADA ──
-   Estiliza la barra de scroll en navegadores WebKit (Chrome, Edge, Safari) */
-::-webkit-scrollbar { width: 3px; }                                           /* Ancho muy fino */
-::-webkit-scrollbar-track { background: var(--superficie); }                     /* Fondo del track */
-::-webkit-scrollbar-thumb { background: var(--borde2); border-radius: 2px; } /* El "pulgar" deslizante */
-::-webkit-scrollbar-thumb:hover { background: var(--acento); }                /* Se vuelve violeta al pasar el ratón */
-
-/* ══════════════════════════════════════
-   LAYOUT PRINCIPAL
-   ══════════════════════════════════════ */
-
-/* Sidebar fija a la izquierda, ocupa todo el alto de la pantalla */
-.barra-lateral {
-  width: var(--barra-lateral-ancho); background: var(--superficie); border-right: 1px solid var(--borde);
-  position: fixed; top: 0; left: 0; bottom: 0;
-  display: flex; flex-direction: column; z-index: 300; overflow-y: auto; overflow-x: hidden;
+/* ── LAYOUT PRINCIPAL ───────────────────────────────────────────────────────
+   El contenido se centra con un ancho máximo, igual que Letterboxd. */
+.contenedor {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
 }
 
-/* El contenido principal ocupa todo el espacio restante dejando margen para el sidebar */
-.contenido-principal { margin-left: var(--barra-lateral-ancho); flex: 1; min-height: 100vh; }
-
-
-/* ══════════════════════════════════════
-   SIDEBAR: LOGO
-   ══════════════════════════════════════ */
-
-.sb-logo { padding: 24px 20px 20px; border-bottom: 1px solid var(--borde); flex-shrink: 0; }
-.sb-logo-enlace { display: flex; align-items: center; gap: 12px; }
-
-/* Contenedor del símbolo gráfico del logo (las dos líneas) */
-.sb-logo-marca {
-  flex-shrink: 0; display: flex; flex-direction: column; gap: 5px; justify-content: center;
-}
-/* Las dos líneas del logo se crean con pseudo-elementos ::before y ::after */
-.sb-logo-marca::before, .sb-logo-marca::after {
-  content: ''; display: block; height: 3px; border-radius: 2px; background: var(--acento);
-}
-.sb-logo-marca::before { width: 24px; }           /* Línea larga */
-.sb-logo-marca::after  { width: 15px; opacity: .45; } /* Línea corta, semitransparente */
-
-.sb-nombre-marca { line-height: 1.1; }
-/* Nombre "BONOBO" en fuente Bebas Neue con espaciado amplio */
-.sb-nombre { font-family: var(--fuente-display); font-size: 26px; letter-spacing: 5px; color: var(--texto); line-height: 1; }
-/* Subtítulo pequeño en mayúsculas con mucho tracking */
-.sb-subtitulo { font-family: var(--fuente-ui); font-size: 7.5px; color: var(--apagado); letter-spacing: 2.5px; text-transform: uppercase; margin-top: 4px; }
-
-
-/* ══════════════════════════════════════
-   SIDEBAR: BARRA DE XP
-   ══════════════════════════════════════ */
-
-.sb-xp { padding: 14px 20px; border-bottom: 1px solid var(--borde); flex-shrink: 0; }
-/* Fila superior: nivel a la izquierda, puntos XP a la derecha */
-.sb-xp-fila { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 9px; }
-.sb-xp-nivel { font-family: var(--fuente-ui); font-size: 9px; font-weight: 800; letter-spacing: 2.5px; text-transform: uppercase; color: var(--acento-claro); }
-.sb-xp-numero { font-size: 10px; color: var(--apagado); }
-/* Track gris de la barra de progreso */
-.sb-xp-pista { height: 3px; background: var(--borde2); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
-/* Relleno animado de la barra: gradiente violeta con transición suave y halo luminoso */
-.sb-xp-relleno { height: 100%; background: linear-gradient(90deg, var(--acento), var(--acento-claro)); border-radius: 2px; transition: width .7s cubic-bezier(.4,0,.2,1); box-shadow: 0 0 10px var(--acento-halo); }
-.sb-xp-siguiente { font-size: 9px; color: var(--apagado); text-align: right; }
-
-
-/* ══════════════════════════════════════
-   SIDEBAR: NAVEGACIÓN
-   ══════════════════════════════════════ */
-
-.sb-nav { flex: 1; padding: 10px 0; }
-/* Cada enlace del menú: flex para alinear icono y texto, borde izquierdo transparente por defecto */
-.nav-elemento {
-  display: flex; align-items: center; gap: 12px; padding: 11px 20px;
-  color: var(--apagado); font-family: var(--fuente-ui); font-size: 10.5px; font-weight: 700;
-  letter-spacing: 1.5px; text-transform: uppercase;
-  border-left: 2px solid transparent; transition: all .15s;
-}
-.nav-elemento:hover { color: var(--tenue); background: rgba(255,255,255,.018); }
-/* Ítem activo: borde violeta izquierdo y fondo tenue */
-.nav-elemento.activo { color: var(--acento-claro); border-left-color: var(--acento); background: var(--acento-fondo); }
-.nav-icono { font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; opacity: .75; }
-.nav-elemento.activo .nav-icono { opacity: 1; }
-/* Badge rojo con número (logros sin reclamar) empujado al extremo derecho con margin-left:auto */
-.nav-insignia { margin-left: auto; background: var(--rojo); color: #fff; border-radius: 20px; padding: 1px 7px; font-size: 9px; font-weight: 700; font-family: var(--fuente-ui); }
-
-
-/* ══════════════════════════════════════
-   SIDEBAR: ESTADÍSTICAS
-   ══════════════════════════════════════ */
-
-/* Grid de 2 columnas con los 4 contadores del usuario */
-.sb-estadisticas { border-top: 1px solid var(--borde); padding: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.sb-estadistica { background: var(--superficie2); border: 1px solid var(--borde); border-radius: var(--radio-peq); padding: 10px 8px; text-align: center; transition: border-color .2s; }
-.sb-estadistica:hover { border-color: var(--acento); }
-/* Número grande en Bebas Neue */
-.sb-stat-numero { font-family: var(--fuente-display); font-size: 22px; color: var(--acento-claro); line-height: 1; margin-bottom: 3px; }
-/* Etiqueta pequeña debajo del número */
-.sb-stat-etiqueta { font-size: 8px; color: var(--apagado); letter-spacing: 1px; text-transform: uppercase; }
-
-
-/* ══════════════════════════════════════
-   SIDEBAR: AUTENTICACIÓN Y USUARIO
-   ══════════════════════════════════════ */
-
-/* Zona de botones login/registro (usuario no logueado) */
-.sb-auth { padding: 16px; border-top: 1px solid var(--borde); display: flex; flex-direction: column; gap: 8px; }
-
-/* Botón "Iniciar sesión": borde sutil, fondo transparente */
-.btn-iniciar-sesion {
-  display: block; text-align: center; padding: 9px 12px;
-  border: 1px solid var(--borde2); border-radius: var(--radio);
-  font-family: var(--fuente-ui); font-size: 9.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
-  color: var(--tenue); transition: all .15s;
-}
-.btn-iniciar-sesion:hover { border-color: var(--tenue); color: var(--texto); }
-
-/* Botón "Registrarse": relleno violeta con halo luminoso — el CTA principal */
-.btn-registro {
-  display: block; text-align: center; padding: 9px 12px;
-  background: var(--acento); border-radius: var(--radio);
-  font-family: var(--fuente-ui); font-size: 9.5px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
-  color: #fff; box-shadow: 0 0 18px var(--acento-halo); transition: all .15s;
-}
-/* Al pasar el ratón: halo más grande y sube ligeramente */
-.btn-registro:hover { box-shadow: 0 0 32px rgba(139,92,246,.5); transform: translateY(-1px); }
-
-/* Zona del usuario logueado: avatar + nombre + botón logout */
-.sb-usuario { padding: 16px; border-top: 1px solid var(--borde); display: flex; align-items: center; gap: 10px; }
-/* Avatar circular con gradiente violeta y halo */
-.sb-avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--acento), #c084fc); flex-shrink: 0; box-shadow: 0 0 14px rgba(139,92,246,.3); }
-.sb-u-nombre { font-family: var(--fuente-ui); font-size: 11px; font-weight: 700; margin-bottom: 2px; }
-/* Botón logout pequeño que se vuelve rojo al pasar el ratón */
-.sb-u-cerrar { font-size: 10px; color: var(--apagado); cursor: pointer; transition: color .15s; }
-.sb-u-cerrar:hover { color: var(--rojo); }
-
-
-/* ══════════════════════════════════════
-   TOPBAR (barra de búsqueda y filtros)
-   ══════════════════════════════════════ */
-
-/* Sticky: se queda pegada arriba al hacer scroll. backdrop-filter crea el efecto cristal */
-.barra-superior {
-  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-  padding: 18px 28px; border-bottom: 1px solid var(--borde);
-  position: sticky; top: 0; z-index: 200;
-  background: rgba(7,7,13,.82); backdrop-filter: blur(16px);
+/* Espacio superior para no solapar con el navbar fijo */
+.pagina {
+    padding-top: calc(var(--navbar-h) + 32px);
+    padding-bottom: 64px;
 }
 
-/* Contenedor del buscador: borde redondeado tipo "pill" */
-.buscador {
-  flex: 1; max-width: 320px; display: flex; align-items: center;
-  background: var(--superficie2); border: 1px solid var(--borde2);
-  border-radius: 999px; padding: 0 14px; gap: 8px; transition: border-color .2s;
+/* ══════════════════════════════════════════════════════════════
+   NAVBAR
+   ══════════════════════════════════════════════════════════════ */
+.navbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    height: var(--navbar-h);
+    background: rgba(14, 14, 18, 0.92);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(12px);   /* efecto de cristal sobre el contenido */
 }
-/* Al hacer foco en el input, el borde se vuelve violeta con halo */
-.buscador:focus-within { border-color: var(--acento); box-shadow: 0 0 0 3px var(--acento-fondo); }
-.buscador-icono { color: var(--apagado); font-size: 16px; line-height: 1; }
-.buscador-campo { flex: 1; background: none; border: none; outline: none; color: var(--texto); font-size: 12.5px; padding: 9px 0; font-family: var(--fuente-cuerpo); }
-.buscador-campo::placeholder { color: var(--apagado); }
 
-/* Contenedor de chips de género */
-.filtros-genero { display: flex; gap: 6px; flex-wrap: wrap; }
-
-/* Chip individual: pastilla redondeada con borde */
-.filtro {
-  padding: 5px 13px; border-radius: 999px; border: 1px solid var(--borde2); background: none;
-  font-family: var(--fuente-ui); font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
-  color: var(--apagado); cursor: pointer; transition: all .15s;
+/* Fila interna del navbar: logo | búsqueda | links | usuario */
+.nav-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 24px;
 }
-.filtro:hover { border-color: var(--tenue); color: var(--tenue); }
-/* Chip activo: relleno violeta con halo */
-.filtro.activo { background: var(--acento); border-color: var(--acento); color: #fff; box-shadow: 0 0 12px rgba(139,92,246,.35); }
 
+/* Logo */
+.nav-logo {
+    font-family: var(--font-display);
+    font-size: 22px;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    flex-shrink: 0;
+}
 
-/* ══════════════════════════════════════
-   HERO (cabecera visual grande)
-   ══════════════════════════════════════ */
+/* Caja del buscador — ocupa el espacio disponible */
+.nav-search-wrap {
+    flex: 1;
+    position: relative;
+    max-width: 380px;
+}
 
+.nav-search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    color: var(--muted);
+    pointer-events: none;
+}
+
+.nav-search {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 13px;
+    padding: 7px 12px 7px 32px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.nav-search:focus { border-color: var(--accent-border); }
+.nav-search::placeholder { color: var(--muted); }
+
+/* Links de navegación intermedios */
+.nav-links {
+    display: flex;
+    gap: 4px;
+}
+
+.nav-link {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    transition: color 0.15s, background 0.15s;
+}
+.nav-link:hover, .nav-link--active {
+    color: var(--text);
+    background: var(--surface2);
+}
+
+/* Botones del navbar */
+.nav-btn {
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    transition: background 0.15s, color 0.15s;
+    flex-shrink: 0;
+}
+.nav-btn--ghost {
+    color: var(--muted);
+    border: 1px solid var(--border);
+}
+.nav-btn--ghost:hover { color: var(--text); border-color: var(--border2); }
+
+.nav-btn--primary {
+    background: var(--accent);
+    color: #000;
+    font-weight: 600;
+}
+.nav-btn--primary:hover { background: var(--accent-hover); }
+
+/* Info del usuario logueado en el nav */
+.nav-auth, .nav-user-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.nav-username {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    transition: background 0.15s;
+}
+.nav-username:hover { background: var(--surface2); }
+
+/* Avatar en el navbar */
+.nav-avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.nav-avatar--placeholder {
+    background: var(--surface3);
+    border: 1px solid var(--border2);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   HERO — Pantalla de bienvenida para visitantes no registrados
+   ══════════════════════════════════════════════════════════════ */
 .hero {
-  display: flex; align-items: flex-end; justify-content: space-between;
-  padding: 44px 28px 40px; gap: 20px; position: relative; overflow: hidden;
-}
-/* Gradiente radial decorativo en la parte derecha del hero */
-.hero::before {
-  content: ''; position: absolute; right: 0; top: 0; width: 55%; height: 100%;
-  background: radial-gradient(ellipse at right center, rgba(139,92,246,.07) 0%, transparent 68%);
-  pointer-events: none;
-}
-/* Texto pequeño en mayúsculas sobre el título (eslogan) */
-.hero-eslogan { font-family: var(--fuente-ui); font-size: 9px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--acento-claro); margin-bottom: 12px; }
-/* Título principal gigante en Bebas Neue */
-.hero-titulo { font-family: var(--fuente-display); font-size: 62px; line-height: .95; color: var(--texto); margin-bottom: 14px; letter-spacing: 1px; }
-.hero-subtitulo { font-size: 11px; color: var(--apagado); letter-spacing: 1px; }
-.hero-derecha { text-align: right; flex-shrink: 0; }
-/* Número decorativo enorme casi transparente en la parte derecha */
-.hero-numero { font-family: var(--fuente-display); font-size: 90px; line-height: 1; color: var(--acento); opacity: .2; letter-spacing: -2px; }
-.hero-numero-etiqueta { font-family: var(--fuente-ui); font-size: 9px; font-weight: 700; color: var(--apagado); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; }
-
-
-/* ══════════════════════════════════════
-   CABECERAS DE SECCIÓN
-   ══════════════════════════════════════ */
-
-/* Línea con icono, texto y línea decorativa horizontal */
-.seccion-titulo { display: flex; align-items: center; gap: 12px; padding: 0 28px; margin-bottom: 16px; }
-/* La línea horizontal crece para ocupar el espacio sobrante */
-.seccion-linea { flex: 1; height: 1px; background: var(--borde); }
-.seccion-texto { font-family: var(--fuente-ui); font-size: 9px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--apagado); white-space: nowrap; }
-.seccion-icono { color: var(--acento-claro); font-size: 11px; }
-
-
-/* ══════════════════════════════════════
-   CUADRÍCULA DE PELÍCULAS
-   ══════════════════════════════════════ */
-
-/* Grid responsivo: columnas de mínimo 130px que se ajustan automáticamente */
-.cuadricula-peliculas {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: 14px; padding: 0 28px; margin-bottom: 52px;
+    position: relative;
+    min-height: calc(100vh - var(--navbar-h));
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    overflow: hidden;
 }
 
-
-/* ══════════════════════════════════════
-   TARJETA DE PELÍCULA
-   ══════════════════════════════════════ */
-
-.tarjeta-peli { cursor: pointer; animation: subirAparecer .38s ease both; }
-
-/* Animación de entrada: las tarjetas suben desde abajo al aparecer */
-@keyframes subirAparecer { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
-
-/* Retraso escalonado para las 8 primeras tarjetas: entran una tras otra */
-.tarjeta-peli:nth-child(1){animation-delay:.00s} .tarjeta-peli:nth-child(2){animation-delay:.04s}
-.tarjeta-peli:nth-child(3){animation-delay:.08s} .tarjeta-peli:nth-child(4){animation-delay:.12s}
-.tarjeta-peli:nth-child(5){animation-delay:.16s} .tarjeta-peli:nth-child(6){animation-delay:.20s}
-.tarjeta-peli:nth-child(7){animation-delay:.24s} .tarjeta-peli:nth-child(8){animation-delay:.28s}
-
-/* Contenedor del póster: ratio 2:3 (proporciones de póster de cine) */
-.tarjeta-poster {
-  position: relative; aspect-ratio: 2/3; border-radius: var(--radio); overflow: hidden;
-  background: var(--superficie2); border: 1px solid var(--borde);
-  transition: transform .28s cubic-bezier(.4,0,.2,1), border-color .2s, box-shadow .28s;
-}
-/* Al hover: sube, borde violeta y sombra profunda */
-.tarjeta-peli:hover .tarjeta-poster { transform: translateY(-6px); border-color: var(--acento); box-shadow: 0 24px 50px rgba(0,0,0,.7), 0 0 0 1px var(--acento); }
-.tarjeta-imagen { width: 100%; height: 100%; object-fit: cover; transition: transform .4s; }
-/* La imagen escala ligeramente al hacer hover */
-.tarjeta-peli:hover .tarjeta-imagen { transform: scale(1.05); }
-
-/* Gradiente oscuro en la parte inferior del póster para que las insignias sean legibles */
-.tarjeta-poster::after {
-  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 50%;
-  background: linear-gradient(to top, rgba(7,7,13,.6) 0%, transparent 100%);
-  pointer-events: none;
+/* Mosaico de pósters de fondo — se rellena dinámicamente con JS */
+.hero-bg {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 2px;
+    opacity: 0.18;
+    filter: blur(2px);
+    transform: scale(1.05);   /* recortamos los bordes del blur */
 }
 
-/* Overlay oscuro con botón play — invisible por defecto, aparece al hacer hover */
-.tarjeta-overlay {
-  position: absolute; inset: 0; background: rgba(7,7,13,.55);
-  opacity: 0; transition: opacity .22s; display: flex; align-items: center; justify-content: center; z-index: 2;
+.hero-bg-poster {
+    background: var(--surface2);
+    background-size: cover;
+    background-position: center;
 }
-.tarjeta-peli:hover .tarjeta-overlay { opacity: 1; }
 
-/* Botón play circular: empieza pequeño e invisible, crece al hacer hover */
-.tarjeta-play {
-  width: 40px; height: 40px; border-radius: 50%; background: var(--acento); color: #fff;
-  display: flex; align-items: center; justify-content: center; font-size: 14px;
-  transform: scale(.7); opacity: 0; transition: all .22s cubic-bezier(.4,0,.2,1);
-  box-shadow: 0 4px 24px rgba(139,92,246,.6);
+/* Gradiente oscuro encima del mosaico para que el texto sea legible */
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to bottom,
+        rgba(14,14,18,0.5) 0%,
+        rgba(14,14,18,0.75) 60%,
+        rgba(14,14,18,1) 100%
+    );
 }
-.tarjeta-peli:hover .tarjeta-play { transform: scale(1); opacity: 1; }
 
-/* Insignias sobre el póster (VISTA, puntuación, watchlist, like, rating global) */
-.tarjeta-insignia { position: absolute; border-radius: 6px; font-family: var(--fuente-ui); font-size: 8.5px; font-weight: 800; letter-spacing: .5px; padding: 3px 7px; line-height: 1; z-index: 3; }
-.insignia-vista   { top:7px; left:7px;  background:var(--verde); color:#07070d; }  /* Verde arriba-izquierda */
-.insignia-puntuacion   { top:7px; right:7px; background:var(--acento); color:#fff; }    /* Violeta arriba-derecha */
-.insignia-watchlist     { bottom:7px; right:7px; background:none; padding:0; font-size:15px; z-index:3; } /* Emoji sin fondo */
-.insignia-like   { bottom:7px; left:7px;  background:none; padding:0; font-size:15px; z-index:3; } /* Emoji sin fondo */
-/* Rating global: fondo semitransparente con blur, texto dorado */
-.insignia-global { bottom:7px; left:7px; z-index:3; background:rgba(0,0,0,.7); backdrop-filter:blur(4px); color:var(--dorado); display:flex; align-items:center; gap:3px; font-size:10px; }
-
-/* Título y metadatos debajo del póster */
-.tarjeta-titulo { margin-top: 9px; font-family: var(--fuente-ui); font-size: 10.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--tenue); }
-/* text-overflow:ellipsis corta el texto largo con "..." */
-.tarjeta-meta { font-size: 10px; color: var(--apagado); margin-top: 2px; }
-
-
-/* ══════════════════════════════════════
-   MODAL DE PELÍCULA
-   ══════════════════════════════════════ */
-
-/* Fondo oscuro semitransparente que cubre toda la pantalla con efecto blur */
-.modal-fondo {
-  position: fixed; inset: 0; background: rgba(0,0,0,.85); z-index: 500;
-  display: flex; align-items: center; justify-content: center;
-  padding: 20px; backdrop-filter: blur(12px); animation: entrarFondo .2s ease;
+/* Contenido del hero: encima del overlay */
+.hero-content {
+    position: relative;
+    z-index: 1;
+    padding: 0 24px;
+    max-width: 640px;
 }
-/* El fondo aparece con fade in */
-@keyframes entrarFondo { from{opacity:0} to{opacity:1} }
 
-/* Ventana del modal: ancho máximo 700px, scroll vertical si el contenido es muy largo */
-.modal {
-  background: var(--superficie); border: 1px solid var(--borde2); border-radius: 18px;
-  max-width: 700px; width: 100%; max-height: 92vh; overflow-y: auto;
-  box-shadow: 0 48px 100px rgba(0,0,0,.9), 0 0 0 1px var(--borde);
-  animation: subirModal .28s cubic-bezier(.4,0,.2,1);
+.hero-titulo {
+    font-family: var(--font-display);
+    font-size: clamp(42px, 8vw, 80px);   /* tamaño adaptable al viewport */
+    line-height: 1;
+    letter-spacing: 0.02em;
+    color: var(--text);
+    margin-bottom: 16px;
 }
-/* El modal sube desde abajo con fade in */
-@keyframes subirModal { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
 
-/* Cabecera del modal: imagen de fondo difuminada con gradiente */
-.modal-cabecera { position: relative; height: 174px; border-radius: 18px 18px 0 0; overflow: hidden; }
-/* Imagen de fondo: desenfocada, oscurecida y desaturada para que sea decorativa */
-.modal-fondo-imagen { position: absolute; inset: 0; width:100%; height:100%; object-fit: cover; filter: blur(14px) brightness(.28) saturate(.4); transform: scale(1.14); }
-/* Gradiente que funde la imagen con el fondo de la surface */
-.modal-gradiente { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,.1), var(--superficie)); }
-/* Contenido interior de la cabecera: póster pequeño + info */
-.modal-cabecera-contenido { position: absolute; inset: 0; display: flex; align-items: flex-end; padding: 22px 26px; gap: 18px; }
-/* Póster miniatura con borde sutil y sombra */
-.modal-poster { width: 78px; height: 117px; object-fit: cover; border-radius: 10px; border: 2px solid rgba(255,255,255,.1); box-shadow: 0 12px 40px rgba(0,0,0,.7); flex-shrink: 0; }
-.modal-info { flex: 1; min-width: 0; }
-.modal-titulo { font-family: var(--fuente-display); font-size: 26px; color: #fff; line-height: 1.05; margin-bottom: 5px; letter-spacing: .5px; }
-.modal-director { font-size: 10px; color: rgba(255,255,255,.45); margin-bottom: 8px; letter-spacing: .5px; }
-/* Pastilla de género violeta */
-.modal-pastilla { display: inline-block; background: var(--acento); color: #fff; border-radius: 20px; padding: 3px 12px; font-family: var(--fuente-ui); font-size: 9px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
-
-/* Botón X para cerrar el modal: circular, esquina superior derecha */
-.modal-cerrar {
-  position: absolute; top: 14px; right: 14px; background: rgba(0,0,0,.55); backdrop-filter: blur(6px);
-  border: 1px solid rgba(255,255,255,.1); color: rgba(255,255,255,.65); border-radius: 50%;
-  width: 32px; height: 32px; font-size: 14px; display: flex; align-items: center; justify-content: center;
-  cursor: pointer; transition: all .15s;
+.hero-titulo span {
+    color: var(--accent);   /* resaltamos "Bonobo" en ámbar */
 }
-/* Al hover se vuelve rojo */
-.modal-cerrar:hover { background: rgba(255,77,109,.35); color: #fff; }
-.modal-cuerpo { padding: 24px 26px 32px; }
 
+.hero-desc {
+    font-size: 16px;
+    color: var(--muted);
+    margin-bottom: 32px;
+    line-height: 1.7;
+}
 
-/* ── BOTONES DE ACCIÓN DEL MODAL ── */
+.hero-cta {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
 
-/* Fila de botones de acción (vista, watchlist, like, favorita, lista) */
-.acciones { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+/* ══════════════════════════════════════════════════════════════
+   BOTONES GLOBALES
+   ══════════════════════════════════════════════════════════════ */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 22px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    border: none;
+    transition: background 0.15s, color 0.15s, transform 0.1s;
+}
+.btn:active { transform: scale(0.97); }
 
-/* Botón de acción base: borde sutil, fondo oscuro */
+.btn--primary { background: var(--accent); color: #000; }
+.btn--primary:hover { background: var(--accent-hover); }
+
+.btn--ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+}
+.btn--ghost:hover { color: var(--text); border-color: var(--border2); background: var(--surface2); }
+
+.btn--surface { background: var(--surface2); color: var(--text); }
+.btn--surface:hover { background: var(--surface3); }
+
+.btn--sm { font-size: 12px; padding: 6px 14px; }
+.btn--lg { font-size: 16px; padding: 13px 28px; }
+
+/* ══════════════════════════════════════════════════════════════
+   SECCIONES DE CONTENIDO
+   ══════════════════════════════════════════════════════════════ */
+.seccion {
+    margin-bottom: 48px;
+}
+
+/* Cabecera de sección: título + línea decorativa */
+.seccion-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.seccion-titulo {
+    font-family: var(--font-display);
+    font-size: 22px;
+    letter-spacing: 0.04em;
+    color: var(--text);
+    flex-shrink: 0;
+}
+
+.seccion-linea {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+
+.seccion-meta {
+    font-size: 12px;
+    color: var(--faint);
+    flex-shrink: 0;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   TARJETAS DE PELÍCULA
+   ══════════════════════════════════════════════════════════════ */
+
+/* Grid de tarjetas: columnas de ~140px que se ajustan al ancho disponible */
+.peliculas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 16px;
+}
+
+/* Tarjeta individual */
+.pelicula-card {
+    cursor: pointer;
+    group: true;
+}
+
+/* Contenedor del póster (ratio 2:3 como un póster real) */
+.pelicula-card__poster {
+    position: relative;
+    aspect-ratio: 2 / 3;
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.pelicula-card:hover .pelicula-card__poster {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+    border-color: var(--border2);
+}
+
+.pelicula-card__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Placeholder cuando no hay imagen */
+.pelicula-card__no-img {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--faint);
+    font-family: var(--font-display);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    text-align: center;
+    padding: 12px;
+}
+
+/* Overlay oscuro en hover con puntuación y acciones rápidas */
+.pelicula-card__overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.2s;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 10px;
+    gap: 6px;
+}
+.pelicula-card:hover .pelicula-card__overlay { opacity: 1; }
+
+/* Puntuación de TMDB en el overlay */
+.pelicula-card__puntuacion {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--rating);
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+/* Info debajo del póster */
+.pelicula-card__info {
+    margin-top: 8px;
+}
+
+.pelicula-card__titulo {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+}
+
+.pelicula-card__anio {
+    font-size: 11px;
+    color: var(--faint);
+    margin-top: 2px;
+}
+
+/* Indicadores de estado del usuario (visto, liked, watchlist) sobre el póster */
+.pelicula-card__badges {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.badge {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+}
+.badge--watched   { background: var(--watched); color: #fff; }
+.badge--liked     { background: var(--liked);   color: #fff; }
+.badge--watchlist { background: var(--wl);      color: #000; }
+
+/* ══════════════════════════════════════════════════════════════
+   FORMULARIOS — Login y Registro
+   ══════════════════════════════════════════════════════════════ */
+.form-pagina {
+    min-height: calc(100vh - var(--navbar-h));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+}
+
+.form-caja {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 40px;
+    width: 100%;
+    max-width: 400px;
+}
+
+.form-titulo {
+    font-family: var(--font-display);
+    font-size: 28px;
+    letter-spacing: 0.04em;
+    margin-bottom: 8px;
+}
+
+.form-subtitulo {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 28px;
+}
+
+.form-grupo {
+    margin-bottom: 18px;
+}
+
+.form-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 6px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.form-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.form-input:focus { border-color: var(--accent-border); }
+.form-input::placeholder { color: var(--faint); }
+
+.form-error {
+    font-size: 12px;
+    color: var(--error);
+    margin-top: 4px;
+    display: none;
+}
+.form-error--visible { display: block; }
+
+.form-btn {
+    width: 100%;
+    margin-top: 8px;
+    padding: 12px;
+    font-size: 15px;
+}
+
+.form-footer {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--muted);
+}
+.form-footer a { color: var(--accent); }
+.form-footer a:hover { color: var(--accent-hover); }
+
+/* ══════════════════════════════════════════════════════════════
+   DETALLE DE PELÍCULA
+   ══════════════════════════════════════════════════════════════ */
+
+/* Cabecera con el póster como fondo difuminado */
+.pelicula-hero {
+    position: relative;
+    padding-top: var(--navbar-h);
+    overflow: hidden;
+}
+
+.pelicula-hero__bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center top;
+    filter: blur(24px) brightness(0.3);
+    transform: scale(1.1);
+}
+
+.pelicula-hero__overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent 0%, var(--bg) 100%);
+}
+
+.pelicula-hero__content {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 24px 48px;
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+}
+
+/* Póster principal */
+.pelicula-poster {
+    width: 200px;
+    flex-shrink: 0;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border2);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+.pelicula-poster img { width: 100%; display: block; }
+
+/* Info a la derecha del póster */
+.pelicula-info { flex: 1; }
+
+.pelicula-titulo {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 5vw, 52px);
+    line-height: 1;
+    letter-spacing: 0.02em;
+    margin-bottom: 6px;
+}
+
+.pelicula-meta {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 16px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.pelicula-meta span { display: flex; align-items: center; gap: 4px; }
+
+/* Géneros como pastillas */
+.pelicula-generos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+.genero-tag {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 100px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+}
+
+.pelicula-sinopsis {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.7;
+    max-width: 560px;
+    margin-bottom: 24px;
+}
+
+/* Panel de acciones del usuario (marcar vista, puntuar, me gusta, watchlist) */
+.acciones-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-width: 320px;
+}
+
+.acciones-panel__titulo {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--faint);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+/* Fila de botones de acción (vista, me gusta, watchlist) */
+.acciones-fila {
+    display: flex;
+    gap: 8px;
+}
+
 .accion-btn {
-  border: 1px solid var(--borde2); background: var(--superficie2); color: var(--tenue);
-  border-radius: var(--radio-peq); padding: 8px 16px;
-  font-family: var(--fuente-ui); font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
-  cursor: pointer; transition: all .15s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 16px;
+    border-radius: var(--radius-sm);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex: 1;
 }
-.accion-btn:hover { border-color: var(--tenue); color: var(--texto); }
-/* Variantes de color para cada estado activo */
-.accion-btn.g { background:rgba(16,217,160,.11); border-color:var(--verde); color:var(--verde); } /* Vista — verde */
-.accion-btn.b { background:rgba(34,211,238,.11); border-color:var(--cian);  color:var(--cian); }  /* Watchlist — azul */
-.accion-btn.r { background:rgba(255,77,109,.11); border-color:var(--rojo);   color:var(--rojo); }   /* Like — rojo */
-.accion-btn.y { background:rgba(251,191,36,.11); border-color:var(--dorado);  color:var(--dorado); }  /* Favorita — dorado */
+.accion-btn svg { width: 18px; height: 18px; }
+.accion-btn:hover { background: var(--surface3); color: var(--text); }
+.accion-btn--watched  { color: var(--watched);  border-color: var(--watched);  background: rgba(34,197,94,0.08); }
+.accion-btn--liked    { color: var(--liked);    border-color: var(--liked);    background: rgba(244,63,94,0.08); }
+.accion-btn--watchlist{ color: var(--wl);       border-color: var(--wl);       background: rgba(56,189,248,0.08); }
 
-/* Mensaje para usuarios no logueados dentro del modal */
-.sin-sesion { background: var(--superficie2); border: 1px dashed var(--borde2); border-radius: 10px; padding: 14px; text-align: center; color: var(--apagado); font-size: 11px; margin-bottom: 18px; }
-.sin-sesion a { color: var(--acento-claro); }
+/* Selector de puntuación (1-10) */
+.puntuacion-wrap { display: flex; flex-direction: column; gap: 8px; }
+.puntuacion-label { font-size: 12px; color: var(--muted); }
 
+.puntuacion-selector {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+.punt-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.punt-btn:hover { background: var(--surface3); color: var(--text); }
+.punt-btn--activo {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #000;
+}
 
-/* ── SISTEMA DE PUNTUACIÓN (ESTRELLAS) ── */
+/* Sección de diario rápido */
+.diario-form { display: flex; flex-direction: column; gap: 8px; }
+.diario-form textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 13px;
+    padding: 10px 12px;
+    resize: vertical;
+    min-height: 80px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.diario-form textarea:focus { border-color: var(--accent-border); }
+.diario-form textarea::placeholder { color: var(--faint); }
 
-.puntuacion-tarjeta { background: var(--superficie2); border: 1px solid var(--borde); border-radius: var(--radio); padding: 16px 18px; margin-bottom: 14px; }
-.puntuacion-superior { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.puntuacion-etiqueta { font-family: var(--fuente-ui); font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--apagado); }
-/* Número grande de la puntuación */
-.puntuacion-valor { font-family: var(--fuente-display); font-size: 34px; color: var(--acento-claro); line-height: 1; }
-.puntuacion-valor sub { font-size: 14px; color: var(--apagado); font-family: var(--fuente-cuerpo); }
-.estrellas { display: flex; gap: 4px; }
-/* Cada botón del 1 al 10: altura fija, se ilumina al hacer hover */
-.estrella-btn { flex: 1; height: 36px; border-radius: 7px; background: var(--superficie); border: 1px solid var(--borde2); font-family: var(--fuente-ui); font-size: 9.5px; font-weight: 700; color: var(--apagado); cursor: pointer; transition: all .12s; }
-.estrella-btn:hover { border-color: var(--acento-claro); color: var(--acento-claro); }
-/* Botón activo (seleccionado o menor que el seleccionado): relleno violeta */
-.estrella-btn.lit { background: var(--acento); border-color: var(--acento); color: #fff; }
+.diario-form input[type="date"] {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 13px;
+    padding: 8px 12px;
+    outline: none;
+    width: 100%;
+    color-scheme: dark;   /* hace que el selector de fecha tenga tema oscuro */
+}
 
+/* Reparto */
+.reparto-grid {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+}
+.actor-card {
+    flex-shrink: 0;
+    width: 80px;
+    text-align: center;
+}
+.actor-foto {
+    width: 80px;
+    height: 80px;
+    border-radius: var(--radius);
+    object-fit: cover;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    margin-bottom: 6px;
+}
+.actor-nombre { font-size: 11px; font-weight: 500; color: var(--text); line-height: 1.3; }
+.actor-personaje { font-size: 10px; color: var(--faint); margin-top: 2px; }
 
-/* ── FORMULARIO DE DIARIO ── */
+/* ══════════════════════════════════════════════════════════════
+   PERFIL DE USUARIO
+   ══════════════════════════════════════════════════════════════ */
+.perfil-cabecera {
+    padding: 32px 0 40px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
+}
 
-/* Botón para abrir el formulario del diario: borde punteado */
-.diario-btn-anadir { display: block; width: 100%; background: var(--superficie2); border: 1px dashed var(--borde2); color: var(--apagado); border-radius: var(--radio); padding: 12px; font-family: var(--fuente-ui); font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; text-align: center; cursor: pointer; transition: all .15s; margin-bottom: 14px; }
-.diario-btn-anadir:hover { border-color: var(--acento-claro); color: var(--acento-claro); }
-
-/* Tarjeta contenedora del formulario de diario */
-.diario-formulario { background: var(--superficie2); border: 1px solid var(--borde); border-radius: var(--radio); padding: 18px; margin-bottom: 14px; }
-/* Etiqueta superior de la tarjeta en mayúsculas */
-.diario-formulario-titulo { font-family: var(--fuente-ui); font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--apagado); margin-bottom: 14px; display: block; }
-
-/* Campos de texto del formulario (input de fecha y textarea de reseña) */
-.campo-entrada { width: 100%; background: var(--superficie); border: 1px solid var(--borde); border-radius: var(--radio-peq); padding: 10px 14px; color: var(--texto); font-family: var(--fuente-cuerpo); font-size: 13px; outline: none; transition: border-color .2s; margin-bottom: 10px; }
-.campo-entrada:focus { border-color: var(--acento); box-shadow: 0 0 0 3px var(--acento-fondo); }
-.campo-entrada::placeholder { color: var(--apagado); }
-/* El textarea no se puede redimensionar manualmente */
-.campo-textarea { resize: none; min-height: 86px; }
-
-/* Fila de botones guardar/cancelar */
-.formulario-botones { display: flex; gap: 8px; margin-top: 6px; }
-/* Botón guardar: violeta */
-.btn-guardar { background: var(--acento); color: #fff; border-radius: var(--radio-peq); padding: 9px 22px; font-family: var(--fuente-ui); font-size: 9px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: all .15s; }
-.btn-guardar:hover { box-shadow: 0 0 20px var(--acento-halo); }
-/* Botón cancelar: fondo oscuro con borde */
-.btn-cancelar { background: var(--superficie); border: 1px solid var(--borde2); color: var(--apagado); border-radius: var(--radio-peq); padding: 9px 18px; font-family: var(--fuente-ui); font-size: 9px; cursor: pointer; transition: color .15s; }
-.btn-cancelar:hover { color: var(--texto); }
-
-/* Grid de metadatos del modal (rating global y año) */
-.modal-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
-.meta-tarjeta { background: var(--superficie2); border: 1px solid var(--borde); border-radius: var(--radio-peq); padding: 14px; }
-.meta-etiqueta { font-size: 9px; color: var(--apagado); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px; }
-.meta-valor { font-family: var(--fuente-display); font-size: 24px; color: var(--texto); line-height: 1; }
-/* Estrella dorada junto al rating global */
-.meta-valor .estrella-dorada { color: var(--dorado); font-size: 17px; margin-right: 3px; }
-.modal-synopsis { font-size: 12.5px; color: var(--tenue); line-height: 1.8; margin-bottom: 10px; }
-.modal-reparto { font-size: 11px; color: var(--apagado); }
-
-
-/* ══════════════════════════════════════
-   PÁGINAS INTERIORES (inner pages)
-   ══════════════════════════════════════ */
-
-/* Padding base para el contenido de las páginas interiores */
-.pagina-contenido { padding: 28px; }
-
-
-/* ── PÁGINA DE PERFIL ── */
-
-/* Tarjeta principal del perfil con gradiente radial decorativo en la esquina */
-.perfil-tarjeta { background: var(--superficie); border: 1px solid var(--borde2); border-radius: 16px; padding: 30px; margin-bottom: 30px; display: flex; align-items: center; gap: 26px; flex-wrap: wrap; position: relative; overflow: hidden; }
-/* Círculo decorativo violeta tenue en la esquina superior derecha */
-.perfil-tarjeta::before { content: ''; position: absolute; right: -40px; top: -40px; width: 320px; height: 320px; border-radius: 50%; background: radial-gradient(circle, rgba(139,92,246,.07) 0%, transparent 65%); pointer-events: none; }
+.perfil-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 24px;
+    margin-bottom: 24px;
+}
 
 /* Avatar grande del perfil */
-.perfil-avatar { width: 78px; height: 78px; border-radius: 50%; background: linear-gradient(135deg, var(--acento) 0%, #c084fc 100%); flex-shrink: 0; box-shadow: 0 0 32px rgba(139,92,246,.28); }
-/* Nombre del usuario en Bebas Neue */
-.perfil-nombre { font-family: var(--fuente-display); font-size: 32px; margin-bottom: 4px; line-height: 1; letter-spacing: .5px; }
-/* Pastilla de nivel junto al nombre */
-.perfil-nivel { display: inline-block; background: var(--acento-fondo); border: 1px solid rgba(139,92,246,.3); color: var(--acento-claro); border-radius: 20px; padding: 3px 12px; font-family: var(--fuente-ui); font-size: 9px; font-weight: 700; letter-spacing: 1px; margin-left: 10px; vertical-align: middle; }
-.perfil-bio { font-size: 12.5px; color: var(--apagado); margin-bottom: 12px; }
-
-/* Barra de XP del perfil */
-.perfil-xp-fila { display: flex; align-items: center; gap: 11px; }
-.perfil-xp-pista { flex:1; max-width:200px; height:4px; background:var(--borde2); border-radius:2px; overflow:hidden; }
-.perfil-xp-relleno { height:100%; background:linear-gradient(90deg, var(--acento), var(--acento-claro)); border-radius:2px; box-shadow:0 0 8px rgba(139,92,246,.4); }
-.perfil-xp-etiqueta { font-size:10.5px; color:var(--acento-claro); font-weight:600; font-family:var(--fuente-ui); }
-
-/* Estadísticas numéricas del perfil (vistas, reseñas, etc.) */
-.perfil-estadisticas { display:flex; gap:28px; margin-left:auto; }
-.perfil-stat { text-align:center; }
-.perfil-stat-numero { font-family:var(--fuente-display); font-size:30px; color:var(--acento-claro); line-height: 1; }
-.perfil-stat-etiqueta { font-family:var(--fuente-ui); font-size:8px; color:var(--apagado); letter-spacing:1.5px; text-transform:uppercase; margin-top: 3px; }
-
-/* Grid de 4 favoritas */
-.favoritas-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
-/* Cada favorita: ratio 2:3 con hover */
-.favorita-tile { aspect-ratio:2/3; border-radius:var(--radio); overflow:hidden; position:relative; border:1px solid var(--borde); cursor:pointer; transition:all .22s; }
-.favorita-tile:hover { border-color:var(--acento); box-shadow:0 10px 32px rgba(139,92,246,.18); transform:translateY(-3px); }
-/* Slot vacío: borde punteado sin cursor de mano */
-.favorita-tile.vacio { border:2px dashed var(--borde2); display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--borde2); gap:6px; font-family:var(--fuente-ui); font-size:9px; letter-spacing:1px; cursor:default; }
-.favorita-tile img { width:100%; height:100%; object-fit:cover; }
-/* Gradiente oscuro inferior para que el título sea legible */
-.favorita-gradiente { position:absolute; inset:0; background:linear-gradient(to top, rgba(7,7,13,.82) 0%, transparent 55%); }
-.favorita-nombre { position:absolute; bottom:8px; left:9px; right:9px; font-family:var(--fuente-ui); font-size:9.5px; font-weight:700; color:#fff; line-height:1.3; }
-
-/* Miniaturas de películas vistas en el perfil */
-.vistas-mini { display:grid; grid-template-columns:repeat(auto-fill, minmax(88px,1fr)); gap:10px; }
-.vista-mini-tile { cursor:pointer; }
-.vista-mini-poster { position:relative; aspect-ratio:2/3; border-radius:var(--radio-peq); overflow:hidden; border:1px solid var(--borde); transition:all .2s; }
-.vista-mini-poster:hover { border-color:var(--acento); transform:translateY(-2px); }
-.vista-mini-poster img { width:100%; height:100%; object-fit:cover; }
-.vista-mini-titulo { font-size:10px; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--tenue); }
-
-
-/* ── LISTA DEL DIARIO ── */
-
-/* Cada entrada del diario: flex horizontal con póster + info */
-.diario-lista { display:flex; flex-direction:column; gap:10px; }
-.diario-item { display:flex; gap:16px; background:var(--superficie); border:1px solid var(--borde); border-radius:14px; padding:18px; cursor:pointer; transition:all .2s; }
-.diario-item:hover { border-color:var(--acento); background:var(--superficie2); }
-/* Miniatura del póster en la entrada del diario */
-.diario-miniatura { width:52px; aspect-ratio:2/3; object-fit:cover; border-radius:var(--radio-peq); flex-shrink:0; }
-.di-titulo { font-family:var(--fuente-ui); font-size:13px; font-weight:700; margin-bottom:3px; }
-.di-fecha { font-size:10.5px; color:var(--apagado); margin-bottom:7px; }
-.di-texto { font-size:12px; color:var(--tenue); line-height:1.72; }
-/* Puntuación del usuario: pastilla violeta alineada a la derecha */
-.di-puntuacion { margin-left:auto; flex-shrink:0; height:fit-content; background:var(--acento); color:#fff; border-radius:var(--radio-peq); padding:5px 11px; font-family:var(--fuente-ui); font-size:11px; font-weight:800; }
-
-
-/* ── PÁGINA DE LOGROS ── */
-
-.logros-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(270px,1fr)); gap:12px; }
-/* Tarjeta de logro base */
-.logro-tile { background:var(--superficie); border:1px solid var(--borde); border-radius:14px; padding:20px; display:flex; gap:14px; align-items:flex-start; transition:all .2s; }
-/* Logro desbloqueado pero no reclamado: borde y fondo violeta tenue */
-.logro-tile.desbloqueado { border-color:rgba(139,92,246,.35); background:rgba(139,92,246,.05); }
-.logro-tile.desbloqueado:hover { border-color:var(--acento); }
-/* Logro ya reclamado: borde verde */
-.logro-tile.reclamado { border-color:rgba(16,217,160,.3); }
-/* Logro bloqueado: muy transparente para indicar que no está disponible */
-.logro-tile.bloqueado { opacity:.38; }
-.logro-icono { font-size:32px; flex-shrink:0; line-height:1; }
-.logro-nombre { font-family:var(--fuente-ui); font-size:13px; font-weight:700; margin-bottom:3px; }
-.logro-desc { font-size:11.5px; color:var(--apagado); margin-bottom:11px; line-height:1.6; }
-.logro-pie { display:flex; justify-content:space-between; align-items:center; }
-.logro-xp { color:var(--acento-claro); font-family:var(--fuente-ui); font-size:11px; font-weight:700; }
-.etiqueta-completado { color:var(--verde); font-family:var(--fuente-ui); font-size:9.5px; font-weight:700; }
-.etiqueta-bloqueado { color:var(--apagado); font-size:10px; }
-/* Botón para reclamar los XP del logro */
-.btn-reclamar { background:var(--acento); color:#fff; border-radius:7px; padding:6px 15px; font-family:var(--fuente-ui); font-size:9px; font-weight:800; letter-spacing:1px; text-transform:uppercase; cursor:pointer; transition:all .15s; }
-.btn-reclamar:hover { box-shadow:0 0 16px var(--acento-halo); transform:translateY(-1px); }
-
-
-/* ══════════════════════════════════════
-   PÁGINAS DE AUTENTICACIÓN (login, registro, etc.)
-   ══════════════════════════════════════ */
-
-/* Layout de dos columnas: formulario a la izquierda, imagen decorativa a la derecha */
-.pagina-auth { min-height: 100vh; width: 100%; display: flex; background: var(--fondo); }
-.auth-izquierda { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 52px; }
-/* Columna derecha: mosaico de imágenes de películas con overlay y cita */
-.auth-derecha { width: 42%; background: var(--superficie); border-left: 1px solid var(--borde); display: flex; align-items: center; justify-content: center; padding: 48px; position: relative; overflow: hidden; }
-
-/* Mosaico de fondo con imágenes de películas, muy desaturado y transparente */
-.auth-derecha-mosaico { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(3,1fr); grid-template-rows: repeat(5,1fr); gap: 2px; opacity: .12; filter: saturate(.2); }
-.auth-derecha-mosaico img { width:100%; height:100%; object-fit:cover; }
-/* Velo semitransparente sobre el mosaico para oscurecerlo */
-.auth-derecha-velo { position: absolute; inset: 0; background: linear-gradient(140deg, var(--superficie) 0%, rgba(13,13,26,.5) 100%); }
-/* Cita cinematográfica sobre el velo */
-.auth-derecha-cita { position: relative; z-index: 1; text-align: center; }
-.auth-cita-texto { font-family: var(--fuente-display); font-size: 32px; line-height: 1.25; color: var(--texto); margin-bottom: 16px; letter-spacing: 1px; }
-.auth-cita-subtitulo { font-size: 10.5px; color: var(--apagado); letter-spacing: 1.5px; text-transform: uppercase; }
-
-.auth-formulario { width: 100%; max-width: 390px; }
-/* Logo pequeño en la parte superior del formulario */
-.auth-superior { display: flex; align-items: center; gap: 14px; margin-bottom: 40px; }
-/* Símbolo de dos líneas (igual que en el sidebar) */
-.auth-marca { flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; justify-content: center; width: 36px; height: 36px; }
-.auth-marca::before, .auth-marca::after { content: ''; display: block; height: 3px; border-radius: 2px; background: var(--acento); }
-.auth-marca::before { width: 36px; }
-.auth-marca::after  { width: 23px; opacity: .5; }
-.auth-nombre { font-family: var(--fuente-display); font-size: 26px; letter-spacing: 5px; color: var(--texto); }
-
-.auth-titulo { font-family: var(--fuente-display); font-size: 40px; letter-spacing: 1px; margin-bottom: 7px; line-height: 1; }
-.auth-subtitulo { font-size: 12px; color: var(--apagado); margin-bottom: 30px; }
-
-/* Caja de error: fondo rojo tenue, oculta por defecto, se muestra desde JS */
-.auth-error { background: rgba(255,77,109,.1); border: 1px solid rgba(255,77,109,.35); border-radius: var(--radio-peq); padding: 11px 15px; font-size: 12px; color: var(--rojo); margin-bottom: 18px; display: none; }
-
-/* Grupo de campo de formulario (label + input) */
-.grupo-campo { margin-bottom: 18px; }
-.campo-etiqueta { display: block; font-family: var(--fuente-ui); font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--apagado); margin-bottom: 7px; }
-
-/* Campo de texto de los formularios de auth */
-.campo-texto { width: 100%; background: var(--superficie2); border: 1px solid var(--borde); border-radius: var(--radio); padding: 13px 16px; color: var(--texto); font-family: var(--fuente-cuerpo); font-size: 13.5px; outline: none; transition: all .2s; }
-.campo-texto:focus { border-color: var(--acento); box-shadow: 0 0 0 3px var(--acento-fondo); }
-.campo-texto::placeholder { color: var(--apagado); }
-
-/* Indicador visual de seguridad de contraseña */
-.contrasena-barra-contenedor { height: 3px; background: var(--borde2); border-radius: 2px; overflow: hidden; margin: 10px 0 5px; }
-/* El ancho y color de la barra se definen desde JS */
-.contrasena-barra { height: 100%; border-radius: 2px; transition: all .35s; }
-.contrasena-etiqueta { font-size: 9px; letter-spacing: 1px; }
-
-/* Botón principal de envío del formulario: ancho completo, violeta con halo */
-.btn-enviar { display: block; width: 100%; background: var(--acento); color: #fff; border-radius: var(--radio); padding: 15px; font-family: var(--fuente-ui); font-size: 11.5px; font-weight: 800; letter-spacing: 2.5px; text-transform: uppercase; cursor: pointer; border: none; margin-top: 10px; box-shadow: 0 0 24px var(--acento-halo); transition: all .15s; }
-.btn-enviar:hover { box-shadow: 0 0 40px rgba(139,92,246,.55); transform: translateY(-1px); }
-
-/* Enlace para cambiar entre login y registro */
-.auth-cambiar { text-align: center; margin-top: 24px; font-size: 12px; color: var(--apagado); }
-.auth-cambiar a { color: var(--acento-claro); }
-
-/* Línea separadora horizontal en los formularios de auth */
-.auth-separador { border: none; border-top: 1px solid var(--borde); margin: 22px 0; }
-
-/* Enlace "Volver" centrado debajo del formulario */
-.auth-volver { display: block; text-align: center; font-size: 10.5px; color: var(--apagado); margin-top: 12px; }
-.auth-volver:hover { color: var(--texto); }
-
-
-/* ══════════════════════════════════════
-   TOAST (notificación temporal)
-   ══════════════════════════════════════ */
-
-/* Contenedor centrado en la parte superior de la pantalla */
-.notif-contenedor { position:fixed; top:20px; left:50%; transform:translateX(-50%); z-index:9999; pointer-events:none; }
-
-/* Pastilla de notificación: invisible por defecto, aparece con .show */
-.notif { background: var(--superficie2); border: 1px solid var(--borde2); color: var(--texto); padding: 11px 22px; border-radius: 999px; font-family: var(--fuente-ui); font-size: 11px; font-weight: 600; letter-spacing: .5px; white-space: nowrap; box-shadow: 0 10px 36px rgba(0,0,0,.6); opacity: 0; transition: opacity .25s; }
-.notif.show { opacity: 1; }
-/* Variantes de color según el tipo de mensaje */
-.notif.ok  { border-color: rgba(16,217,160,.5);  color: var(--verde); } /* Éxito — verde */
-.notif.err { border-color: rgba(255,77,109,.5);  color: var(--rojo); }   /* Error — rojo */
-.notif.inf { border-color: rgba(34,211,238,.5);  color: var(--cian); }  /* Informativo — azul */
-
-
-/* ══════════════════════════════════════
-   POPUP DE LOGRO DESBLOQUEADO
-   ══════════════════════════════════════ */
-
-/* Panel que aparece desde la derecha en la esquina inferior derecha */
-.popup-logro { position: fixed; bottom: 24px; right: 24px; z-index: 9998; background: var(--superficie); border: 1px solid var(--acento); border-radius: 16px; padding: 20px 22px; max-width: 295px; box-shadow: 0 0 50px rgba(139,92,246,.24); animation: entrarLogro .35s cubic-bezier(.4,0,.2,1); }
-/* Entra deslizándose desde la derecha */
-@keyframes entrarLogro { from{transform:translateX(70px);opacity:0} to{transform:translateX(0);opacity:1} }
-.popup-logro-icono  { font-size: 34px; margin-bottom: 9px; }
-.popup-logro-etiqueta  { font-family:var(--fuente-ui); font-size:9px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--acento-claro); margin-bottom:4px; }
-.popup-logro-nombre { font-family:var(--fuente-display); font-size:20px; margin-bottom:3px; letter-spacing:.5px; }
-.popup-logro-desc { font-size:11.5px; color:var(--apagado); line-height:1.6; }
-/* XP disponibles para reclamar */
-.popup-logro-xp   { margin-top:11px; color:var(--acento-claro); font-family:var(--fuente-ui); font-size:12px; font-weight:700; }
-
-
-/* ══════════════════════════════════════
-   ESTADO VACÍO (sin resultados)
-   ══════════════════════════════════════ */
-
-.vacio { text-align:center; padding:72px 20px; }
-.vacio-icono   { font-size:52px; margin-bottom:16px; opacity:.5; }
-.vacio-titulo { font-family:var(--fuente-display); font-size:24px; margin-bottom:7px; color:var(--tenue); letter-spacing:.5px; }
-.vacio-texto   { font-size:12px; color:var(--apagado); }
-.vacio a     { color:var(--acento-claro); }
-
-
-/* ══════════════════════════════════════
-   DISEÑO RESPONSIVE (móvil y tablet)
-   ══════════════════════════════════════ */
-
-/* Por debajo de 800px se colapsa el sidebar a una barra de iconos de 60px */
-@media(max-width:800px){
-  :root{ --barra-lateral-ancho:60px; }
-  /* Oculta todos los textos del sidebar, dejando solo los iconos */
-  .sb-logo .sb-nombre-marca, .sb-logo-marca, .sb-xp, .sb-estadisticas,
-  .nav-elemento span:not(.nav-icono), .nav-insignia,
-  .sb-auth span, .sb-usuario .sb-u-nombre, .sb-usuario .sb-u-cerrar { display:none; }
-  .sb-logo { padding:16px 10px; }
-  .sb-logo-enlace { justify-content:center; }
-  /* Los ítems de nav centran solo el icono */
-  .nav-elemento { justify-content:center; padding:14px 10px; gap:0; }
-  .sb-auth { flex-direction:row; padding:10px; }
-  .btn-registro, .btn-iniciar-sesion { padding:10px 8px; font-size:8px; }
-  .sb-usuario { justify-content:center; }
-  /* En móvil la columna derecha de auth desaparece */
-  .auth-derecha { display:none; }
-  /* Reducción de tamaños en el hero */
-  .hero { padding:28px 16px; }
-  .hero-titulo { font-size:44px; }
-  .hero-numero { font-size:56px; }
-  /* Grid de películas con columnas más pequeñas */
-  .cuadricula-peliculas { padding:0 16px; gap:10px; grid-template-columns:repeat(auto-fill,minmax(100px,1fr)); }
-  .barra-superior { padding:14px 16px; }
-  .seccion-titulo { padding:0 16px; }
-}
-
-
-/* ══════════════════════════════════════
-   SISTEMA SOCIAL
-   (Buscar usuarios, seguir, reseñas)
-   ══════════════════════════════════════ */
-
-/* ── Tarjetas de usuario en la página de búsqueda ── */
-.lista-usuarios { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
-/* Cada tarjeta de usuario: flex horizontal con avatar, info y botón de seguir */
-.tarjeta-usuario {
-  display: flex; align-items: center; gap: 14px;
-  background: var(--superficie); border: 1px solid var(--borde);
-  border-radius: var(--radio); padding: 14px 16px;
-  transition: border-color .15s;
-}
-.tarjeta-usuario:hover { border-color: var(--borde2); }
-/* Parte clicable de la tarjeta (avatar + info) */
-.tarjeta-usuario-enlace { display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0; }
-/* Avatar circular del usuario en la tarjeta */
-.tarjeta-usuario-avatar {
-  width: 46px; height: 46px; border-radius: 50%; flex-shrink: 0;
-  background: var(--superficie2); border: 1px solid var(--borde2);
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--fuente-display); font-size: 20px; color: var(--acento);
-  background-size: cover; background-position: center;
-}
-.tarjeta-usuario-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.tarjeta-usuario-nombre { font-family: var(--fuente-ui); font-size: 13px; font-weight: 700; color: var(--texto); }
-.tarjeta-usuario-meta { font-size: 10px; color: var(--apagado); }
-.tarjeta-usuario-bio  { font-size: 11px; color: var(--tenue); margin-top: 2px; }
-
-/* ── Botón seguir pequeño (en tarjetas de usuario) ── */
-.btn-seguir {
-  flex-shrink: 0; padding: 6px 14px; border-radius: 20px;
-  border: 1px solid var(--acento); background: transparent;
-  color: var(--acento-claro); font-size: 11px; font-family: var(--fuente-ui);
-  font-weight: 700; letter-spacing: .5px; cursor: pointer; transition: all .15s;
-}
-.btn-seguir:hover { background: var(--acento-fondo); }
-/* Estado "siguiendo": fondo tenue, al hover se vuelve rojo indicando que puede dejar de seguir */
-.btn-seguir.siguiendo { background: var(--acento-fondo); color: var(--apagado); border-color: var(--borde2); }
-.btn-seguir.siguiendo:hover { border-color: var(--rojo); color: var(--rojo); }
-
-/* ── Botón seguir grande (en la página de perfil de otro usuario) ── */
-.btn-seguir-grande {
-  display: inline-block; padding: 10px 28px; border-radius: var(--radio-peq);
-  border: 1px solid var(--acento); background: var(--acento-fondo);
-  color: var(--acento-claro); font-size: 12px; font-family: var(--fuente-ui);
-  font-weight: 700; letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
-  transition: all .15s; text-decoration: none;
-}
-.btn-seguir-grande:hover { background: var(--acento); color: #fff; }
-.btn-seguir-grande.siguiendo { background: transparent; border-color: var(--borde2); color: var(--apagado); }
-.btn-seguir-grande.siguiendo:hover { border-color: var(--rojo); color: var(--rojo); }
-
-/* ── Cabecera de sección de reseñas en el modal ── */
-.resenas-titulo {
-  display: flex; align-items: center; gap: 8px;
-  font-family: var(--fuente-ui); font-size: 11px; font-weight: 800;
-  letter-spacing: 1.5px; text-transform: uppercase; color: var(--tenue);
-  padding: 20px 0 12px; border-top: 1px solid var(--borde);
-}
-.resenas-amigos, .resenas-comunidad { display: flex; flex-direction: column; gap: 10px; margin-bottom: 8px; }
-
-/* ── Tarjeta de reseña de amigo ── */
-.resena-amigo {
-  display: flex; gap: 12px; padding: 12px;
-  background: var(--superficie2); border: 1px solid var(--borde);
-  border-radius: var(--radio-peq); transition: border-color .15s;
-}
-.resena-amigo:hover { border-color: var(--borde2); }
-
-/* Avatar circular pequeño usado en reseñas */
-.resena-avatar {
-  width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
-  background: var(--superficie); border: 1px solid var(--borde2);
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--fuente-display); font-size: 16px; color: var(--acento);
-  background-size: cover; background-position: center;
-}
-.resena-amigo-info  { flex: 1; min-width: 0; }
-.resena-amigo-nombre  { font-family: var(--fuente-ui); font-size: 12px; font-weight: 700; color: var(--acento-claro); display: block; margin-bottom: 4px; }
-.resena-amigo-texto  { font-size: 12px; color: var(--tenue); line-height: 1.6; margin-bottom: 6px; }
-.resena-amigo-estado{ font-size: 11px; color: var(--apagado); }
-.resena-amigo-meta  { display: flex; gap: 12px; font-size: 10px; color: var(--apagado); }
-/* Texto "X entradas más" en violeta */
-.resena-amigo-mas  { color: var(--acento); font-weight: 600; }
-
-/* ── Tarjeta de reseña general (comunidad) ── */
-.resena-comunidad-tarjeta {
-  padding: 14px; background: var(--superficie2); border: 1px solid var(--borde);
-  border-radius: var(--radio-peq); margin-bottom: 10px;
-}
-.resena-comunidad-superior   { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
-.resena-comunidad-info  { display: flex; flex-direction: column; gap: 2px; }
-.resena-comunidad-nombre  { font-family: var(--fuente-ui); font-size: 12px; font-weight: 700; color: var(--texto); }
-.resena-comunidad-fecha  { font-size: 10px; color: var(--apagado); }
-.resena-comunidad-texto  { font-size: 12px; color: var(--tenue); line-height: 1.7; margin-bottom: 10px; }
-.resena-comunidad-acciones { display: flex; gap: 10px; align-items: center; }
-
-/* ── Botón de like en reseñas ── */
-.resena-btn-like {
-  display: flex; align-items: center; gap: 5px; padding: 5px 10px;
-  border-radius: 20px; border: 1px solid var(--borde2);
-  background: transparent; color: var(--apagado); font-size: 12px; cursor: pointer;
-  transition: all .15s;
-}
-.resena-btn-like:hover { border-color: var(--rojo); color: var(--rojo); }
-/* Estado activo: fondo rojo tenue */
-.resena-btn-like.liked { border-color: var(--rojo); color: var(--rojo); background: rgba(255,77,109,.08); }
-/* Like estático (sin botón) para la propia reseña del usuario */
-.resena-like-estatico { font-size: 12px; color: var(--apagado); }
-
-/* ── Botón para desplegar/colapsar comentarios ── */
-.resena-btn-comentarios {
-  display: flex; align-items: center; gap: 5px; padding: 5px 10px;
-  border-radius: 20px; border: 1px solid var(--borde2);
-  background: transparent; color: var(--apagado); font-size: 12px; cursor: pointer;
-  transition: all .15s;
-}
-.resena-btn-comentarios:hover { border-color: var(--acento); color: var(--acento-claro); }
-
-/* ── Sección de comentarios (oculta por defecto) ── */
-.resena-comentarios { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--borde); }
-.lista-comentarios { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
-/* Cada comentario: avatar + texto */
-.comentario  { display: flex; gap: 8px; align-items: flex-start; }
-/* Avatar muy pequeño del comentarista */
-.comentario-avatar   {
-  width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
-  background: var(--superficie); display: flex; align-items: center; justify-content: center;
-  font-family: var(--fuente-display); font-size: 12px; color: var(--acento);
-}
-.comentario-cuerpo   { flex: 1; }
-.comentario-autor { font-family: var(--fuente-ui); font-size: 10px; font-weight: 700; color: var(--acento-claro); display: block; }
-.comentario-texto   { font-size: 12px; color: var(--tenue); line-height: 1.5; margin-top: 2px; }
-/* Botón X de eliminar comentario: solo visible para el autor */
-.comentario-btn-eliminar    {
-  flex-shrink: 0; background: none; border: none; color: var(--apagado);
-  font-size: 11px; cursor: pointer; padding: 2px 4px;
-}
-.comentario-btn-eliminar:hover { color: var(--rojo); }
-
-/* Formulario para escribir un nuevo comentario */
-.resena-formulario-comentario { display: flex; gap: 8px; margin-top: 8px; }
-.resena-comentario-input  {
-  flex: 1; background: var(--fondo); border: 1px solid var(--borde2); border-radius: var(--radio-peq);
-  padding: 7px 10px; color: var(--texto); font-size: 12px; font-family: var(--fuente-cuerpo);
-}
-.resena-comentario-input:focus { outline: none; border-color: var(--acento); }
-/* Botón enviar comentario */
-.resena-comentario-enviar {
-  padding: 7px 14px; border-radius: var(--radio-peq); border: 1px solid var(--acento);
-  background: var(--acento-fondo); color: var(--acento-claro); font-size: 11px;
-  font-family: var(--fuente-ui); font-weight: 700; cursor: pointer;
-}
-.resena-comentario-enviar:hover { background: var(--acento); color: #fff; }
-
-
-/* ── Ranking de amigos ── */
-
-/* Cada fila del ranking */
-.ranking-fila {
-  display: flex; align-items: center; gap: 12px;
-  padding: 10px 14px; background: var(--superficie); border: 1px solid var(--borde);
-  border-radius: var(--radio-peq); transition: border-color .15s;
-}
-/* Fila del propio usuario resaltada en violeta */
-.ranking-yo   { border-color: var(--acento); background: var(--acento-fondo); }
-.ranking-posicion  { font-family: var(--fuente-display); font-size: 18px; color: var(--apagado); width: 24px; text-align: center; flex-shrink: 0; }
-/* La posición del usuario actual se muestra en dorado */
-.ranking-yo .ranking-posicion { color: var(--dorado); }
-.ranking-nombre { flex: 1; font-family: var(--fuente-ui); font-size: 12px; font-weight: 700; }
-.ranking-nivel{ font-size: 11px; color: var(--acento-claro); font-family: var(--fuente-ui); font-weight: 700; }
-.ranking-xp   { font-size: 10px; color: var(--apagado); }
-
-/* ── Badge de nivel en tarjetas de logro ── */
-.logro-tile { position: relative; }
-/* Pastilla en la esquina superior derecha indicando si es nivel 1 o nivel 2 */
-.logro-nivel-pastilla {
-  position: absolute; top: 10px; right: 10px;
-  font-size: 8px; font-family: var(--fuente-ui); font-weight: 700;
-  letter-spacing: 1px; text-transform: uppercase;
-  padding: 2px 6px; border-radius: 10px;
-  background: var(--superficie2); border: 1px solid var(--borde2); color: var(--apagado);
-}
-
-/* ── Avatar con letra inicial en el sidebar ──
-   Sobreescribe el gradiente del .sb-avatar original cuando el usuario no tiene foto */
-.sb-avatar {
-  width: 34px; height: 34px; border-radius: 50%;
-  background: var(--acento-fondo); border: 1px solid var(--acento);
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--fuente-display); font-size: 18px; color: var(--acento-claro);
-  flex-shrink: 0; overflow: hidden; background-size: cover; background-position: center;
-}
-
-/* ── Avatar con inicial en la página de perfil ──
-   Versión grande del avatar para la tarjeta de perfil */
 .perfil-avatar {
-  width: 72px; height: 72px; flex-shrink: 0;
-  border-radius: 50%; background: var(--acento-fondo);
-  border: 2px solid var(--acento); display: flex; align-items: center;
-  justify-content: center; font-family: var(--fuente-display); font-size: 32px;
-  color: var(--acento-claro); overflow: hidden;
-  background-size: cover; background-position: center;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--surface2);
+    border: 2px solid var(--border2);
+    flex-shrink: 0;
+}
+.perfil-avatar--placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 28px;
+    color: var(--faint);
 }
 
-/* ── Tarjeta de entrada del diario en la vista de perfil ── */
-.entrada-diario {
-  background: var(--superficie2); border: 1px solid var(--borde);
-  border-radius: var(--radio-peq); padding: 14px;
+.perfil-datos { flex: 1; }
+
+.perfil-username {
+    font-family: var(--font-display);
+    font-size: 36px;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    margin-bottom: 6px;
 }
 
-/* ── Enlace "olvidé mi contraseña" ── */
-.enlace-olvide {
-  font-size: 11px; color: var(--apagado);
-  text-decoration: underline; text-underline-offset: 3px;
-  transition: color .15s;
-}
-.enlace-olvide:hover { color: var(--acento-claro); }
-
-/* Caja de confirmación de éxito (ej: email enviado): verde, oculta por defecto */
-.auth-exito {
-  display: none; background: rgba(16,217,160,.1); border: 1px solid rgba(16,217,160,.3);
-  color: var(--verde); border-radius: var(--radio-peq); padding: 10px 14px;
-  font-size: 12px; line-height: 1.5; margin-bottom: 18px;
+.perfil-bio {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 12px;
+    line-height: 1.6;
 }
 
-
-/* ══════════════════════════════════════
-   LISTAS PERSONALIZADAS
-   ══════════════════════════════════════ */
-
-/* Grid responsivo de tarjetas de lista */
-.listas-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 18px;
-  margin-bottom: 32px;
+/* Estadísticas del perfil: Vistas · Seguidores · Seguidos */
+.perfil-stats {
+    display: flex;
+    gap: 24px;
+}
+.perfil-stat { text-align: center; }
+.perfil-stat__num {
+    font-family: var(--font-display);
+    font-size: 24px;
+    color: var(--text);
+    line-height: 1;
+}
+.perfil-stat__label {
+    font-size: 11px;
+    color: var(--faint);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 2px;
 }
 
-/* Tarjeta de lista: imagen mosaico arriba + información abajo */
-.lista-tarjeta {
-  background: var(--superficie);
-  border: 1px solid var(--borde);
-  border-radius: var(--radio);
-  overflow: hidden;
-  transition: border-color .15s;
+/* Películas favoritas en el perfil (4 pósters en una fila) */
+.favoritas-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    max-width: 400px;
 }
-.lista-tarjeta:hover { border-color: var(--borde2); }
+.favorita-slot {
+    aspect-ratio: 2/3;
+    border-radius: var(--radius-sm);
+    background: var(--surface2);
+    border: 1px dashed var(--border);
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.15s;
+}
+.favorita-slot:hover { border-color: var(--accent-border); }
+.favorita-slot img { width: 100%; height: 100%; object-fit: cover; }
+.favorita-slot--vacio {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--faint);
+    font-size: 20px;
+}
 
-/* Mosaico de 4 pósters (2x2) como portada de la lista */
-.lista-mosaico {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 80px 80px;
-  cursor: pointer;
-  overflow: hidden;
-}
-.lista-mosaicoo-celda {
-  overflow: hidden;
-  background: var(--superficie2);
-}
-.lista-mosaicoo-celda img { width: 100%; height: 100%; object-fit: cover; transition: transform .3s; }
-/* Al hacer hover en la tarjeta, los pósters del mosaico se escalan ligeramente */
-.lista-tarjeta:hover .lista-mosaicoo-celda img { transform: scale(1.05); }
+/* ══════════════════════════════════════════════════════════════
+   DIARIO
+   ══════════════════════════════════════════════════════════════ */
+.diario-lista { display: flex; flex-direction: column; gap: 0; }
 
-.lista-info   { padding: 14px 16px; }
-.lista-nombre {
-  font-family: var(--fuente-ui); font-size: 13px; font-weight: 700;
-  color: var(--texto); cursor: pointer; margin-bottom: 4px;
+.diario-entrada {
+    display: flex;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: flex-start;
 }
-.lista-nombre:hover { color: var(--acento-claro); }
-.lista-descripcion   { font-size: 11px; color: var(--tenue); line-height: 1.5; }
+.diario-entrada:first-child { padding-top: 0; }
 
-/* Botón para añadir/quitar película de una lista desde el modal */
-.lista-btn-seleccionar {
-  display: flex; align-items: center; gap: 8px;
-  padding: 8px 12px; border-radius: var(--radio-peq);
-  border: 1px solid var(--borde2); background: var(--superficie2);
-  color: var(--tenue); font-size: 12px; cursor: pointer;
-  text-align: left; transition: all .15s;
+/* Fecha en la columna izquierda */
+.diario-fecha {
+    flex-shrink: 0;
+    width: 48px;
+    text-align: center;
 }
-.lista-btn-seleccionar:hover { border-color: var(--acento); color: var(--acento-claro); }
-/* Estado activo: la película ya está en esta lista — borde y texto verde */
-.lista-btn-seleccionar.en-lista {
-  border-color: var(--verde); color: var(--verde);
-  background: rgba(16,217,160,.08);
+.diario-fecha__dia {
+    font-family: var(--font-display);
+    font-size: 28px;
+    line-height: 1;
+    color: var(--text);
 }
+.diario-fecha__mes {
+    font-size: 10px;
+    color: var(--faint);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+/* Minipóster en el diario */
+.diario-poster {
+    flex-shrink: 0;
+    width: 44px;
+    aspect-ratio: 2/3;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+}
+.diario-poster img { width: 100%; height: 100%; object-fit: cover; }
+
+.diario-contenido { flex: 1; }
+.diario-titulo-peli {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+}
+.diario-resena {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+}
+.diario-puntuacion {
+    font-size: 12px;
+    color: var(--rating);
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   WATCHLIST
+   ══════════════════════════════════════════════════════════════ */
+/* Reutiliza el grid de tarjetas de película */
+
+/* ══════════════════════════════════════════════════════════════
+   BUSCADOR DE USUARIOS
+   ══════════════════════════════════════════════════════════════ */
+.buscar-input-wrap {
+    position: relative;
+    margin-bottom: 32px;
+    max-width: 480px;
+}
+.buscar-input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 15px;
+    padding: 14px 18px 14px 44px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.buscar-input:focus { border-color: var(--accent-border); }
+.buscar-input::placeholder { color: var(--faint); }
+.buscar-input-icono {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    color: var(--muted);
+}
+
+/* Lista de resultados de usuarios */
+.usuarios-lista { display: flex; flex-direction: column; gap: 2px; }
+
+.usuario-fila {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.15s;
+    text-decoration: none;
+    color: inherit;
+}
+.usuario-fila:hover { background: var(--surface); }
+
+.usuario-fila__avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+}
+.usuario-fila__avatar--placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 16px;
+    color: var(--faint);
+}
+.usuario-fila__username { font-size: 14px; font-weight: 500; }
+
+/* ══════════════════════════════════════════════════════════════
+   ESTADOS DE CARGA Y VACÍO
+   ══════════════════════════════════════════════════════════════ */
+.estado-vacio {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--faint);
+}
+.estado-vacio__titulo {
+    font-family: var(--font-display);
+    font-size: 20px;
+    margin-bottom: 8px;
+    color: var(--muted);
+}
+.estado-vacio__desc { font-size: 13px; line-height: 1.6; }
+
+/* Esqueleto de carga (placeholder animado mientras carga la API) */
+.skeleton {
+    background: linear-gradient(90deg, var(--surface2) 25%, var(--surface3) 50%, var(--surface2) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+    border-radius: var(--radius-sm);
+}
+@keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MODAL
+   ══════════════════════════════════════════════════════════════ */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    backdrop-filter: blur(4px);
+}
+.modal-overlay--hidden { display: none; }
+
+.modal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    width: 100%;
+    max-width: 480px;
+    position: relative;
+}
+
+.modal-titulo {
+    font-family: var(--font-display);
+    font-size: 24px;
+    letter-spacing: 0.04em;
+    margin-bottom: 20px;
+}
+
+.modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    color: var(--muted);
+    font-size: 20px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    line-height: 1;
+    padding: 4px;
+}
+.modal-close:hover { color: var(--text); }
+
+/* ══════════════════════════════════════════════════════════════
+   NOTIFICACIÓN TOAST (feedback rápido al usuario)
+   ══════════════════════════════════════════════════════════════ */
+.toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 12px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 300;
+    transition: transform 0.3s ease;
+    white-space: nowrap;
+    max-width: calc(100vw - 48px);
+}
+.toast--visible { transform: translateX(-50%) translateY(0); }
+.toast--ok    { border-color: var(--success); color: var(--success); }
+.toast--error { border-color: var(--error);   color: var(--error);   }
+
+/* ══════════════════════════════════════════════════════════════
+   UTILIDADES
+   ══════════════════════════════════════════════════════════════ */
+.oculto { display: none !important; }
+.text-muted { color: var(--muted); }
+.text-faint  { color: var(--faint); }
+.text-accent { color: var(--accent); }
+.mt-8  { margin-top: 8px; }
+.mt-16 { margin-top: 16px; }
+.mt-32 { margin-top: 32px; }

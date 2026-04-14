@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BONOBO — Película</title>
+    <link rel="stylesheet" href="../css/main.css" />
+</head>
+<body>
+
+    <header id="nav-placeholder"></header>
+
+    <!-- ── CABECERA DE LA PELÍCULA (póster de fondo difuminado) ─────────── -->
+    <div class="pelicula-hero" id="peliculaHero">
+        <!-- Fondo: el póster de la película difuminado (se rellena por JS) -->
+        <div class="pelicula-hero__bg" id="heroBg"></div>
+        <div class="pelicula-hero__overlay"></div>
+
+        <div class="pelicula-hero__content">
+
+            <!-- Póster principal a la izquierda -->
+            <div class="pelicula-poster" id="posterWrap">
+                <div class="skeleton" style="aspect-ratio:2/3;width:200px"></div>
+            </div>
+
+            <!-- Info a la derecha del póster -->
+            <div class="pelicula-info">
+                <h1 class="pelicula-titulo" id="titulo">—</h1>
+                <div class="pelicula-meta" id="meta"></div>
+                <div class="pelicula-generos" id="generos"></div>
+                <p class="pelicula-sinopsis" id="sinopsis"></p>
+
+                <!-- Panel de acciones del usuario: solo visible si está logueado -->
+                <div class="acciones-panel oculto" id="accionesPanel">
+                    <p class="acciones-panel__titulo">Tu actividad</p>
+
+                    <!-- Fila de acciones: Vista · Me gusta · Watchlist -->
+                    <div class="acciones-fila">
+                        <button class="accion-btn" id="btnVista" onclick="toggleVista()">
+                            <!-- Ojo: icono de "vista" -->
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                            <span id="lblVista">Vista</span>
+                        </button>
+
+                        <button class="accion-btn" id="btnLike" onclick="toggleMeGusta()">
+                            <!-- Corazón: icono de "me gusta" -->
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                            </svg>
+                            <span>Me gusta</span>
+                        </button>
+
+                        <button class="accion-btn" id="btnWatchlist" onclick="toggleWatchlist()">
+                            <!-- Bookmark: icono de "watchlist" -->
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                            </svg>
+                            <span>Watchlist</span>
+                        </button>
+                    </div>
+
+                    <!-- Puntuación del 1 al 10 -->
+                    <div class="puntuacion-wrap">
+                        <p class="puntuacion-label">Tu puntuación</p>
+                        <div class="puntuacion-selector" id="selectorPuntuacion">
+                            <!-- Los botones del 1 al 10 se generan por JS -->
+                        </div>
+                    </div>
+
+                    <!-- Añadir al diario -->
+                    <div>
+                        <p class="puntuacion-label" style="margin-bottom:8px">Añadir al diario</p>
+                        <div class="diario-form">
+                            <input type="date" id="fechaVisionado" />
+                            <textarea id="resena" placeholder="¿Qué te pareció? (opcional)"></textarea>
+                            <button class="btn btn--surface btn--sm" onclick="guardarDiario()">
+                                Guardar en diario
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mensaje para visitantes no logueados -->
+                <div id="panelVisitante" class="oculto">
+                    <a href="login.html" class="btn btn--primary">Entrar para registrarla</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ── SECCIÓN DE REPARTO ────────────────────────────────────────────── -->
+    <main class="contenedor" style="padding-top:32px;padding-bottom:64px">
+
+        <section class="seccion" id="secReparto">
+            <div class="seccion-header">
+                <h2 class="seccion-titulo">Reparto</h2>
+                <div class="seccion-linea"></div>
+            </div>
+            <div class="reparto-grid" id="gridReparto"></div>
+        </section>
+
+    </main>
+
+    <!-- Toast de notificaciones -->
+    <div class="toast" id="toast"></div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/nav.js"></script>
+    <script src="../js/pelicula.js"></script>
+
+</body>
+</html>

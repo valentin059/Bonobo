@@ -1,106 +1,126 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Watchlist — BONOBO</title>
-  <link rel="stylesheet" href="../css/main.css" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BONOBO — Watchlist</title>
+    <link rel="stylesheet" href="../css/main.css" />
 </head>
 <body>
 
-<!-- ===================== BARRA LATERAL ===================== -->
-<aside class="barra-lateral">
-  <div class="sb-logo"><a href="../index.html" class="sb-logo-enlace"><div class="sb-logo-marca"></div><div class="sb-nombre-marca"><div class="sb-nombre">BONOBO</div><div class="sb-subtitulo">DIARIO CINEMATOGRÁFICO</div></div></a></div>
-  <div class="sb-xp" id="sXp" style="display:none"><div class="sb-xp-fila"><span class="sb-xp-nivel" id="sLevel">NIVEL 1</span><span class="sb-xp-numero" id="sXpNum">0 XP</span></div><div class="sb-xp-pista"><div class="sb-xp-relleno" id="sXpFill" style="width:0%"></div></div><div class="sb-xp-siguiente" id="sXpNext"></div></div>
-  <nav class="sb-nav">
-    <a href="../index.html"  class="nav-elemento"><span class="nav-icono">◈</span> Explorar</a>
-    <a href="perfil.html"   class="nav-elemento" id="navPerfil"><span class="nav-icono">◎</span> Mi Perfil</a>
-    <a href="diario.html"   class="nav-elemento" id="navDiario"><span class="nav-icono">◻</span> Diario</a>
-    <a href="watchlist.html" class="nav-elemento activo" id="navWatchlist"><span class="nav-icono">◷</span> Watchlist</a>
-    <!-- "activo" marca esta página como la sección actual en el menú -->
-    <a href="listas.html" class="nav-elemento" id="navListas"><span class="nav-icono">▤</span> Listas</a>
-    <a href="logros.html"   class="nav-elemento" id="navLogros"><span class="nav-icono">◆</span> Logros<span class="nav-insignia" id="logrosBadge" style="display:none">0</span></a>
-    <a href="buscar-usuarios.html" class="nav-elemento" id="navBuscar"><span class="nav-icono">⊕</span> Buscar</a>
-  </nav>
-  <div class="sb-estadisticas" id="sStats" style="display:none">
-    <div class="sb-estadistica"><div class="sb-stat-numero" id="stVistas">0</div><div class="sb-stat-etiqueta">Vistas</div></div>
-    <div class="sb-estadistica"><div class="sb-stat-numero" id="stResenas">0</div><div class="sb-stat-etiqueta">Reseñas</div></div>
-    <div class="sb-estadistica"><div class="sb-stat-numero" id="stWatchlist">0</div><div class="sb-stat-etiqueta">Watchlist</div></div>
-    <div class="sb-estadistica"><div class="sb-stat-numero" id="stLogros">0</div><div class="sb-stat-etiqueta">Logros</div></div>
-  </div>
-  <div class="sb-auth" id="sAuth"><a href="login.html" class="btn-iniciar-sesion">Iniciar sesión</a><a href="registro.html" class="btn-registro">Registrarse</a></div>
-  <div class="sb-usuario" id="sUser" style="display:none"><div class="sb-avatar"></div><div><div class="sb-u-nombre" id="sUsername">—</div><button class="sb-u-cerrar" id="btnLogout">Cerrar sesión</button></div></div>
-</aside>
+    <header id="nav-placeholder"></header>
 
-<!-- ===================== CONTENIDO PRINCIPAL ===================== -->
-<main class="contenido-principal">
+    <main class="contenedor pagina">
 
-  <!-- Topbar con título y contador de películas en la watchlist -->
-  <div class="barra-superior">
-    <h2 style="font-family:var(--fuente-display);font-size:22px;font-weight:900;">Watchlist</h2>
-    <!-- El JS rellena este span con el número de películas, ej: "— 3 películas" -->
-    <span id="contadorWatchlist" style="font-size:11px;color:var(--apagado);margin-left:8px"></span>
-  </div>
+        <div class="seccion-header" style="margin-bottom:32px">
+            <h1 class="seccion-titulo">Mi Watchlist</h1>
+            <div class="seccion-linea"></div>
+            <span class="seccion-meta" id="lblTotal"></span>
+        </div>
 
-  <div class="pagina-contenido">
-    <!-- Usa el mismo grid de tarjetas que la página principal -->
-    <!-- El JS lo rellena con las películas que el usuario tiene pendientes de ver -->
-    <div class="cuadricula-peliculas" id="gridWatchlist"></div>
-  </div>
-</main>
+        <!-- Grid de películas en la watchlist -->
+        <div class="peliculas-grid" id="gridWatchlist"></div>
 
-<!-- BUG 1 FIX: Se eliminó el <div id="movieModalBg"> vacío.
-     abrirModal() en ui.js lo crea dinámicamente con todo su contenido. -->
+    </main>
 
-<script src="../js/data.js"></script>
-<script src="../js/auth.js"></script>
-<script src="../js/ui.js"></script>
-<script>
-// Función que renderiza la cuadrícula de películas de la watchlist
-function renderizarWatchlist() {
-  const usuario = AUTENTICACION.obtenerUsuarioActual();
-  const grid    = document.getElementById('gridWatchlist');
+    <div class="toast" id="toast"></div>
 
-  // Si no hay sesión, muestra mensaje de acceso restringido
-  if (!usuario) {
-    // grid-column:1/-1 hace que el mensaje ocupe todas las columnas del grid
-    grid.innerHTML = `<div class="vacio" style="grid-column:1/-1"><div class="vacio-icono">🔒</div><div class="vacio-titulo">Inicia sesión</div><p class="vacio-texto"><a href="login.html">Inicia sesión</a> para ver tu watchlist</p></div>`;
-    return;
-  }
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/nav.js"></script>
+    <script>
+        function mostrarToast(msg, tipo = 'ok') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `toast toast--${tipo} toast--visible`;
+            setTimeout(() => { t.className = 'toast'; }, 2800);
+        }
 
-  const datos     = AUTENTICACION.obtenerDatosUsuario(usuario.nombreUsuario);
-  // Filtra el catálogo para obtener solo las películas que están en la watchlist del usuario
-  const peliculas = PELICULAS.filter(m => datos.watchlist.includes(m.id));
+        // Quita una película de la watchlist y actualiza el grid sin recargar la página.
+        async function quitarDeWatchlist(tmdbId, cardEl) {
+            try {
+                await api.acciones.quitarWatchlist(tmdbId);
+                cardEl.remove();   // eliminamos la tarjeta del DOM directamente
 
-  // Actualiza el contador de películas en el topbar
-  document.getElementById('contadorWatchlist').textContent = `— ${peliculas.length} películas`;
+                // Actualizamos el contador
+                const grid = document.getElementById('gridWatchlist');
+                const restantes = grid.querySelectorAll('.pelicula-card').length;
+                document.getElementById('lblTotal').textContent =
+                    `${restantes} película${restantes !== 1 ? 's' : ''}`;
 
-  // Si la watchlist está vacía, muestra un estado vacío con instrucciones
-  if (peliculas.length === 0) {
-    grid.innerHTML = `<div class="vacio" style="grid-column:1/-1"><div class="vacio-icono">🔖</div><div class="vacio-titulo">Tu watchlist está vacía</div><p class="vacio-texto">Añade películas que quieras ver en el futuro</p></div>`;
-    return;
-  }
+                if (restantes === 0) {
+                    grid.innerHTML = `<div class="estado-vacio" style="grid-column:1/-1">
+                        <p class="estado-vacio__titulo">Tu watchlist está vacía</p>
+                        <p class="estado-vacio__desc">Añade películas desde su ficha con el botón de bookmark.</p>
+                    </div>`;
+                }
 
-  // Construye las tarjetas de película reutilizando las mismas clases que el catálogo principal
-  // Todas las tarjetas llevan el icono 🔖 para indicar que están en la watchlist
-  grid.innerHTML = peliculas.map(pelicula => `
-    <div class="tarjeta-peli" onclick="abrirModal(${pelicula.id})">
-      <div class="tarjeta-poster">
-        <img class="tarjeta-imagen" src="${pelicula.imagen}" alt="${pelicula.titulo}" loading="lazy" />
-        <div class="tarjeta-overlay"><div class="tarjeta-play">▶</div></div>
-        <!-- Insignia de marcador fija en todas las tarjetas de la watchlist -->
-        <span class="tarjeta-insignia insignia-watchlist">🔖</span>
-      </div>
-      <p class="tarjeta-titulo">${pelicula.titulo}</p>
-      <p class="tarjeta-meta">${pelicula.anio} · ${pelicula.genero}</p>
-    </div>`).join('');
-}
+                mostrarToast('Eliminada de la watchlist');
+            } catch (err) {
+                mostrarToast(err.message || 'Error', 'error');
+            }
+        }
 
-// Expone renderizarWatchlist como refrescarGrid para que el modal pueda actualizar
-// la lista cuando el usuario marca una película como vista (y sale de la watchlist)
-refrescarGrid = renderizarWatchlist;
+        document.addEventListener('DOMContentLoaded', async () => {
+            renderNav('../');
 
-// Espera a que el DOM esté listo antes de renderizar e inicializar el sidebar
-document.addEventListener('DOMContentLoaded', renderizarWatchlist);
-</script>
+            if (!auth.estaLogueado()) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                const usuario = await api.usuarios.mePerfil();
+                // La API devuelve { id, pelicula: { tmdb_id, titulo, poster_url, anio_estreno } }
+                const watchlist = await api.usuarios.watchlist(usuario.id, 0, 100);
+
+                const lbl  = document.getElementById('lblTotal');
+                const grid = document.getElementById('gridWatchlist');
+
+                lbl.textContent = `${watchlist.length} película${watchlist.length !== 1 ? 's' : ''}`;
+
+                if (watchlist.length === 0) {
+                    grid.innerHTML = `<div class="estado-vacio" style="grid-column:1/-1">
+                        <p class="estado-vacio__titulo">Tu watchlist está vacía</p>
+                        <p class="estado-vacio__desc">Añade películas desde su ficha con el botón de bookmark.</p>
+                    </div>`;
+                    return;
+                }
+
+                // Cada elemento de watchlist: { id, pelicula: { tmdb_id, titulo, poster_url, anio_estreno } }
+                grid.innerHTML = watchlist.map(item => {
+                    const p = item.pelicula;
+                    return `
+                        <div class="pelicula-card" id="card-${p.tmdb_id}">
+                            <div class="pelicula-card__poster" onclick="location.href='pelicula.html?id=${p.tmdb_id}'">
+                                ${p.poster_url
+                                    ? `<img class="pelicula-card__img" src="${p.poster_url}" alt="${p.titulo}" loading="lazy">`
+                                    : `<div class="pelicula-card__no-img">SIN IMAGEN</div>`
+                                }
+                                <div class="pelicula-card__overlay">
+                                    <!-- Botón para quitar de watchlist desde la propia tarjeta -->
+                                    <button
+                                        class="btn btn--ghost btn--sm"
+                                        style="font-size:10px"
+                                        onclick="event.stopPropagation(); quitarDeWatchlist(${p.tmdb_id}, document.getElementById('card-${p.tmdb_id}'))"
+                                    >
+                                        Quitar
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="pelicula-card__info">
+                                <div class="pelicula-card__titulo">${p.titulo || '—'}</div>
+                                <div class="pelicula-card__anio">${p.anio_estreno || ''}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch {
+                mostrarToast('Error al cargar la watchlist', 'error');
+            }
+        });
+    </script>
+
 </body>
 </html>

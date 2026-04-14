@@ -1,192 +1,147 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mi Diario — BONOBO</title>
-  <link rel="stylesheet" href="../css/main.css" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BONOBO — Mi Diario</title>
+    <link rel="stylesheet" href="../css/main.css" />
 </head>
 <body>
 
-<!-- ===================== BARRA LATERAL ===================== -->
-<aside class="barra-lateral">
-  <div class="sb-logo"><a href="../index.html" class="sb-logo-enlace"><div class="sb-logo-marca"></div><div class="sb-nombre-marca"><div class="sb-nombre">BONOBO</div><div class="sb-subtitulo">DIARIO CINEMATOGRÁFICO</div></div></a></div>
-  <div class="sb-xp" id="sXp" style="display:none"><div class="sb-xp-fila"><span class="sb-xp-nivel" id="sLevel">NIVEL 1</span><span class="sb-xp-numero" id="sXpNum">0 XP</span></div><div class="sb-xp-pista"><div class="sb-xp-relleno" id="sXpFill" style="width:0%"></div></div><div class="sb-xp-siguiente" id="sXpNext"></div></div>
-  <nav class="sb-nav">
-    <a href="../index.html"  class="nav-elemento"><span class="nav-icono">◈</span> Explorar</a>
-    <a href="perfil.html"   class="nav-elemento" id="navPerfil"><span class="nav-icono">◎</span> Mi Perfil</a>
-    <a href="diario.html"   class="nav-elemento activo" id="navDiario"><span class="nav-icono">◻</span> Diario</a>
-    <!-- "activo" marca esta página como la sección actual en el menú -->
-    <a href="watchlist.html" class="nav-elemento" id="navWatchlist"><span class="nav-icono">◷</span> Watchlist</a>
-    <a href="logros.html"   class="nav-elemento" id="navLogros"><span class="nav-icono">◆</span> Logros<span class="nav-insignia" id="logrosBadge" style="display:none">0</span></a>
-    <a href="buscar-usuarios.html" class="nav-elemento" id="navBuscar"><span class="nav-icono">⊕</span> Buscar</a>
-  </nav>
-  <div class="sb-estadisticas" id="sStats" style="display:none">
-    <div class="sb-estadistica"><div class="sb-stat-numero" id="stVistas">0</div><div class="sb-stat-etiqueta">Vistas</div></div>
-    <div class="sb-estadistica"><div class="sb-stat-numero" id="stResenas">0</div><div class="sb-stat-etiqueta">Reseñas</div></div>
-    <div class="sb-estadistica"><div class="sb-stat-numero" id="stWatchlist">0</div><div class="sb-stat-etiqueta">Watchlist</div></div>
-    <div class="sb-estadistica"><div class="sb-stat-numero" id="stLogros">0</div><div class="sb-stat-etiqueta">Logros</div></div>
-  </div>
-  <div class="sb-auth" id="sAuth"><a href="login.html" class="btn-iniciar-sesion">Iniciar sesión</a><a href="registro.html" class="btn-registro">Registrarse</a></div>
-  <div class="sb-usuario" id="sUser" style="display:none"><div class="sb-avatar"></div><div><div class="sb-u-nombre" id="sUsername">—</div><button class="sb-u-cerrar" id="btnLogout">Cerrar sesión</button></div></div>
-</aside>
+    <header id="nav-placeholder"></header>
 
-<!-- ===================== CONTENIDO PRINCIPAL ===================== -->
-<main class="contenido-principal">
+    <main class="contenedor pagina">
 
-  <!-- Topbar con título y contador de entradas del diario -->
-  <div class="barra-superior">
-    <h2 style="font-family:var(--fuente-display);font-size:22px;font-weight:900;">Mi Diario</h2>
-    <!-- El JS rellena este span con el número de entradas, ej: "— 5 entradas" -->
-    <span id="contadorDiario" style="font-size:11px;color:var(--apagado);margin-left:8px"></span>
-  </div>
+        <div class="seccion-header" style="margin-bottom:32px">
+            <h1 class="seccion-titulo">Mi Diario</h1>
+            <div class="seccion-linea"></div>
+            <span class="seccion-meta" id="lblTotal"></span>
+        </div>
 
-  <div class="pagina-contenido">
-    <!-- Contenedor vacío donde el JS renderiza la lista de entradas del diario -->
-    <div class="diario-lista" id="listaDiario"></div>
-  </div>
-</main>
+        <!-- Lista de entradas del diario -->
+        <div class="diario-lista" id="listaDiario"></div>
 
-<!-- BUG 1 FIX: Se eliminó el <div id="movieModalBg"> vacío del HTML.
-     Ahora abrirModal() en ui.js lo crea dinámicamente con todo el contenido. -->
+        <!-- Botón para cargar más entradas -->
+        <div style="text-align:center;margin-top:32px">
+            <button class="btn btn--ghost oculto" id="btnMas" onclick="cargarMas()">
+                Cargar más
+            </button>
+        </div>
 
-<script src="../js/data.js"></script>
-<script src="../js/auth.js"></script>
-<script src="../js/ui.js"></script>
-<script>
-// Función principal que construye y renderiza la lista de entradas del diario
-function renderizarDiario() {
-  const usuario = AUTENTICACION.obtenerUsuarioActual();
-  const lista   = document.getElementById('listaDiario');
+    </main>
 
-  // Si no hay sesión, muestra mensaje de acceso restringido
-  if (!usuario) {
-    lista.innerHTML = `<div class="vacio"><div class="vacio-icono">🔒</div><div class="vacio-titulo">Inicia sesión</div><p class="vacio-texto"><a href="login.html">Inicia sesión</a> para ver tu diario</p></div>`;
-    return;
-  }
+    <div class="toast" id="toast"></div>
 
-  const datos = AUTENTICACION.obtenerDatosUsuario(usuario.nombreUsuario);
-  // Ordena las entradas de más reciente a más antigua por fecha
-  const ordenadas = [...datos.diario].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/nav.js"></script>
+    <script>
+        // Paginación: cargamos de 20 en 20
+        let skip = 0;
+        const LIMIT = 20;
+        let movieMap = {};   // { id_pelicula_interno → datos de película }
+        let usuarioId = null;
 
-  // Actualiza el contador de entradas en el topbar
-  document.getElementById('contadorDiario').textContent = `— ${ordenadas.length} entradas`;
+        function mostrarToast(msg, tipo = 'ok') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `toast toast--${tipo} toast--visible`;
+            setTimeout(() => { t.className = 'toast'; }, 2800);
+        }
 
-  // Si el diario está vacío, muestra un estado vacío con instrucciones
-  if (ordenadas.length === 0) {
-    lista.innerHTML = `<div class="vacio"><div class="vacio-icono">📓</div><div class="vacio-titulo">Tu diario está vacío</div><p class="vacio-texto">Haz clic en una película → "Añadir al diario"</p></div>`;
-    return;
-  }
+        // Construye el mapa id_interno → datos de película a partir de las vistas del usuario.
+        // Esto nos permite mostrar el póster y título en cada entrada del diario.
+        async function construirMovieMap() {
+            try {
+                // Pedimos hasta 200 vistas para tener datos de las películas
+                const vistas = await api.usuarios.vistas(usuarioId, 0, 200);
+                vistas.forEach(v => { movieMap[v.id_pelicula] = v.pelicula; });
+            } catch {
+                // Si falla, el diario se muestra sin pósters (no es crítico)
+            }
+        }
 
-  // Construye el HTML de cada entrada del diario
-  lista.innerHTML = ordenadas.map(e => {
-    const pelicula = PELICULAS.find(mv => mv.id === e.idPelicula);
-    if (!pelicula) return ''; // Si la película no existe en el catálogo, omite la entrada
+        // Crea el HTML de una entrada del diario.
+        function crearEntradaHTML(entrada) {
+            const fecha = new Date(entrada.fecha_visionado);
+            const dia   = fecha.getDate();
+            const mes   = fecha.toLocaleString('es', { month: 'short' }).toUpperCase();
+            const anio  = fecha.getFullYear();
 
-    // Formatea la fecha en español: ej. "15 de marzo de 2024"
-    // El T00:00:00 evita problemas de zona horaria al parsear la fecha
-    const fechaFormateada = new Date(e.fecha+'T00:00:00').toLocaleDateString('es-ES', {year:'numeric',month:'long',day:'numeric'});
+            const pelicula = movieMap[entrada.id_pelicula];
 
-    // La puntuación del usuario está en vistas[], no en el diario
-    const entradaVista = datos.vistas.find(v => v.idPelicula === e.idPelicula);
-    const puntuacion   = entradaVista?.puntuacion || null;
+            return `
+                <div class="diario-entrada">
+                    <div class="diario-fecha">
+                        <div class="diario-fecha__dia">${dia}</div>
+                        <div class="diario-fecha__mes">${mes}</div>
+                        <div class="diario-fecha__mes">${anio}</div>
+                    </div>
+                    ${pelicula?.poster_url
+                        ? `<div class="diario-poster" style="cursor:pointer"
+                               onclick="location.href='pelicula.html?id=${pelicula.tmdb_id}'">
+                               <img src="${pelicula.poster_url}" alt="">
+                           </div>`
+                        : `<div class="diario-poster"></div>`
+                    }
+                    <div class="diario-contenido">
+                        <div class="diario-titulo-peli"
+                             ${pelicula ? `style="cursor:pointer" onclick="location.href='pelicula.html?id=${pelicula.tmdb_id}'"` : ''}>
+                            ${pelicula?.titulo || `Entrada #${entrada.id}`}
+                        </div>
+                        ${entrada.resena
+                            ? `<p class="diario-resena">${entrada.resena}</p>`
+                            : `<p class="diario-resena text-faint">Sin reseña</p>`
+                        }
+                    </div>
+                </div>
+            `;
+        }
 
-    return `<div class="diario-item" id="entrada-${e.id}">
-      <!-- Miniatura del póster: al hacer click abre el modal de la película -->
-      <img class="diario-miniatura" src="${pelicula.imagen}" alt="${pelicula.titulo}" onclick="abrirModal(${pelicula.id})" style="cursor:pointer" />
-      <div style="flex:1;min-width:0">
-        <!-- Título clicable que abre el modal -->
-        <p class="di-titulo" onclick="abrirModal(${pelicula.id})" style="cursor:pointer">
-          ${pelicula.titulo} <span style="font-size:11px;color:var(--apagado);font-weight:400">${pelicula.anio}</span>
-        </p>
-        <p class="di-fecha">📅 ${fechaFormateada}</p>
-        <!-- Muestra la reseña si existe, o un texto en cursiva si la entrada no tiene reseña -->
-        ${e.resena ? `<p class="di-texto">${e.resena}</p>` : '<p class="di-texto" style="color:var(--apagado);font-style:italic">Sin reseña</p>'}
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
-        <!-- Puntuación del usuario si ha valorado la película -->
-        ${puntuacion ? `<div class="di-puntuacion">${puntuacion}/10</div>` : ''}
-        <!-- Botón para editar esta entrada del diario -->
-        <button onclick="editarEntrada(${e.id})" title="Editar entrada" style="
-          padding:4px 8px;border-radius:var(--radio-peq);border:1px solid var(--borde2);
-          background:transparent;color:var(--apagado);font-size:11px;cursor:pointer;
-          white-space:nowrap">✏️ Editar</button>
-      </div>
-    </div>`;
-  }).join('');
-}
+        async function cargarEntradas() {
+            try {
+                const entradas = await api.usuarios.diario(usuarioId, skip, LIMIT);
 
-// ─ Editar entrada de diario ─
-// Sustituye el HTML de una entrada por un formulario de edición inline
-function editarEntrada(idEntrada) {
-  const usuario = AUTENTICACION.obtenerUsuarioActual(); if (!usuario) return;
-  const datos   = AUTENTICACION.obtenerDatosUsuario(usuario.nombreUsuario);
-  const entrada = datos.diario.find(x => x.id === idEntrada);
-  if (!entrada) return;
+                if (skip === 0 && entradas.length === 0) {
+                    document.getElementById('listaDiario').innerHTML = `
+                        <div class="estado-vacio">
+                            <p class="estado-vacio__titulo">Tu diario está vacío</p>
+                            <p class="estado-vacio__desc">Añade películas desde su ficha para que aparezcan aquí.</p>
+                        </div>
+                    `;
+                    return;
+                }
 
-  const contenedor = document.getElementById(`entrada-${idEntrada}`);
-  if (!contenedor) return;
+                const lista = document.getElementById('listaDiario');
+                lista.insertAdjacentHTML('beforeend', entradas.map(crearEntradaHTML).join(''));
 
-  // Guarda el HTML original de la entrada para poder restaurarlo si el usuario cancela
-  const htmlOriginal = contenedor.innerHTML;
+                // Mostramos "Cargar más" solo si recibimos el límite completo (puede haber más)
+                document.getElementById('btnMas').classList.toggle('oculto', entradas.length < LIMIT);
+                skip += entradas.length;
 
-  // Reemplaza el contenido de la entrada con el formulario de edición
-  contenedor.innerHTML = `
-    <div style="flex:1;padding:4px 0">
-      <p style="font-family:var(--fuente-ui);font-size:11px;font-weight:700;color:var(--acento-claro);margin-bottom:10px">
-        Editando entrada
-      </p>
-      <div style="margin-bottom:10px">
-        <label style="font-size:10px;color:var(--apagado);display:block;margin-bottom:4px">Fecha de visionado</label>
-        <!-- Precarga la fecha actual de la entrada en el input -->
-        <input type="date" id="editFecha-${idEntrada}" class="campo-entrada" value="${entrada.fecha}" style="max-width:180px" />
-      </div>
-      <div style="margin-bottom:12px">
-        <label style="font-size:10px;color:var(--apagado);display:block;margin-bottom:4px">Reseña (opcional)</label>
-        <!-- Precarga el texto de la reseña actual en el textarea -->
-        <textarea id="editTexto-${idEntrada}" class="campo-entrada campo-textarea" rows="3"
-          placeholder="¿Qué te pareció?">${entrada.resena || ''}</textarea>
-      </div>
-      <div style="display:flex;gap:8px">
-        <button onclick="guardarEdicion(${idEntrada})" class="btn-guardar">Guardar cambios</button>
-        <!-- Pasa el HTML original codificado para poder restaurarlo al cancelar -->
-        <button onclick="cancelarEdicion(${idEntrada}, \`${encodeURIComponent(htmlOriginal)}\`)" class="btn-cancelar">Cancelar</button>
-      </div>
-    </div>`;
-}
+            } catch {
+                mostrarToast('Error al cargar el diario', 'error');
+            }
+        }
 
-// Guarda los cambios de la entrada editada en localStorage y re-renderiza el diario
-function guardarEdicion(idEntrada) {
-  const usuario = AUTENTICACION.obtenerUsuarioActual(); if (!usuario) return;
-  const fecha   = document.getElementById(`editFecha-${idEntrada}`)?.value;
-  const texto   = document.getElementById(`editTexto-${idEntrada}`)?.value.trim();
-  // La fecha es obligatoria, la reseña es opcional
-  if (!fecha) { notificacion('La fecha es obligatoria', 'err'); return; }
+        function cargarMas() { cargarEntradas(); }
 
-  let datos = AUTENTICACION.obtenerDatosUsuario(usuario.nombreUsuario);
-  const idx = datos.diario.findIndex(x => x.id === idEntrada);
-  if (idx < 0) return;
-  // Actualiza solo la fecha y la reseña, sin tocar el resto de datos de la entrada
-  datos.diario[idx].fecha  = fecha;
-  datos.diario[idx].resena = texto || '';
-  AUTENTICACION.guardarDatosUsuario(usuario.nombreUsuario, datos);
-  notificacion('✓ Entrada actualizada');
-  // Re-renderiza toda la lista para reflejar los cambios
-  renderizarDiario();
-}
+        document.addEventListener('DOMContentLoaded', async () => {
+            renderNav('../');
 
-// Restaura el HTML original de la entrada cancelando la edición
-function cancelarEdicion(idEntrada, htmlCodificado) {
-  const contenedor = document.getElementById(`entrada-${idEntrada}`);
-  // decodeURIComponent deshace la codificación aplicada al guardar el HTML original
-  if (contenedor) contenedor.innerHTML = decodeURIComponent(htmlCodificado);
-}
+            if (!auth.estaLogueado()) {
+                window.location.href = 'login.html';
+                return;
+            }
 
-// Expone renderizarDiario como refrescarGrid para que ui.js pueda refrescar el diario
-// después de acciones en el modal (marcar vista, añadir entrada, etc.)
-refrescarGrid = renderizarDiario;
+            // Obtenemos el id del usuario y el mapa de películas antes de cargar el diario
+            const usuario = await api.usuarios.mePerfil();
+            usuarioId = usuario.id;
 
-// Espera a que el DOM esté listo antes de renderizar el diario e inicializar el sidebar
-document.addEventListener('DOMContentLoaded', renderizarDiario);
-</script>
+            await construirMovieMap();   // necesario para mostrar pósters y títulos
+            cargarEntradas();
+        });
+    </script>
+
 </body>
 </html>

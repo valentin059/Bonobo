@@ -72,6 +72,7 @@ class UserUpdate(BaseModel):
 # Vista de una película con sus datos de película adjuntos (para mostrar en el perfil)
 class VistaConPelicula(BaseModel):
     id: int
+    id_pelicula: int             # id interno de la película en nuestra BD (necesario para cruzar con el diario)
     puntuacion: Optional[int] = None
     pelicula: PeliculaCache      # datos básicos de la película (tmdb_id, título, poster...)
     model_config = ConfigDict(from_attributes=True)

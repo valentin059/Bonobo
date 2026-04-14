@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BONOBO — Buscar usuarios</title>
+    <link rel="stylesheet" href="../css/main.css" />
+</head>
+<body>
+
+    <header id="nav-placeholder"></header>
+
+    <main class="contenedor pagina">
+
+        <div class="seccion-header" style="margin-bottom:32px">
+            <h1 class="seccion-titulo">Buscar usuarios</h1>
+            <div class="seccion-linea"></div>
+        </div>
+
+        <!-- Campo de búsqueda de usuarios -->
+        <div class="buscar-input-wrap">
+            <svg class="buscar-input-icono" viewBox="0 0 20 20" fill="none">
+                <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M13 13l3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <input
+                class="buscar-input"
+                type="text"
+                id="inputBuscar"
+                placeholder="Busca por nombre de usuario…"
+                autocomplete="off"
+            />
+        </div>
+
+        <!-- Lista de resultados -->
+        <div class="usuarios-lista" id="listaResultados"></div>
+
+        <!-- Estado vacío inicial -->
+        <div class="estado-vacio" id="estadoInicial">
+            <p class="estado-vacio__desc">Escribe un nombre de usuario para buscar.</p>
+        </div>
+
+    </main>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/nav.js"></script>
+    <script>
+        let debounceTimer = null;   // timer para no buscar en cada tecla pulsada
+
+        // Renderiza la lista de usuarios encontrados.
+        function renderizarUsuarios(usuarios) {
+            const lista     = document.getElementById('listaResultados');
+            const estadoIni = document.getElementById('estadoInicial');
+
+            estadoIni.classList.add('oculto');
+
+            if (usuarios.length === 0) {
+                lista.innerHTML = `<div class="estado-vacio">
+                    <p class="estado-vacio__titulo">Sin resultados</p>
+                    <p class="estado-vacio__desc">No hay usuarios con ese nombre.</p>
+                </div>`;
+                return;
+            }
+
+            lista.innerHTML = usuarios.map(u => `
+                <a class="usuario-fila" href="usuario.html?id=${u.id}">
+                    ${u.avatar_url
+                        ? `<img class="usuario-fila__avatar" src="${u.avatar_url}" alt="${u.username}">`
+                        : `<div class="usuario-fila__avatar usuario-fila__avatar--placeholder">
+                               ${u.username[0].toUpperCase()}
+                           </div>`
+                    }
+                    <span class="usuario-fila__username">${u.username}</span>
+                </a>
+            `).join('');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderNav('../');
+
+            const input = document.getElementById('inputBuscar');
+
+            // Buscamos con un debounce de 300ms para no saturar la API con cada tecla
+            input.addEventListener('input', () => {
+                clearTimeout(debounceTimer);
+                const q = input.value.trim();
+
+                if (!q) {
+                    document.getElementById('listaResultados').innerHTML = '';
+                    document.getElementById('estadoInicial').classList.remove('oculto');
+                    return;
+                }
+
+                debounceTimer = setTimeout(async () => {
+                    try {
+                        const resultados = await api.usuarios.buscar(q);
+                        renderizarUsuarios(resultados);
+                    } catch {
+                        // Error silencioso en búsqueda
+                    }
+                }, 300);
+            });
+        });
+    </script>
+
+</body>
+</html>
