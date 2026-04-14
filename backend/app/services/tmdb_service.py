@@ -6,8 +6,7 @@ from ..schemas.peliculas import (
     PaginadoPeliculas, PaginadoCartelera, PaginadoEstrenos, PeliculaDetalle
 )
 
-# Cargos del equipo técnico que queremos mostrar, agrupados por departamento TMDB.
-# Un único cargo principal por departamento para mantener la lista limpia.
+# roles de equipo técnico que se muestran, por departamento
 CREW_ROLES = {
     "Directing":         {"Director"},
     "Writing":           {"Screenplay", "Story", "Writer", "Novel", "Characters", "Original Story"},
@@ -21,36 +20,29 @@ CREW_ROLES = {
     "Lighting":          {"Gaffer"},
 }
 
-# URL base de la API de TMDB y de sus imágenes
-TMDB_BASE_URL = "https://api.themoviedb.org/3"
-TMDB_IMAGE_BASE_URL    = "https://image.tmdb.org/t/p/w500"    # w500 para pósters
-TMDB_BACKDROP_BASE_URL = "https://image.tmdb.org/t/p/w1280"   # w1280 para imágenes de cabecera 16:9
-TMDB_TIMEOUT = 10.0   # segundos máximos de espera para cada petición a TMDB
+TMDB_BASE_URL          = "https://api.themoviedb.org/3"
+TMDB_IMAGE_BASE_URL    = "https://image.tmdb.org/t/p/w500"
+TMDB_BACKDROP_BASE_URL = "https://image.tmdb.org/t/p/w1280"
+TMDB_TIMEOUT           = 10.0
 
-# Cabeceras que enviamos en cada petición a TMDB (autenticación con token Bearer)
 headers = {
     "Authorization": f"Bearer {settings.tmdb_token}",
     "accept": "application/json"
 }
 
 
-# Construye la URL completa de un poster a partir del path que devuelve TMDB.
-# TMDB devuelve solo el path (ej: "/abc123.jpg"), nosotros añadimos la base.
 def build_poster_url(poster_path: str | None) -> str | None:
     if not poster_path:
         return None
     return f"{TMDB_IMAGE_BASE_URL}{poster_path}"
 
 
-# Construye la URL completa de una imagen de cabecera (backdrop) 16:9.
 def build_backdrop_url(backdrop_path: str | None) -> str | None:
     if not backdrop_path:
         return None
     return f"{TMDB_BACKDROP_BASE_URL}{backdrop_path}"
 
 
-# Extrae el año de una fecha en formato "YYYY-MM-DD".
-# Devuelve None si la fecha es vacía o tiene un formato incorrecto.
 def _parse_anio(release_date: str | None) -> int | None:
     if not release_date or len(release_date) < 4:
         return None
@@ -60,10 +52,7 @@ def _parse_anio(release_date: str | None) -> int | None:
         return None
 
 
-# Busca películas en TMDB por texto libre.
-# skip y limit permiten paginar los resultados.
 def buscar_peliculas(query: str, skip: int = 0, limit: int = 20) -> PaginadoPeliculas:
-    # TMDB trabaja con páginas de 20 resultados; calculamos qué página pedir
     page = (skip // 20) + 1
     with httpx.Client(timeout=TMDB_TIMEOUT) as client:
         response = client.get(
@@ -71,10 +60,9 @@ def buscar_peliculas(query: str, skip: int = 0, limit: int = 20) -> PaginadoPeli
             headers=headers,
             params={"query": query, "language": "es-ES", "page": page}
         )
-        response.raise_for_status()   # lanza excepción si TMDB devuelve error (4xx, 5xx)
+        response.raise_for_status()
         data = response.json()
 
-    # Construimos la lista de resultados descartando películas sin id
     resultados = [
         PeliculaResumen(
             tmdb_id=movie["id"],
@@ -94,8 +82,6 @@ def buscar_peliculas(query: str, skip: int = 0, limit: int = 20) -> PaginadoPeli
     )
 
 
-# Obtiene las películas que están actualmente en cines (cartelera española).
-# Las ordena de mayor a menor puntuación antes de devolverlas.
 def obtener_cartelera(skip: int = 0, limit: int = 20) -> PaginadoCartelera:
     page = (skip // 20) + 1
     with httpx.Client(timeout=TMDB_TIMEOUT) as client:
@@ -120,7 +106,6 @@ def obtener_cartelera(skip: int = 0, limit: int = 20) -> PaginadoCartelera:
         if movie.get("id")
     ]
 
-    # Ordenamos por puntuación descendente (las mejores primero)
     resultados.sort(key=lambda x: x.puntuacion or 0, reverse=True)
 
     return PaginadoCartelera(
@@ -130,9 +115,6 @@ def obtener_cartelera(skip: int = 0, limit: int = 20) -> PaginadoCartelera:
     )
 
 
-# Obtiene las películas próximas a estrenarse.
-# Filtra las que tengan fecha de estreno igual o posterior a hoy,
-# y las ordena por fecha de estreno (las más próximas primero).
 def obtener_estrenos(skip: int = 0, limit: int = 20) -> PaginadoEstrenos:
     page = (skip // 20) + 1
     hoy = datetime.now().date()
@@ -157,7 +139,6 @@ def obtener_estrenos(skip: int = 0, limit: int = 20) -> PaginadoEstrenos:
             fecha_peli = datetime.strptime(fecha_str, "%Y-%m-%d").date()
         except ValueError:
             continue
-        # Solo incluimos películas que se estrenan hoy o en el futuro
         if fecha_peli >= hoy:
             resultados.append(PeliculaEstreno(
                 tmdb_id=movie["id"],
@@ -168,7 +149,6 @@ def obtener_estrenos(skip: int = 0, limit: int = 20) -> PaginadoEstrenos:
                 fecha_exacta=fecha_str
             ))
 
-    # Ordenamos por fecha de estreno (primero las más próximas)
     resultados.sort(key=lambda x: x.fecha_exacta or "")
 
     return PaginadoEstrenos(
@@ -178,11 +158,8 @@ def obtener_estrenos(skip: int = 0, limit: int = 20) -> PaginadoEstrenos:
     )
 
 
-# Obtiene el detalle completo de una película: info, géneros, duración y reparto.
-# Hace dos peticiones a TMDB: una para los datos de la película y otra para los créditos.
 def obtener_detalle_pelicula(tmdb_id: int) -> PeliculaDetalle:
     with httpx.Client(timeout=TMDB_TIMEOUT) as client:
-        # Primera petición: datos generales de la película
         detalle = client.get(
             f"{TMDB_BASE_URL}/movie/{tmdb_id}",
             headers=headers,
@@ -190,7 +167,6 @@ def obtener_detalle_pelicula(tmdb_id: int) -> PeliculaDetalle:
         )
         detalle.raise_for_status()
 
-        # Segunda petición: reparto y equipo técnico
         creditos = client.get(
             f"{TMDB_BASE_URL}/movie/{tmdb_id}/credits",
             headers=headers,
@@ -198,12 +174,11 @@ def obtener_detalle_pelicula(tmdb_id: int) -> PeliculaDetalle:
         )
         creditos.raise_for_status()
 
-    movie      = detalle.json()
+    movie         = detalle.json()
     creditos_data = creditos.json()
-    cast_raw   = creditos_data.get("cast", [])[:15]   # primeros 15 actores
-    crew_raw   = creditos_data.get("crew", [])
+    cast_raw      = creditos_data.get("cast", [])[:15]
+    crew_raw      = creditos_data.get("crew", [])
 
-    # ── Reparto ───────────────────────────────────────────────────────────────
     reparto = [
         PersonaCast(
             nombre=p.get("name"),
@@ -214,9 +189,7 @@ def obtener_detalle_pelicula(tmdb_id: int) -> PeliculaDetalle:
         for p in cast_raw
     ]
 
-    # ── Equipo técnico ────────────────────────────────────────────────────────
-    # Solo incluimos los cargos definidos en CREW_ROLES, respetando el orden de
-    # departamentos y eliminando duplicados (misma persona + mismo cargo).
+    # filtramos por CREW_ROLES y deduplicamos por persona+cargo
     vistos = set()
     crew = []
     for dept, roles_permitidos in CREW_ROLES.items():
@@ -253,6 +226,6 @@ def obtener_detalle_pelicula(tmdb_id: int) -> PeliculaDetalle:
         productoras=[c["name"] for c in movie.get("production_companies", []) if c.get("name")],
         paises=[c["name"] for c in movie.get("production_countries", []) if c.get("name")],
         idioma_original=movie.get("original_language"),
-        presupuesto=movie.get("budget") or None,     # TMDB devuelve 0 si no hay datos → None
+        presupuesto=movie.get("budget") or None,
         recaudacion=movie.get("revenue") or None,
     )
