@@ -210,5 +210,5 @@ __marimo__/
 .postman
 postman/
 
-#Claude Code
-memory/
+#Claude
+.claude/

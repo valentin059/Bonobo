@@ -166,6 +166,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const navSearch = sessionStorage.getItem('nav_search');
     if (navSearch) {
         sessionStorage.removeItem('nav_search');   // limpiamos para que no persista
+
+        // Si el usuario no está logueado, colapsamos el hero a una tira mínima
+        // para que los resultados de búsqueda sean lo primero que se vea
+        if (!estaLogueado) {
+            hero.classList.add('hero--mini');
+        }
+
         buscarPeliculas(navSearch);
     } else {
         // Cargamos cartelera y estrenos en paralelo para ser más rápidos

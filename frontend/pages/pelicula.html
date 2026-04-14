@@ -23,14 +23,18 @@
                 <div class="skeleton" style="aspect-ratio:2/3;width:200px"></div>
             </div>
 
-            <!-- Info a la derecha del póster -->
+            <!-- Info central: título, meta, géneros, sinopsis -->
             <div class="pelicula-info">
                 <h1 class="pelicula-titulo" id="titulo">—</h1>
                 <div class="pelicula-meta" id="meta"></div>
                 <div class="pelicula-generos" id="generos"></div>
                 <p class="pelicula-sinopsis" id="sinopsis"></p>
+            </div>
 
-                <!-- Panel de acciones del usuario: solo visible si está logueado -->
+            <!-- Sidebar derecho: acciones del usuario -->
+            <div class="pelicula-sidebar">
+
+                <!-- Panel de acciones: solo visible si está logueado -->
                 <div class="acciones-panel oculto" id="accionesPanel">
                     <p class="acciones-panel__titulo">Tu actividad</p>
 
@@ -87,6 +91,7 @@
                 <div id="panelVisitante" class="oculto">
                     <a href="login.html" class="btn btn--primary">Entrar para registrarla</a>
                 </div>
+
             </div>
 
         </div>

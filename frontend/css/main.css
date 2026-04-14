@@ -237,7 +237,8 @@ img { display: block; max-width: 100%; }
    ══════════════════════════════════════════════════════════════ */
 .hero {
     position: relative;
-    min-height: calc(100vh - var(--navbar-h));
+    /* 62vh para que la cartelera de abajo ya se vea al cargar la página */
+    min-height: 62vh;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -246,12 +247,25 @@ img { display: block; max-width: 100%; }
     overflow: hidden;
 }
 
+/* Versión colapsada: solo una tira fina con CTA cuando se está buscando sin sesión */
+.hero--mini {
+    min-height: auto;
+    padding: 28px 24px 20px;
+}
+.hero--mini .hero-bg    { display: none; }
+.hero--mini .hero-overlay { display: none; }
+.hero--mini .hero-titulo  { font-size: 20px; margin-bottom: 6px; }
+.hero--mini .hero-desc    { display: none; }
+.hero--mini .hero-cta     { gap: 8px; }
+.hero--mini .hero-content { max-width: 100%; }
+
 /* Mosaico de pósters de fondo — se rellena dinámicamente con JS */
 .hero-bg {
     position: absolute;
     inset: 0;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    grid-auto-rows: 165px;   /* altura fija para que las celdas tengan tamaño aunque estén vacías */
     gap: 2px;
     opacity: 0.18;
     filter: blur(2px);
@@ -636,8 +650,14 @@ img { display: block; max-width: 100%; }
 }
 .pelicula-poster img { width: 100%; display: block; }
 
-/* Info a la derecha del póster */
-.pelicula-info { flex: 1; }
+/* Info central (título, meta, géneros, sinopsis) */
+.pelicula-info { flex: 1; min-width: 0; }
+
+/* Sidebar derecho con el panel de acciones del usuario */
+.pelicula-sidebar {
+    flex-shrink: 0;
+    width: 260px;
+}
 
 .pelicula-titulo {
     font-family: var(--font-display);
@@ -691,7 +711,7 @@ img { display: block; max-width: 100%; }
     display: flex;
     flex-direction: column;
     gap: 16px;
-    max-width: 320px;
+    /* El ancho lo controla .pelicula-sidebar — no lo fijamos aquí */
 }
 
 .acciones-panel__titulo {
