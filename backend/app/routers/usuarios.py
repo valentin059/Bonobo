@@ -38,7 +38,7 @@ def get_mi_perfil(db: Session = Depends(database.get_db),
         total_vistas=total_vistas,
         seguidores=seguidores,
         seguidos=seguidos,
-        yo_sigo=None
+        yo_sigo=None,
     )
 
 
@@ -152,7 +152,7 @@ def get_perfil(id: int,
         total_vistas=total_vistas,
         seguidores=seguidores,
         seguidos=seguidos,
-        yo_sigo=yo_sigo
+        yo_sigo=yo_sigo,
     )
 
 

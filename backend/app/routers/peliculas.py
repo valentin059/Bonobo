@@ -53,6 +53,20 @@ def obtener_estrenos(skip: int = 0, limit: int = Query(20, ge=1, le=100)):
         )
 
 
+# GET /api/peliculas/persona/{person_id}
+# Devuelve el perfil de una persona (actor, director…) con su filmografía.
+@router.get("/persona/{person_id}", response_model=schemas.PersonaDetalle)
+def obtener_persona(person_id: int):
+    try:
+        return services.obtener_persona(person_id)
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 404:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail="Persona no encontrada.")
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                            detail="No se pudo obtener la información.")
+
+
 # GET /api/peliculas/{tmdb_id}
 # Devuelve el detalle completo de una película.
 # Si el usuario está autenticado, incluye también su estado personal

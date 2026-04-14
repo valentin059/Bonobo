@@ -86,6 +86,23 @@
                             </button>
                         </div>
                     </div>
+
+                    <!-- Añadir a lista -->
+                    <div>
+                        <button class="btn btn--surface btn--sm"
+                                style="width:100%;justify-content:space-between"
+                                id="btnToggleListas"
+                                onclick="togglePanelListas()">
+                            <span>Añadir a lista</span>
+                            <span id="toggleListasArrow">▾</span>
+                        </button>
+                        <div id="panelListas" class="oculto" style="margin-top:6px">
+                            <div id="listasUsuario"
+                                 style="display:flex;flex-direction:column;gap:4px">
+                                <p class="text-faint" style="font-size:12px">Cargando…</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Mensaje para visitantes no logueados -->
@@ -106,6 +123,7 @@
             <button class="tab tab--activo" data-tab="reparto">Reparto</button>
             <button class="tab" data-tab="equipo">Equipo</button>
             <button class="tab" data-tab="detalles">Detalles</button>
+            <button class="tab" data-tab="resenas">Reseñas</button>
         </div>
 
         <!-- Panel Reparto -->
@@ -123,7 +141,27 @@
             <dl class="detalles-lista" id="listaDetalles"></dl>
         </div>
 
+        <!-- Panel Reseñas -->
+        <div class="tab-panel oculto" id="panelResenas">
+            <!-- Reseñas de amigos (solo logueados) -->
+            <div id="seccionAmigos" class="oculto">
+                <p class="resenas-subtitulo">Amigos</p>
+                <div id="listaAmigos"></div>
+            </div>
+            <!-- Reseñas de la comunidad -->
+            <p class="resenas-subtitulo" id="subtituloComunidad">Comunidad</p>
+            <div id="listaComunidad">
+                <p class="text-faint" style="font-size:13px">Cargando reseñas…</p>
+            </div>
+        </div>
+
     </main>
+
+    <!-- Overlay póster ampliado -->
+    <div class="poster-overlay poster-overlay--hidden" id="posterOverlay"
+         onclick="this.classList.add('poster-overlay--hidden')">
+        <img id="posterOverlayImg" src="" alt="" />
+    </div>
 
     <!-- Toast de notificaciones -->
     <div class="toast" id="toast"></div>

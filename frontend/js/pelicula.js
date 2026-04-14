@@ -76,9 +76,15 @@ function renderizarPelicula(pelicula) {
 
     // Póster principal
     const posterWrap = document.getElementById('posterWrap');
-    posterWrap.innerHTML = pelicula.poster_url
-        ? `<img src="${pelicula.poster_url}" alt="${pelicula.titulo}">`
-        : `<div class="pelicula-card__no-img" style="aspect-ratio:2/3">SIN IMAGEN</div>`;
+    if (pelicula.poster_url) {
+        posterWrap.innerHTML = `<img src="${pelicula.poster_url}" alt="${pelicula.titulo}" style="cursor:zoom-in">`;
+        posterWrap.querySelector('img').addEventListener('click', () => {
+            document.getElementById('posterOverlayImg').src = pelicula.poster_url;
+            document.getElementById('posterOverlay').classList.remove('poster-overlay--hidden');
+        });
+    } else {
+        posterWrap.innerHTML = `<div class="pelicula-card__no-img" style="aspect-ratio:2/3">SIN IMAGEN</div>`;
+    }
 
     // Título
     document.getElementById('titulo').textContent = pelicula.titulo || '—';
@@ -111,7 +117,7 @@ function renderizarPelicula(pelicula) {
     const gridReparto = document.getElementById('gridReparto');
     if (pelicula.reparto && pelicula.reparto.length > 0) {
         gridReparto.innerHTML = pelicula.reparto.map(actor => `
-            <div class="actor-card">
+            <div class="actor-card" ${actor.person_id ? `style="cursor:pointer" onclick="irAPersona(${actor.person_id})"` : ''}>
                 ${actor.foto
                     ? `<img class="actor-foto" src="${actor.foto}" alt="${actor.nombre}" loading="lazy">`
                     : `<div class="actor-foto" style="display:flex;align-items:center;justify-content:center;color:var(--faint)">?</div>`
@@ -153,7 +159,7 @@ function renderizarPelicula(pelicula) {
             <div class="crew-grupo">
                 <div class="crew-grupo__titulo">${DEPT_ES[dept] || dept}</div>
                 ${personas.map(p => `
-                    <div class="crew-fila">
+                    <div class="crew-fila" ${p.person_id ? `onclick="irAPersona(${p.person_id})"` : ''}>
                         ${p.foto
                             ? `<img class="crew-foto" src="${p.foto}" alt="${p.nombre}" loading="lazy">`
                             : `<div class="crew-foto crew-foto--placeholder">${(p.nombre || '?')[0]}</div>`
@@ -296,6 +302,10 @@ async function setPuntuacion(valor) {
     }
 }
 
+function irAPersona(personId) {
+    window.location.href = `persona.html?id=${personId}`;
+}
+
 // Guarda una nueva entrada en el diario del usuario.
 async function guardarDiario() {
     const fecha  = document.getElementById('fechaVisionado').value;
@@ -329,14 +339,314 @@ async function guardarDiario() {
 
 // ── PESTAÑAS ──────────────────────────────────────────────────────────────────
 
+let resenasCargadas = false;
+
 // Cambia la pestaña activa y muestra el panel correspondiente.
 function activarTab(nombre) {
     document.querySelectorAll('.tab').forEach(btn => {
         btn.classList.toggle('tab--activo', btn.dataset.tab === nombre);
     });
-    document.getElementById('panelReparto').classList.toggle('oculto', nombre !== 'reparto');
-    document.getElementById('panelEquipo').classList.toggle('oculto',  nombre !== 'equipo');
+    document.getElementById('panelReparto').classList.toggle('oculto',  nombre !== 'reparto');
+    document.getElementById('panelEquipo').classList.toggle('oculto',   nombre !== 'equipo');
     document.getElementById('panelDetalles').classList.toggle('oculto', nombre !== 'detalles');
+    document.getElementById('panelResenas').classList.toggle('oculto',  nombre !== 'resenas');
+
+    if (nombre === 'resenas' && !resenasCargadas) {
+        resenasCargadas = true;
+        cargarResenas();
+    }
+}
+
+// ── AÑADIR A LISTA ────────────────────────────────────────────────────────────
+
+let listasUsuarioCargadas = false;
+let panelListasAbierto    = false;
+
+async function togglePanelListas() {
+    const panel = document.getElementById('panelListas');
+    const arrow = document.getElementById('toggleListasArrow');
+    panelListasAbierto = !panelListasAbierto;
+    panel.classList.toggle('oculto', !panelListasAbierto);
+    arrow.textContent = panelListasAbierto ? '▴' : '▾';
+
+    if (panelListasAbierto && !listasUsuarioCargadas) {
+        listasUsuarioCargadas = true;
+        await cargarPanelListas();
+    }
+}
+
+async function cargarPanelListas() {
+    const contenedor = document.getElementById('listasUsuario');
+    try {
+        const usuario = await api.usuarios.mePerfil();
+        const listas  = await api.usuarios.listas(usuario.id);
+
+        if (listas.length === 0) {
+            contenedor.innerHTML = `
+                <p class="text-faint" style="font-size:12px">Sin listas.
+                    <a href="listas.html" style="color:var(--accent)">Crea una →</a>
+                </p>`;
+            return;
+        }
+
+        contenedor.innerHTML = listas.map(l => `
+            <button class="btn btn--surface btn--sm"
+                    style="width:100%;justify-content:flex-start;font-weight:400;font-size:12px"
+                    onclick="añadirALista(${l.id}, '${l.nombre.replace(/'/g, "\\'")}')">
+                ${l.nombre}
+                <span style="margin-left:auto;color:var(--faint);font-size:10px">
+                    ${l.es_publica ? 'Pública' : 'Privada'}
+                </span>
+            </button>
+        `).join('');
+    } catch {
+        contenedor.innerHTML = '<p class="text-faint" style="font-size:12px">Error al cargar listas.</p>';
+    }
+}
+
+async function añadirALista(idLista, nombreLista) {
+    try {
+        await api.listas.añadirPelicula(idLista, tmdbId);
+        mostrarToast(`Añadida a "${nombreLista}" ✓`);
+        // cerramos el panel
+        document.getElementById('panelListas').classList.add('oculto');
+        document.getElementById('toggleListasArrow').textContent = '▾';
+        panelListasAbierto = false;
+    } catch (err) {
+        mostrarToast(err.message || 'Error al añadir', 'error');
+    }
+}
+
+// ── RESEÑAS ───────────────────────────────────────────────────────────────────
+
+async function cargarResenas() {
+    // reseñas de amigos (solo si hay sesión)
+    if (auth.estaLogueado()) {
+        try {
+            const amigos = await api.resenas.amigos(tmdbId);
+            renderResenaAmigos(amigos);
+            if (amigos.length > 0) {
+                document.getElementById('seccionAmigos').classList.remove('oculto');
+                document.getElementById('subtituloComunidad').textContent = 'Comunidad';
+            }
+        } catch { /* silencioso — puede no haber amigos */ }
+    }
+
+    // reseñas de la comunidad
+    try {
+        const comunidad = await api.resenas.comunidad(tmdbId);
+        renderResenasComunidad(comunidad);
+    } catch {
+        document.getElementById('listaComunidad').innerHTML =
+            '<p class="text-faint" style="font-size:13px">No se pudieron cargar las reseñas.</p>';
+    }
+}
+
+function avatarHTML(avatar_url, username, size = 32) {
+    const style = `width:${size}px;height:${size}px`;
+    if (avatar_url) {
+        return `<div class="resena-card__avatar" style="${style}"><img src="${avatar_url}" alt="${username}"></div>`;
+    }
+    return `<div class="resena-card__avatar" style="${style}">${(username || '?')[0].toUpperCase()}</div>`;
+}
+
+function renderResenaAmigos(amigos) {
+    const lista = document.getElementById('listaAmigos');
+    if (amigos.length === 0) {
+        lista.innerHTML = '<p class="text-faint" style="font-size:13px;padding:8px 0">Ningún amigo ha visto esta película aún.</p>';
+        return;
+    }
+    lista.innerHTML = amigos.map(a => {
+        const avgEl = a.avatar_url
+            ? `<img src="${a.avatar_url}" alt="${a.username}">`
+            : a.username[0].toUpperCase();
+        return `
+            <div class="amigo-resena">
+                <div class="amigo-resena__avatar">${avgEl}</div>
+                <div class="amigo-resena__info">
+                    <div class="amigo-resena__username"
+                         onclick="location.href='usuario.html?id=${a.id_usuario}'">${a.username}</div>
+                    <div class="amigo-resena__stats">
+                        ${a.puntuacion ? `<span>★ ${a.puntuacion}/10</span>` : ''}
+                        <span>${a.total_entradas} ${a.total_entradas === 1 ? 'visionado' : 'visionados'}</span>
+                    </div>
+                    ${a.ultima_resena
+                        ? `<p class="amigo-resena__texto">"${a.ultima_resena}"</p>`
+                        : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderResenasComunidad(resenas) {
+    const lista = document.getElementById('listaComunidad');
+    if (resenas.length === 0) {
+        lista.innerHTML = '<p class="text-faint" style="font-size:13px">Aún no hay reseñas de la comunidad.</p>';
+        return;
+    }
+    lista.innerHTML = resenas.map(r => crearResenaCardHTML(r)).join('');
+}
+
+function crearResenaCardHTML(r) {
+    const fecha = new Date(r.fecha_visionado).toLocaleDateString('es', {
+        day: 'numeric', month: 'short', year: 'numeric'
+    });
+    const likedClass = r.yo_di_like ? 'resena-accion-btn--liked' : '';
+    const likeLabel  = r.yo_di_like ? 'Me gusta' : 'Me gusta';
+
+    return `
+        <div class="resena-card" id="resena-${r.id}">
+            <div class="resena-card__header">
+                ${avatarHTML(r.avatar_url, r.username)}
+                <div class="resena-card__meta">
+                    <div class="resena-card__username"
+                         onclick="location.href='usuario.html?id=${r.id_usuario}'">${r.username}</div>
+                    <div class="resena-card__fecha">${fecha}</div>
+                </div>
+                ${r.puntuacion ? `<div class="resena-card__puntuacion">★ ${r.puntuacion}</div>` : ''}
+            </div>
+            ${r.resena ? `<p class="resena-card__texto">${r.resena}</p>` : ''}
+            <div class="resena-card__acciones">
+                <button class="resena-accion-btn ${likedClass}" id="like-btn-${r.id}"
+                        onclick="toggleLike(${r.id}, this)" ${auth.estaLogueado() ? '' : 'disabled'}>
+                    <svg viewBox="0 0 24 24" fill="${r.yo_di_like ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                    </svg>
+                    <span id="like-count-${r.id}">${r.total_likes}</span>
+                </button>
+                <button class="resena-accion-btn" onclick="toggleComentarios(${r.id}, this)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                    <span>${r.total_comentarios}</span>
+                </button>
+            </div>
+            <div class="comentarios-seccion oculto" id="comentarios-${r.id}"></div>
+        </div>
+    `;
+}
+
+// Toggle like en una reseña
+async function toggleLike(idEntrada, btn) {
+    if (!auth.estaLogueado()) return;
+    const liked = btn.classList.contains('resena-accion-btn--liked');
+    const countEl = document.getElementById(`like-count-${idEntrada}`);
+    try {
+        if (liked) {
+            await api.resenas.quitarLike(idEntrada);
+            btn.classList.remove('resena-accion-btn--liked');
+            btn.querySelector('svg').setAttribute('fill', 'none');
+            countEl.textContent = Math.max(0, parseInt(countEl.textContent) - 1);
+        } else {
+            await api.resenas.darLike(idEntrada);
+            btn.classList.add('resena-accion-btn--liked');
+            btn.querySelector('svg').setAttribute('fill', 'currentColor');
+            countEl.textContent = parseInt(countEl.textContent) + 1;
+        }
+    } catch (err) {
+        mostrarToast(err.message || 'Error al procesar like', 'error');
+    }
+}
+
+// Muestra/oculta los comentarios de una reseña
+async function toggleComentarios(idEntrada, btn) {
+    const seccion = document.getElementById(`comentarios-${idEntrada}`);
+    if (!seccion.classList.contains('oculto')) {
+        seccion.classList.add('oculto');
+        return;
+    }
+    seccion.classList.remove('oculto');
+    if (seccion.dataset.cargado) return;
+    seccion.dataset.cargado = '1';
+    await cargarComentarios(idEntrada, seccion);
+}
+
+async function cargarComentarios(idEntrada, contenedor) {
+    try {
+        const comentarios = await api.resenas.comentarios(idEntrada);
+        const miId = auth.getUsuario()?.id;
+
+        const listHTML = comentarios.length === 0
+            ? '<p class="text-faint" style="font-size:12px;padding:4px 0">Sin comentarios aún.</p>'
+            : comentarios.map(c => `
+                <div class="comentario-item" id="comentario-${c.id}">
+                    <div class="comentario-item__avatar">
+                        ${c.avatar_url
+                            ? `<img src="${c.avatar_url}" alt="${c.username}">`
+                            : c.username[0].toUpperCase()
+                        }
+                    </div>
+                    <div class="comentario-item__body">
+                        <span class="comentario-item__username">${c.username}</span>
+                        <span class="comentario-item__texto">${c.texto}</span>
+                        ${miId === c.id_usuario
+                            ? `<button class="comentario-item__borrar"
+                                       onclick="borrarComentario(${c.id}, ${idEntrada})">✕</button>`
+                            : ''}
+                    </div>
+                </div>
+            `).join('');
+
+        const formHTML = auth.estaLogueado() ? `
+            <div class="comentario-form" id="form-comentario-${idEntrada}">
+                <input type="text" placeholder="Añadir comentario…"
+                       maxlength="500"
+                       onkeydown="if(event.key==='Enter') enviarComentario(${idEntrada})"/>
+                <button class="btn btn--surface btn--sm"
+                        onclick="enviarComentario(${idEntrada})">Enviar</button>
+            </div>
+        ` : '';
+
+        contenedor.innerHTML = `<div id="lista-comentarios-${idEntrada}">${listHTML}</div>${formHTML}`;
+    } catch {
+        contenedor.innerHTML = '<p class="text-faint" style="font-size:12px">Error al cargar comentarios.</p>';
+    }
+}
+
+async function enviarComentario(idEntrada) {
+    const form = document.getElementById(`form-comentario-${idEntrada}`);
+    const input = form.querySelector('input');
+    const texto = input.value.trim();
+    if (!texto) return;
+    try {
+        const nuevo = await api.resenas.crearComentario(idEntrada, texto);
+        input.value = '';
+        const lista = document.getElementById(`lista-comentarios-${idEntrada}`);
+        const miId  = auth.getUsuario()?.id;
+        const item  = document.createElement('div');
+        item.className = 'comentario-item';
+        item.id = `comentario-${nuevo.id}`;
+        item.innerHTML = `
+            <div class="comentario-item__avatar">
+                ${nuevo.avatar_url
+                    ? `<img src="${nuevo.avatar_url}" alt="${nuevo.username}">`
+                    : nuevo.username[0].toUpperCase()
+                }
+            </div>
+            <div class="comentario-item__body">
+                <span class="comentario-item__username">${nuevo.username}</span>
+                <span class="comentario-item__texto">${nuevo.texto}</span>
+                <button class="comentario-item__borrar"
+                        onclick="borrarComentario(${nuevo.id}, ${idEntrada})">✕</button>
+            </div>
+        `;
+        // reemplaza el mensaje de "sin comentarios" si era el primero
+        if (lista.querySelector('.text-faint')) lista.innerHTML = '';
+        lista.appendChild(item);
+    } catch (err) {
+        mostrarToast(err.message || 'Error al comentar', 'error');
+    }
+}
+
+async function borrarComentario(idComentario, idEntrada) {
+    try {
+        await api.resenas.borrarComentario(idComentario);
+        const el = document.getElementById(`comentario-${idComentario}`);
+        if (el) el.remove();
+    } catch (err) {
+        mostrarToast(err.message || 'Error al borrar', 'error');
+    }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {

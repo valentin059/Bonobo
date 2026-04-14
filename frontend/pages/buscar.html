@@ -76,30 +76,33 @@
             `).join('');
         }
 
+        async function buscar(q) {
+            if (!q) {
+                document.getElementById('listaResultados').innerHTML = '';
+                document.getElementById('estadoInicial').classList.remove('oculto');
+                return;
+            }
+            try {
+                const resultados = await api.usuarios.buscar(q);
+                renderizarUsuarios(resultados);
+            } catch { /* silencioso */ }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             renderNav('../');
 
-            const input = document.getElementById('inputBuscar');
+            const input  = document.getElementById('inputBuscar');
+            // si venimos desde el buscador del nav con @usuario, pre-cargamos
+            const params = new URLSearchParams(window.location.search);
+            const qParam = params.get('q');
+            if (qParam) {
+                input.value = qParam;
+                buscar(qParam);
+            }
 
-            // Buscamos con un debounce de 300ms para no saturar la API con cada tecla
             input.addEventListener('input', () => {
                 clearTimeout(debounceTimer);
-                const q = input.value.trim();
-
-                if (!q) {
-                    document.getElementById('listaResultados').innerHTML = '';
-                    document.getElementById('estadoInicial').classList.remove('oculto');
-                    return;
-                }
-
-                debounceTimer = setTimeout(async () => {
-                    try {
-                        const resultados = await api.usuarios.buscar(q);
-                        renderizarUsuarios(resultados);
-                    } catch {
-                        // Error silencioso en búsqueda
-                    }
-                }, 300);
+                debounceTimer = setTimeout(() => buscar(input.value.trim()), 300);
             });
         });
     </script>

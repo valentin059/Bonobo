@@ -16,32 +16,29 @@
         <div class="perfil-cabecera" id="perfilCabecera">
 
             <div class="perfil-top">
-                <!-- Avatar -->
                 <div class="perfil-avatar perfil-avatar--placeholder" id="perfilAvatar">?</div>
 
                 <div class="perfil-datos">
                     <h1 class="perfil-username" id="perfilUsername">—</h1>
                     <p class="perfil-bio" id="perfilBio"></p>
 
-                    <!-- Estadísticas: vistas · seguidores · seguidos -->
                     <div class="perfil-stats">
-                        <div class="perfil-stat">
+                        <div class="perfil-stat" style="cursor:pointer" onclick="location.href='vistas.html'">
                             <div class="perfil-stat__num" id="statVistas">0</div>
                             <div class="perfil-stat__label">Vistas</div>
                         </div>
-                        <div class="perfil-stat">
+                        <div class="perfil-stat" style="cursor:pointer" onclick="abrirModalSeguidores()">
                             <div class="perfil-stat__num" id="statSeguidores">0</div>
                             <div class="perfil-stat__label">Seguidores</div>
                         </div>
-                        <div class="perfil-stat">
+                        <div class="perfil-stat" style="cursor:pointer" onclick="abrirModalSeguidos()">
                             <div class="perfil-stat__num" id="statSeguidos">0</div>
                             <div class="perfil-stat__label">Siguiendo</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Botón de editar (solo en perfil propio) -->
-                <button class="btn btn--ghost btn--sm" id="btnEditarPerfil" onclick="abrirModalEditar()">
+                <button class="btn btn--ghost btn--sm" onclick="abrirModalEditar()">
                     Editar perfil
                 </button>
             </div>
@@ -50,23 +47,27 @@
             <div>
                 <p style="font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">
                     Películas favoritas
+                    <span style="color:var(--border2);margin-left:6px;font-size:10px">(clic para editar)</span>
                 </p>
-                <div class="favoritas-grid" id="favoritasGrid">
-                    <!-- Se rellena por JS. Cada slot vacío muestra un + -->
+                <!-- Vista normal de favoritas -->
+                <div class="favoritas-grid" id="favoritasGrid"></div>
+
+                <!-- Editor inline de favoritas (oculto por defecto) -->
+                <div id="favEditInline" class="oculto" style="max-width:500px">
+                    <div class="favoritas-edit-grid" id="favEditGrid"></div>
+                    <p class="form-error" id="errorFavoritas"></p>
+                    <div style="display:flex;gap:8px;margin-top:4px">
+                        <button class="btn btn--primary btn--sm" onclick="guardarFavoritas()">
+                            Guardar
+                        </button>
+                        <button class="btn btn--ghost btn--sm" onclick="cerrarEditFavoritas()">
+                            Cancelar
+                        </button>
+                    </div>
                 </div>
             </div>
 
         </div>
-
-        <!-- ── PELÍCULAS VISTAS ──────────────────────────────────────────── -->
-        <section class="seccion">
-            <div class="seccion-header">
-                <h2 class="seccion-titulo">Películas vistas</h2>
-                <div class="seccion-linea"></div>
-                <span class="seccion-meta" id="lblVistas"></span>
-            </div>
-            <div class="peliculas-grid" id="gridVistas"></div>
-        </section>
 
         <!-- ── DIARIO RECIENTE ───────────────────────────────────────────── -->
         <section class="seccion">
@@ -78,12 +79,35 @@
             <div class="diario-lista" id="listaDiario"></div>
         </section>
 
+        <!-- ── PELÍCULAS VISTAS ──────────────────────────────────────────── -->
+        <section class="seccion">
+            <div class="seccion-header">
+                <h2 class="seccion-titulo">Películas vistas</h2>
+                <div class="seccion-linea"></div>
+                <span class="seccion-meta" id="lblVistas"></span>
+            </div>
+            <div class="peliculas-grid peliculas-grid--sm" id="gridVistas"
+                 style="overflow:hidden;max-height:140px"></div>
+        </section>
+
+        <!-- ── MIS LISTAS ─────────────────────────────────────────────────── -->
+        <section class="seccion">
+            <div class="seccion-header">
+                <h2 class="seccion-titulo">Mis listas</h2>
+                <div class="seccion-linea"></div>
+                <a href="listas.html" class="seccion-meta" style="color:var(--accent)">Ver todo →</a>
+            </div>
+            <div class="listas-lista" id="listaListas">
+                <p class="text-faint" style="font-size:13px">Sin listas todavía.</p>
+            </div>
+        </section>
+
     </main>
 
     <!-- ── MODAL: EDITAR PERFIL ─────────────────────────────────────────── -->
     <div class="modal-overlay modal-overlay--hidden" id="modalEditar">
         <div class="modal">
-            <button class="modal-close" onclick="cerrarModalEditar()">✕</button>
+            <button class="modal-close" onclick="cerrarModal('modalEditar')">✕</button>
             <h2 class="modal-titulo">Editar perfil</h2>
 
             <div class="form-grupo">
@@ -100,6 +124,24 @@
             <button class="btn btn--primary" style="width:100%;margin-top:8px" onclick="guardarPerfil()">
                 Guardar cambios
             </button>
+        </div>
+    </div>
+
+    <!-- ── MODAL: SEGUIDORES ─────────────────────────────────────────────── -->
+    <div class="modal-overlay modal-overlay--hidden" id="modalSeguidores">
+        <div class="modal">
+            <button class="modal-close" onclick="cerrarModal('modalSeguidores')">✕</button>
+            <h2 class="modal-titulo">Seguidores</h2>
+            <div class="modal-usuarios-lista" id="listaModalSeguidores"></div>
+        </div>
+    </div>
+
+    <!-- ── MODAL: SEGUIDOS ───────────────────────────────────────────────── -->
+    <div class="modal-overlay modal-overlay--hidden" id="modalSeguidos">
+        <div class="modal">
+            <button class="modal-close" onclick="cerrarModal('modalSeguidos')">✕</button>
+            <h2 class="modal-titulo">Siguiendo</h2>
+            <div class="modal-usuarios-lista" id="listaModalSeguidos"></div>
         </div>
     </div>
 

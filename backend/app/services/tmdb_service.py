@@ -3,7 +3,8 @@ import httpx
 from ..config import settings
 from ..schemas.peliculas import (
     PersonaCast, PersonaCrew, PeliculaResumen, PeliculaCartelera, PeliculaEstreno,
-    PaginadoPeliculas, PaginadoCartelera, PaginadoEstrenos, PeliculaDetalle
+    PaginadoPeliculas, PaginadoCartelera, PaginadoEstrenos, PeliculaDetalle,
+    PeliculaPersona, PersonaDetalle,
 )
 
 # roles de equipo técnico que se muestran, por departamento
@@ -229,3 +230,68 @@ def obtener_detalle_pelicula(tmdb_id: int) -> PeliculaDetalle:
         presupuesto=movie.get("budget") or None,
         recaudacion=movie.get("revenue") or None,
     )
+
+
+def obtener_persona(person_id: int) -> PersonaDetalle:
+    with httpx.Client(timeout=TMDB_TIMEOUT) as client:
+        persona_res = client.get(
+            f"{TMDB_BASE_URL}/person/{person_id}",
+            headers=headers,
+            params={"language": "es-ES"}
+        )
+        persona_res.raise_for_status()
+
+        creditos_res = client.get(
+            f"{TMDB_BASE_URL}/person/{person_id}/movie_credits",
+            headers=headers,
+            params={"language": "es-ES"}
+        )
+        creditos_res.raise_for_status()
+
+    persona  = persona_res.json()
+    creditos = creditos_res.json()
+
+    # Combina cast + crew deduplicando por tmdb_id (cast tiene prioridad)
+    pelis: dict[int, PeliculaPersona] = {}
+    for movie in creditos.get("cast", []):
+        tid = movie.get("id")
+        if not tid:
+            continue
+        pelis[tid] = PeliculaPersona(
+            tmdb_id=tid,
+            titulo=movie.get("title"),
+            poster_url=build_poster_url(movie.get("poster_path")),
+            anio_estreno=_parse_anio(movie.get("release_date")),
+            personaje=movie.get("character") or None,
+        )
+
+    for movie in creditos.get("crew", []):
+        tid = movie.get("id")
+        if not tid or tid in pelis:
+            continue
+        pelis[tid] = PeliculaPersona(
+            tmdb_id=tid,
+            titulo=movie.get("title"),
+            poster_url=build_poster_url(movie.get("poster_path")),
+            anio_estreno=_parse_anio(movie.get("release_date")),
+            rol=movie.get("job") or None,
+        )
+
+    filmografia = sorted(
+        [p for p in pelis.values() if p.anio_estreno],
+        key=lambda x: x.anio_estreno or 0,
+        reverse=True
+    )[:60]
+
+    return PersonaDetalle(
+        person_id=persona["id"],
+        nombre=persona.get("name", ""),
+        foto_url=build_poster_url(persona.get("profile_path")),
+        biografia=persona.get("biography") or None,
+        conocido_por=persona.get("known_for_department") or None,
+        fecha_nacimiento=persona.get("birthday") or None,
+        lugar_nacimiento=persona.get("place_of_birth") or None,
+        filmografia=filmografia,
+    )
+
+

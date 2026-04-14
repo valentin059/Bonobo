@@ -27,16 +27,21 @@
                             <div class="perfil-stat__num" id="statVistas">0</div>
                             <div class="perfil-stat__label">Vistas</div>
                         </div>
-                        <div class="perfil-stat">
+                        <div class="perfil-stat" style="cursor:pointer" onclick="abrirModalSeguidores()">
                             <div class="perfil-stat__num" id="statSeguidores">0</div>
                             <div class="perfil-stat__label">Seguidores</div>
                         </div>
-                        <div class="perfil-stat">
+                        <div class="perfil-stat" style="cursor:pointer" onclick="abrirModalSeguidos()">
                             <div class="perfil-stat__num" id="statSeguidos">0</div>
                             <div class="perfil-stat__label">Siguiendo</div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Botón seguir/dejar de seguir (solo si hay sesión y no es uno mismo) -->
+                <button class="btn btn--sm oculto" id="btnSeguir" onclick="toggleSeguir()">
+                    Seguir
+                </button>
             </div>
 
             <!-- Favoritas del usuario -->
@@ -54,11 +59,48 @@
             <div class="seccion-header">
                 <h2 class="seccion-titulo">Películas vistas</h2>
                 <div class="seccion-linea"></div>
+                <span class="seccion-meta" id="lblVistas"></span>
             </div>
             <div class="peliculas-grid" id="gridVistas"></div>
         </section>
 
+        <!-- ── DIARIO RECIENTE ───────────────────────────────────────────── -->
+        <section class="seccion" id="seccionDiario">
+            <div class="seccion-header">
+                <h2 class="seccion-titulo">Diario reciente</h2>
+                <div class="seccion-linea"></div>
+            </div>
+            <div class="diario-lista" id="listaDiario"></div>
+        </section>
+
+        <!-- ── LISTAS PÚBLICAS ───────────────────────────────────────────── -->
+        <section class="seccion" id="seccionListas">
+            <div class="seccion-header">
+                <h2 class="seccion-titulo">Listas</h2>
+                <div class="seccion-linea"></div>
+            </div>
+            <div class="listas-lista" id="listaListas"></div>
+        </section>
+
     </main>
+
+    <!-- ── MODAL: SEGUIDORES ─────────────────────────────────────────────── -->
+    <div class="modal-overlay modal-overlay--hidden" id="modalSeguidores">
+        <div class="modal">
+            <button class="modal-close" onclick="cerrarModal('modalSeguidores')">✕</button>
+            <h2 class="modal-titulo">Seguidores</h2>
+            <div class="modal-usuarios-lista" id="listaModalSeguidores"></div>
+        </div>
+    </div>
+
+    <!-- ── MODAL: SEGUIDOS ───────────────────────────────────────────────── -->
+    <div class="modal-overlay modal-overlay--hidden" id="modalSeguidos">
+        <div class="modal">
+            <button class="modal-close" onclick="cerrarModal('modalSeguidos')">✕</button>
+            <h2 class="modal-titulo">Siguiendo</h2>
+            <div class="modal-usuarios-lista" id="listaModalSeguidos"></div>
+        </div>
+    </div>
 
     <div class="toast" id="toast"></div>
 
@@ -66,6 +108,10 @@
     <script src="../js/auth.js"></script>
     <script src="../js/nav.js"></script>
     <script>
+        let usuarioId = null;
+        let yoSigo    = false;
+        let movieMap  = {};
+
         function mostrarToast(msg, tipo = 'ok') {
             const t = document.getElementById('toast');
             t.textContent = msg;
@@ -77,30 +123,219 @@
             location.href = `pelicula.html?id=${tmdbId}`;
         }
 
+        function cerrarModal(id) {
+            document.getElementById(id).classList.add('modal-overlay--hidden');
+        }
+
+        // ── Seguir / Dejar de seguir ──────────────────────────────────────
+
+        function actualizarBtnSeguir() {
+            const btn = document.getElementById('btnSeguir');
+            if (yoSigo) {
+                btn.textContent = 'Siguiendo';
+                btn.className = 'btn btn--sm btn--siguiendo';
+            } else {
+                btn.textContent = 'Seguir';
+                btn.className = 'btn btn--sm btn--seguir';
+            }
+        }
+
+        async function toggleSeguir() {
+            try {
+                if (yoSigo) {
+                    await api.social.dejarDeSeguir(usuarioId);
+                    yoSigo = false;
+                    document.getElementById('statSeguidores').textContent =
+                        Math.max(0, parseInt(document.getElementById('statSeguidores').textContent) - 1);
+                    mostrarToast('Has dejado de seguir a este usuario');
+                } else {
+                    await api.social.seguir(usuarioId);
+                    yoSigo = true;
+                    document.getElementById('statSeguidores').textContent =
+                        parseInt(document.getElementById('statSeguidores').textContent) + 1;
+                    mostrarToast('Ahora sigues a este usuario ✓');
+                }
+                actualizarBtnSeguir();
+            } catch (err) {
+                mostrarToast(err.message || 'Error al actualizar', 'error');
+            }
+        }
+
+        // ── Modales seguidores/seguidos ───────────────────────────────────
+
+        function renderUsuariosModal(usuarios) {
+            if (!usuarios || usuarios.length === 0) {
+                return '<p class="text-faint" style="font-size:13px;padding:8px 0">Ningún usuario.</p>';
+            }
+            return usuarios.map(u => `
+                <a href="usuario.html?id=${u.id}" class="usuario-fila">
+                    <div class="usuario-fila__avatar ${u.avatar_url ? '' : 'usuario-fila__avatar--placeholder'}">
+                        ${u.avatar_url
+                            ? `<img src="${u.avatar_url}" alt="${u.username}" class="usuario-fila__avatar">`
+                            : u.username[0].toUpperCase()
+                        }
+                    </div>
+                    <span class="usuario-fila__username">${u.username}</span>
+                </a>
+            `).join('');
+        }
+
+        async function abrirModalSeguidores() {
+            document.getElementById('modalSeguidores').classList.remove('modal-overlay--hidden');
+            const lista = document.getElementById('listaModalSeguidores');
+            lista.innerHTML = '<p class="text-faint" style="font-size:13px">Cargando…</p>';
+            try {
+                const data = await api.social.seguidores(usuarioId);
+                lista.innerHTML = renderUsuariosModal(data);
+            } catch {
+                lista.innerHTML = '<p class="text-faint" style="font-size:13px">Error al cargar.</p>';
+            }
+        }
+
+        async function abrirModalSeguidos() {
+            document.getElementById('modalSeguidos').classList.remove('modal-overlay--hidden');
+            const lista = document.getElementById('listaModalSeguidos');
+            lista.innerHTML = '<p class="text-faint" style="font-size:13px">Cargando…</p>';
+            try {
+                const data = await api.social.seguidos(usuarioId);
+                lista.innerHTML = renderUsuariosModal(data);
+            } catch {
+                lista.innerHTML = '<p class="text-faint" style="font-size:13px">Error al cargar.</p>';
+            }
+        }
+
+        // ── Renderizado ───────────────────────────────────────────────────
+
+        function renderizarFavoritas(favoritas) {
+            const porOrden = {};
+            favoritas.forEach(f => { porOrden[f.orden] = f.pelicula; });
+            document.getElementById('favoritasGrid').innerHTML =
+                Array.from({ length: 4 }, (_, i) => {
+                    const p = porOrden[i + 1];
+                    return p
+                        ? `<div class="favorita-slot" onclick="irAPelicula(${p.tmdb_id})">
+                               ${p.poster_url
+                                   ? `<img src="${p.poster_url}" alt="${p.titulo}">`
+                                   : `<div class="favorita-slot--vacio">?</div>`
+                               }
+                           </div>`
+                        : `<div class="favorita-slot favorita-slot--vacio">—</div>`;
+                }).join('');
+        }
+
+        function renderizarVistas(vistas) {
+            const lbl  = document.getElementById('lblVistas');
+            const grid = document.getElementById('gridVistas');
+            lbl.textContent = `${vistas.length} película${vistas.length !== 1 ? 's' : ''}`;
+
+            if (vistas.length === 0) {
+                grid.innerHTML = `<div class="estado-vacio" style="grid-column:1/-1">
+                    <p class="estado-vacio__desc">Este usuario aún no ha visto ninguna película.</p>
+                </div>`;
+                return;
+            }
+            grid.innerHTML = vistas.map(v => {
+                const p = v.pelicula;
+                movieMap[v.id_pelicula] = p;
+                return `
+                    <div class="pelicula-card" onclick="irAPelicula(${p.tmdb_id})">
+                        <div class="pelicula-card__poster">
+                            ${p.poster_url
+                                ? `<img class="pelicula-card__img" src="${p.poster_url}" alt="${p.titulo}" loading="lazy">`
+                                : `<div class="pelicula-card__no-img">SIN IMAGEN</div>`
+                            }
+                            <div class="pelicula-card__overlay">
+                                ${v.puntuacion ? `<div class="pelicula-card__puntuacion">★ ${v.puntuacion}</div>` : ''}
+                            </div>
+                        </div>
+                        <div class="pelicula-card__info">
+                            <div class="pelicula-card__titulo">${p.titulo || '—'}</div>
+                            <div class="pelicula-card__anio">${p.anio_estreno || ''}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderizarDiario(entradas) {
+            const lista = document.getElementById('listaDiario');
+            if (entradas.length === 0) {
+                document.getElementById('seccionDiario').style.display = 'none';
+                return;
+            }
+            lista.innerHTML = entradas.slice(0, 5).map(entrada => {
+                const fecha = new Date(entrada.fecha_visionado);
+                const dia   = fecha.getDate();
+                const mes   = fecha.toLocaleString('es', { month: 'short' }).toUpperCase();
+                const pelicula = movieMap[entrada.id_pelicula];
+                return `
+                    <div class="diario-entrada">
+                        <div class="diario-fecha">
+                            <div class="diario-fecha__dia">${dia}</div>
+                            <div class="diario-fecha__mes">${mes}</div>
+                        </div>
+                        ${pelicula?.poster_url
+                            ? `<div class="diario-poster" style="cursor:pointer"
+                                   onclick="irAPelicula(${pelicula.tmdb_id})">
+                                   <img src="${pelicula.poster_url}" alt="">
+                               </div>`
+                            : `<div class="diario-poster"></div>`
+                        }
+                        <div class="diario-contenido">
+                            <div class="diario-titulo-peli"
+                                 ${pelicula ? `style="cursor:pointer" onclick="irAPelicula(${pelicula.tmdb_id})"` : ''}>
+                                ${pelicula?.titulo || `Entrada #${entrada.id}`}
+                            </div>
+                            ${entrada.resena
+                                ? `<p class="diario-resena">${entrada.resena}</p>`
+                                : `<p class="diario-resena text-faint">Sin reseña</p>`
+                            }
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderizarListas(listas) {
+            const seccion = document.getElementById('seccionListas');
+            const lista   = document.getElementById('listaListas');
+
+            // solo mostramos listas públicas
+            const publicas = listas.filter(l => l.es_publica);
+            if (publicas.length === 0) {
+                seccion.style.display = 'none';
+                return;
+            }
+            lista.innerHTML = publicas.map(l => `
+                <div class="lista-card" onclick="location.href='listas.html?id=${l.id}'">
+                    <div class="lista-card__info">
+                        <div class="lista-card__nombre">${l.nombre}</div>
+                        ${l.descripcion ? `<div class="lista-card__desc">${l.descripcion}</div>` : ''}
+                    </div>
+                    <span class="lista-badge lista-badge--publica">Pública</span>
+                    <div class="lista-card__count">${l.total_peliculas ?? 0} pel.</div>
+                </div>
+            `).join('');
+        }
+
+        // ── Init ──────────────────────────────────────────────────────────
+
         document.addEventListener('DOMContentLoaded', async () => {
             renderNav('../');
 
-            // Leemos el id del usuario de la URL (?id=XX)
             const params = new URLSearchParams(window.location.search);
             const id = parseInt(params.get('id'));
 
-            if (!id) {
-                location.href = '../index.html';
-                return;
-            }
-
-            // Si es el propio usuario, redirigimos a su página de perfil
-            const miUsuario = auth.getUsuario();
-            if (miUsuario && miUsuario.id === id) {
-                location.href = 'perfil.html';
-                return;
-            }
+            if (!id) { location.href = '../index.html'; return; }
 
             try {
                 const usuario = await api.usuarios.perfil(id);
+                usuarioId = usuario.id;
+                yoSigo    = usuario.yo_sigo === true;
+
                 document.title = `BONOBO — ${usuario.username}`;
 
-                // Avatar
+                // avatar
                 const avatarEl = document.getElementById('perfilAvatar');
                 if (usuario.avatar_url) {
                     avatarEl.innerHTML = `<img class="perfil-avatar" src="${usuario.avatar_url}" alt="${usuario.username}">`;
@@ -110,59 +345,31 @@
                 }
 
                 document.getElementById('perfilUsername').textContent  = usuario.username;
-                document.getElementById('perfilBio').textContent        = usuario.bio || '';
-                document.getElementById('statVistas').textContent       = usuario.total_vistas;
-                document.getElementById('statSeguidores').textContent   = usuario.seguidores;
-                document.getElementById('statSeguidos').textContent     = usuario.seguidos;
+                document.getElementById('perfilBio').textContent       = usuario.bio || '';
+                document.getElementById('statVistas').textContent      = usuario.total_vistas;
+                document.getElementById('statSeguidores').textContent  = usuario.seguidores;
+                document.getElementById('statSeguidos').textContent    = usuario.seguidos;
 
-                // Favoritas
-                const favoritas = await api.usuarios.favoritas(id);
-                const porOrden  = {};
-                favoritas.forEach(f => { porOrden[f.orden] = f.pelicula; });
-
-                document.getElementById('favoritasGrid').innerHTML =
-                    Array.from({ length: 4 }, (_, i) => {
-                        const p = porOrden[i + 1];
-                        return p
-                            ? `<div class="favorita-slot" onclick="irAPelicula(${p.tmdb_id})">
-                                   ${p.poster_url
-                                       ? `<img src="${p.poster_url}" alt="${p.titulo}">`
-                                       : `<div class="favorita-slot--vacio">?</div>`
-                                   }
-                               </div>`
-                            : `<div class="favorita-slot favorita-slot--vacio">—</div>`;
-                    }).join('');
-
-                // Vistas
-                const vistas = await api.usuarios.vistas(id, 0, 40);
-                const grid   = document.getElementById('gridVistas');
-
-                if (vistas.length === 0) {
-                    grid.innerHTML = `<div class="estado-vacio" style="grid-column:1/-1">
-                        <p class="estado-vacio__desc">Este usuario aún no ha visto ninguna película.</p>
-                    </div>`;
-                } else {
-                    grid.innerHTML = vistas.map(v => {
-                        const p = v.pelicula;
-                        return `
-                            <div class="pelicula-card" onclick="irAPelicula(${p.tmdb_id})">
-                                <div class="pelicula-card__poster">
-                                    ${p.poster_url
-                                        ? `<img class="pelicula-card__img" src="${p.poster_url}" alt="${p.titulo}" loading="lazy">`
-                                        : `<div class="pelicula-card__no-img">SIN IMAGEN</div>`
-                                    }
-                                    <div class="pelicula-card__overlay">
-                                        ${v.puntuacion ? `<div class="pelicula-card__puntuacion">★ ${v.puntuacion}</div>` : ''}
-                                    </div>
-                                </div>
-                                <div class="pelicula-card__info">
-                                    <div class="pelicula-card__titulo">${p.titulo || '—'}</div>
-                                    <div class="pelicula-card__anio">${p.anio_estreno || ''}</div>
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
+                // botón seguir: solo si hay sesión y no es uno mismo
+                const miUsuario = auth.getUsuario();
+                if (auth.estaLogueado() && (!miUsuario || miUsuario.id !== id)) {
+                    const btn = document.getElementById('btnSeguir');
+                    btn.classList.remove('oculto');
+                    actualizarBtnSeguir();
                 }
+
+                // cargamos el resto en paralelo
+                const [favoritas, vistas, diario, listas] = await Promise.all([
+                    api.usuarios.favoritas(id),
+                    api.usuarios.vistas(id, 0, 40),
+                    api.usuarios.diario(id, 0, 5),
+                    api.usuarios.listas(id),
+                ]);
+
+                renderizarFavoritas(favoritas);
+                renderizarVistas(vistas);      // construye movieMap
+                renderizarDiario(diario);
+                renderizarListas(listas);
 
             } catch (err) {
                 mostrarToast('No se pudo cargar el perfil', 'error');

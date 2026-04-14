@@ -1051,9 +1051,8 @@ img { display: block; max-width: 100%; }
 /* Películas favoritas en el perfil (4 pósters en una fila) */
 .favoritas-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    max-width: 400px;
+    grid-template-columns: repeat(4, 140px);
+    gap: 16px;
 }
 .favorita-slot {
     aspect-ratio: 2/3;
@@ -1073,6 +1072,13 @@ img { display: block; max-width: 100%; }
     color: var(--faint);
     font-size: 20px;
 }
+
+/* Grid pequeño para vistas en el perfil */
+.peliculas-grid--sm {
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 8px;
+}
+.peliculas-grid--sm .pelicula-card__info { display: none; }
 
 /* ══════════════════════════════════════════════════════════════
    DIARIO
@@ -1318,3 +1324,495 @@ img { display: block; max-width: 100%; }
 .mt-8  { margin-top: 8px; }
 .mt-16 { margin-top: 16px; }
 .mt-32 { margin-top: 32px; }
+
+/* ══════════════════════════════════════════════════════════════
+   NIVEL 2 — SOCIAL, RESEÑAS, LISTAS
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Botón seguir / dejar de seguir ─────────────────────────── */
+.btn--seguir {
+    background: var(--accent);
+    color: #000;
+    font-weight: 600;
+}
+.btn--seguir:hover { background: var(--accent-hover); }
+
+.btn--siguiendo {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border2);
+}
+.btn--siguiendo:hover {
+    color: var(--error);
+    border-color: var(--error);
+}
+
+/* ── Reseñas (comunidad y amigos) ───────────────────────────── */
+.resenas-subtitulo {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--faint);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 16px;
+    margin-top: 24px;
+}
+.resenas-subtitulo:first-child { margin-top: 0; }
+
+/* Reseña de la comunidad */
+.resena-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+    transition: border-color 0.15s;
+}
+.resena-card:hover { border-color: var(--border2); }
+
+.resena-card__header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.resena-card__avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 14px;
+    color: var(--faint);
+    overflow: hidden;
+}
+.resena-card__avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.resena-card__meta { flex: 1; }
+.resena-card__username {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+}
+.resena-card__username:hover { color: var(--accent); }
+
+.resena-card__fecha {
+    font-size: 11px;
+    color: var(--faint);
+    margin-top: 1px;
+}
+.resena-card__puntuacion {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--rating);
+    flex-shrink: 0;
+}
+
+.resena-card__texto {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 12px;
+}
+
+.resena-card__acciones {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.resena-accion-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: var(--faint);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 0;
+    transition: color 0.15s;
+    font-family: var(--font-body);
+}
+.resena-accion-btn:hover { color: var(--muted); }
+.resena-accion-btn--liked { color: var(--liked); }
+.resena-accion-btn svg { width: 14px; height: 14px; }
+
+/* Reseña de amigo (más compacta) */
+.amigo-resena {
+    display: flex;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: flex-start;
+}
+.amigo-resena:last-child { border-bottom: none; }
+
+.amigo-resena__avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 16px;
+    color: var(--faint);
+    overflow: hidden;
+}
+.amigo-resena__avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.amigo-resena__info { flex: 1; }
+.amigo-resena__username {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    margin-bottom: 2px;
+}
+.amigo-resena__username:hover { color: var(--accent); }
+.amigo-resena__stats {
+    font-size: 11px;
+    color: var(--faint);
+    display: flex;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+.amigo-resena__texto {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+    font-style: italic;
+}
+
+/* ── Sección de comentarios ─────────────────────────────────── */
+.comentarios-seccion {
+    margin-top: 12px;
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+}
+
+.comentario-item {
+    display: flex;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: flex-start;
+}
+.comentario-item:last-child { border-bottom: none; }
+
+.comentario-item__avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--surface2);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 11px;
+    color: var(--faint);
+    overflow: hidden;
+}
+.comentario-item__avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.comentario-item__body { flex: 1; }
+.comentario-item__username {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    margin-right: 6px;
+}
+.comentario-item__texto {
+    font-size: 12px;
+    color: var(--muted);
+    display: inline;
+}
+.comentario-item__borrar {
+    font-size: 11px;
+    color: var(--faint);
+    background: none;
+    border: none;
+    cursor: pointer;
+    margin-left: 8px;
+    padding: 0;
+    font-family: var(--font-body);
+}
+.comentario-item__borrar:hover { color: var(--error); }
+
+.comentario-form {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+.comentario-form input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 12px;
+    padding: 7px 12px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.comentario-form input:focus { border-color: var(--accent-border); }
+.comentario-form input::placeholder { color: var(--faint); }
+
+/* ── Listas ──────────────────────────────────────────────────── */
+.lista-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+.lista-card:hover {
+    border-color: var(--border2);
+    background: var(--surface2);
+}
+
+.lista-card__info { flex: 1; min-width: 0; }
+.lista-card__nombre {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.lista-card__desc {
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lista-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 100px;
+    flex-shrink: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.lista-badge--publica  { background: rgba(34,197,94,0.12);  color: var(--watched); border: 1px solid rgba(34,197,94,0.3); }
+.lista-badge--privada  { background: rgba(120,120,160,0.12); color: var(--muted);  border: 1px solid var(--border); }
+
+.lista-card__count {
+    font-size: 12px;
+    color: var(--faint);
+    flex-shrink: 0;
+}
+
+.lista-card__acciones {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.listas-lista { display: flex; flex-direction: column; gap: 8px; }
+
+/* ── Detalle de lista ────────────────────────────────────────── */
+.lista-detalle-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 32px;
+}
+.lista-detalle-info { flex: 1; }
+.lista-detalle-nombre {
+    font-family: var(--font-display);
+    font-size: 32px;
+    letter-spacing: 0.02em;
+    margin-bottom: 6px;
+}
+.lista-detalle-desc {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 8px;
+}
+.lista-detalle-meta {
+    font-size: 12px;
+    color: var(--faint);
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+/* ── Modal ancho (para favoritas y búsqueda en listas) ───────── */
+.modal--wide { max-width: 680px; }
+
+/* Slots de favoritas en el modal de edición */
+.favoritas-edit-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+}
+.fav-edit-slot {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.fav-edit-slot__poster {
+    aspect-ratio: 2/3;
+    border-radius: var(--radius-sm);
+    background: var(--surface2);
+    border: 1px dashed var(--border);
+    overflow: hidden;
+    position: relative;
+}
+.fav-edit-slot__poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.fav-edit-slot__vacio {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--faint);
+    font-size: 18px;
+}
+.fav-edit-slot__clear {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.7);
+    color: var(--text);
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+.fav-edit-slot__label {
+    font-size: 10px;
+    color: var(--faint);
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.fav-edit-slot__search {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 11px;
+    padding: 5px 8px;
+    outline: none;
+    width: 100%;
+    transition: border-color 0.2s;
+}
+.fav-edit-slot__search:focus { border-color: var(--accent-border); }
+.fav-edit-slot__search::placeholder { color: var(--faint); }
+
+.fav-resultados {
+    position: absolute;
+    top: 100%;
+    left: 0; right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    z-index: 10;
+    max-height: 180px;
+    overflow-y: auto;
+    display: none;
+}
+.fav-result-item {
+    display: flex;
+    gap: 8px;
+    padding: 8px 10px;
+    cursor: pointer;
+    align-items: center;
+    font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+}
+.fav-result-item:last-child { border-bottom: none; }
+.fav-result-item:hover { background: var(--surface2); }
+.fav-result-item img {
+    width: 28px;
+    height: 42px;
+    object-fit: cover;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+.fav-result-item span { line-height: 1.3; }
+
+/* Wrapper para posicionar los resultados relativo al slot */
+.fav-search-wrap { position: relative; }
+
+/* ── Modal de usuarios (seguidores/seguidos) ─────────────────── */
+.modal-usuarios-lista {
+    max-height: 360px;
+    overflow-y: auto;
+    margin-top: 8px;
+}
+
+/* ── Entrada del diario con acciones de editar ───────────────── */
+.diario-acciones {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    flex-shrink: 0;
+}
+.diario-accion-btn {
+    font-size: 11px;
+    color: var(--faint);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 3px 6px;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    transition: color 0.15s, background 0.15s;
+}
+.diario-accion-btn:hover { color: var(--muted); background: var(--surface2); }
+
+/* ── Overlay póster ampliado ─────────────────────────────────── */
+.poster-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 300;
+    cursor: zoom-out;
+}
+.poster-overlay--hidden { display: none; }
+.poster-overlay img {
+    max-height: 90vh;
+    max-width: 90vw;
+    border-radius: var(--radius);
+    box-shadow: 0 8px 40px rgba(0,0,0,.6);
+}

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BONOBO — Persona</title>
+    <link rel="stylesheet" href="../css/main.css" />
+</head>
+<body>
+
+    <header id="nav-placeholder"></header>
+
+    <main class="contenedor pagina">
+
+        <!-- ── CABECERA DE LA PERSONA ─────────────────────────────────────── -->
+        <div class="perfil-top" style="margin-bottom:40px;padding-bottom:32px;border-bottom:1px solid var(--border)">
+
+            <!-- Foto -->
+            <div id="personaFoto"
+                 style="width:120px;height:120px;flex-shrink:0;border-radius:var(--radius);overflow:hidden;background:var(--surface2);border:1px solid var(--border)">
+                <div class="skeleton" style="width:100%;height:100%"></div>
+            </div>
+
+            <!-- Datos -->
+            <div style="flex:1">
+                <h1 class="perfil-username" id="personaNombre">—</h1>
+
+                <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px">
+                    <span id="personaRol"   style="font-size:12px;color:var(--faint)"></span>
+                    <span id="personaNac"   style="font-size:12px;color:var(--faint)"></span>
+                    <span id="personaLugar" style="font-size:12px;color:var(--faint)"></span>
+                </div>
+
+                <p id="personaBio"
+                   style="font-size:13px;color:var(--muted);line-height:1.7;max-width:640px;max-height:120px;overflow:hidden;position:relative"
+                   id="personaBio"></p>
+                <button class="btn btn--ghost btn--sm oculto" id="btnVerMas"
+                        style="margin-top:6px" onclick="toggleBio()">
+                    Ver más
+                </button>
+            </div>
+
+        </div>
+
+        <!-- ── FILMOGRAFÍA ────────────────────────────────────────────────── -->
+        <div class="seccion-header" style="margin-bottom:20px">
+            <h2 class="seccion-titulo">Filmografía</h2>
+            <div class="seccion-linea"></div>
+            <span class="seccion-meta" id="lblFilmo"></span>
+        </div>
+
+        <div class="peliculas-grid" id="gridFilmo"></div>
+
+    </main>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/nav.js"></script>
+    <script>
+        let bioExpandida = false;
+
+        function mostrarToast(msg, tipo = 'ok') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `toast toast--${tipo} toast--visible`;
+            setTimeout(() => { t.className = 'toast'; }, 2800);
+        }
+
+        function toggleBio() {
+            const bio = document.getElementById('personaBio');
+            const btn = document.getElementById('btnVerMas');
+            bioExpandida = !bioExpandida;
+            bio.style.maxHeight = bioExpandida ? 'none' : '120px';
+            btn.textContent    = bioExpandida ? 'Ver menos' : 'Ver más';
+        }
+
+        const DEPT_ES = {
+            'Acting':          'Interpretación',
+            'Directing':       'Dirección',
+            'Writing':         'Guion',
+            'Production':      'Producción',
+            'Camera':          'Fotografía',
+            'Editing':         'Montaje',
+            'Sound':           'Música',
+            'Art':             'Dirección de Arte',
+            'Visual Effects':  'Efectos Visuales',
+        };
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            renderNav('../');
+
+            const params   = new URLSearchParams(window.location.search);
+            const personId = parseInt(params.get('id'));
+
+            if (!personId) {
+                location.href = '../index.html';
+                return;
+            }
+
+            try {
+                const persona = await api.peliculas.persona(personId);
+
+                document.title = `BONOBO — ${persona.nombre}`;
+
+                // Foto
+                const fotoEl = document.getElementById('personaFoto');
+                if (persona.foto_url) {
+                    fotoEl.innerHTML = `<img src="${persona.foto_url}" alt="${persona.nombre}"
+                                             style="width:100%;height:100%;object-fit:cover">`;
+                } else {
+                    fotoEl.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;
+                                                    justify-content:center;font-family:var(--font-display);
+                                                    font-size:40px;color:var(--faint)">
+                                            ${persona.nombre[0].toUpperCase()}
+                                        </div>`;
+                }
+
+                document.getElementById('personaNombre').textContent = persona.nombre;
+
+                if (persona.conocido_por) {
+                    document.getElementById('personaRol').textContent =
+                        DEPT_ES[persona.conocido_por] || persona.conocido_por;
+                }
+                if (persona.fecha_nacimiento) {
+                    document.getElementById('personaNac').textContent = `Nacido: ${persona.fecha_nacimiento}`;
+                }
+                if (persona.lugar_nacimiento) {
+                    document.getElementById('personaLugar').textContent = persona.lugar_nacimiento;
+                }
+
+                // Bio
+                const bioEl = document.getElementById('personaBio');
+                if (persona.biografia) {
+                    bioEl.textContent = persona.biografia;
+                    // Si el texto es largo, mostramos el botón "Ver más"
+                    if (persona.biografia.length > 400) {
+                        document.getElementById('btnVerMas').classList.remove('oculto');
+                    }
+                } else {
+                    bioEl.textContent = 'Sin biografía disponible.';
+                    bioEl.style.color = 'var(--faint)';
+                    bioEl.style.maxHeight = 'none';
+                }
+
+                // Filmografía
+                const grid   = document.getElementById('gridFilmo');
+                const label  = document.getElementById('lblFilmo');
+                const filmo  = persona.filmografia || [];
+
+                label.textContent = `${filmo.length} película${filmo.length !== 1 ? 's' : ''}`;
+
+                if (filmo.length === 0) {
+                    grid.innerHTML = `<div class="estado-vacio" style="grid-column:1/-1">
+                        <p class="estado-vacio__desc">Sin filmografía disponible.</p>
+                    </div>`;
+                } else {
+                    grid.innerHTML = filmo.map(p => `
+                        <div class="pelicula-card" onclick="location.href='pelicula.html?id=${p.tmdb_id}'">
+                            <div class="pelicula-card__poster">
+                                ${p.poster_url
+                                    ? `<img class="pelicula-card__img" src="${p.poster_url}" alt="${p.titulo}" loading="lazy">`
+                                    : `<div class="pelicula-card__no-img">SIN IMAGEN</div>`
+                                }
+                                <div class="pelicula-card__overlay"></div>
+                            </div>
+                            <div class="pelicula-card__info">
+                                <div class="pelicula-card__titulo">${p.titulo || '—'}</div>
+                                <div class="pelicula-card__anio">
+                                    ${p.anio_estreno || ''}
+                                    ${p.personaje ? `<span style="color:var(--faint)"> · ${p.personaje}</span>` : ''}
+                                    ${p.rol        ? `<span style="color:var(--faint)"> · ${p.rol}</span>`       : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+
+            } catch (err) {
+                mostrarToast('No se pudo cargar la información', 'error');
+            }
+        });
+    </script>
+
+</body>
+</html>

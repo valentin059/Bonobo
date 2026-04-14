@@ -1,1 +1,1 @@
-from .tmdb_service import buscar_peliculas, obtener_cartelera, obtener_estrenos, obtener_detalle_pelicula
+from .tmdb_service import buscar_peliculas, obtener_cartelera, obtener_estrenos, obtener_detalle_pelicula, obtener_persona

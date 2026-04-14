@@ -37,7 +37,7 @@ function renderNav(base = '') {
                         type="text"
                         id="navSearch"
                         class="nav-search"
-                        placeholder="Buscar película…"
+                        placeholder="Buscar película o @usuario…"
                         autocomplete="off"
                     />
                 </div>
@@ -46,7 +46,7 @@ function renderNav(base = '') {
                 <div class="nav-links">
                     <a href="${base}pages/diario.html"    class="nav-link">Diario</a>
                     <a href="${base}pages/watchlist.html" class="nav-link">Watchlist</a>
-                    <a href="${base}pages/buscar.html"    class="nav-link">Buscar</a>
+                    <a href="${base}pages/listas.html"    class="nav-link">Listas</a>
                 </div>
                 ` : ''}
 
@@ -58,12 +58,22 @@ function renderNav(base = '') {
     const placeholder = document.getElementById('nav-placeholder');
     if (placeholder) placeholder.innerHTML = navHTML;
 
-    // buscar al pulsar Enter — guarda la query y va a la home
+    // buscar al pulsar Enter
+    // si empieza por @ → busca usuarios; si no → busca películas
     const searchInput = document.getElementById('navSearch');
     if (searchInput) {
         searchInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && searchInput.value.trim()) {
-                sessionStorage.setItem('nav_search', searchInput.value.trim());
+            if (e.key !== 'Enter') return;
+            const q = searchInput.value.trim();
+            if (!q) return;
+
+            if (q.startsWith('@')) {
+                // búsqueda de usuarios: quitamos el @ y vamos a buscar.html
+                const usuario = q.slice(1).trim();
+                window.location.href = `${base}pages/buscar.html?q=${encodeURIComponent(usuario)}`;
+            } else {
+                // búsqueda de películas: guardamos y vamos a la home
+                sessionStorage.setItem('nav_search', q);
                 window.location.href = `${base}index.html`;
             }
         });

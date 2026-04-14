@@ -56,7 +56,8 @@ const api = {
         estrenos:  (skip = 0, limit = 20) =>
             _req('GET', `/api/peliculas/estrenos?skip=${skip}&limit=${limit}`),
         // incluye estado_usuario si hay token
-        detalle:   (tmdbId) => _req('GET', `/api/peliculas/${tmdbId}`)
+        detalle:   (tmdbId)   => _req('GET', `/api/peliculas/${tmdbId}`),
+        persona:   (personId) => _req('GET', `/api/peliculas/persona/${personId}`),
     },
 
     acciones: {
@@ -90,5 +91,37 @@ const api = {
         diario:    (id, skip = 0, limit = 20) => _req('GET', `/api/usuarios/${id}/diario?skip=${skip}&limit=${limit}`),
         watchlist: (id, skip = 0, limit = 20) => _req('GET', `/api/usuarios/${id}/watchlist?skip=${skip}&limit=${limit}`),
         favoritas: (id) => _req('GET', `/api/usuarios/${id}/favoritas`),
-    }
+        listas:    (id) => _req('GET', `/api/usuarios/${id}/listas`),
+    },
+
+    social: {
+        seguir:        (id) => _req('POST',   `/api/usuarios/${id}/seguir`),
+        dejarDeSeguir: (id) => _req('DELETE', `/api/usuarios/${id}/seguir`),
+        seguidores:    (id) => _req('GET',    `/api/usuarios/${id}/seguidores`),
+        seguidos:      (id) => _req('GET',    `/api/usuarios/${id}/seguidos`),
+    },
+
+    resenas: {
+        amigos:          (tmdbId) =>
+            _req('GET', `/api/peliculas/${tmdbId}/resenas/amigos`),
+        comunidad:       (tmdbId, skip = 0, limit = 20) =>
+            _req('GET', `/api/peliculas/${tmdbId}/resenas?skip=${skip}&limit=${limit}`),
+        darLike:         (idEntrada) => _req('POST',   `/api/diario/${idEntrada}/like`),
+        quitarLike:      (idEntrada) => _req('DELETE', `/api/diario/${idEntrada}/like`),
+        comentarios:     (idEntrada) => _req('GET',    `/api/diario/${idEntrada}/comentarios`),
+        crearComentario: (idEntrada, texto) =>
+            _req('POST', `/api/diario/${idEntrada}/comentarios`, { texto }),
+        borrarComentario:(idComentario) => _req('DELETE', `/api/comentarios/${idComentario}`),
+    },
+
+    listas: {
+        crear:          (body)          => _req('POST',   '/api/listas', body),
+        detalle:        (id)            => _req('GET',    `/api/listas/${id}`),
+        editar:         (id, body)      => _req('PUT',    `/api/listas/${id}`, body),
+        borrar:         (id)            => _req('DELETE', `/api/listas/${id}`),
+        añadirPelicula: (idLista, tmdbId) =>
+            _req('POST',   `/api/listas/${idLista}/peliculas/${tmdbId}`),
+        quitarPelicula: (idLista, tmdbId) =>
+            _req('DELETE', `/api/listas/${idLista}/peliculas/${tmdbId}`),
+    },
 };

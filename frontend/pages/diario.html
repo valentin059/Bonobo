@@ -18,10 +18,8 @@
             <span class="seccion-meta" id="lblTotal"></span>
         </div>
 
-        <!-- Lista de entradas del diario -->
         <div class="diario-lista" id="listaDiario"></div>
 
-        <!-- Botón para cargar más entradas -->
         <div style="text-align:center;margin-top:32px">
             <button class="btn btn--ghost oculto" id="btnMas" onclick="cargarMas()">
                 Cargar más
@@ -30,16 +28,43 @@
 
     </main>
 
+    <!-- ── MODAL: EDITAR ENTRADA ─────────────────────────────────────────── -->
+    <div class="modal-overlay modal-overlay--hidden" id="modalEditar">
+        <div class="modal">
+            <button class="modal-close" onclick="cerrarModalEditar()">✕</button>
+            <h2 class="modal-titulo">Editar entrada</h2>
+
+            <input type="hidden" id="editIdEntrada" />
+
+            <div class="form-grupo">
+                <label class="form-label">Fecha de visionado</label>
+                <input class="form-input" type="date" id="editFecha" style="color-scheme:dark" />
+            </div>
+            <div class="form-grupo">
+                <label class="form-label">Reseña</label>
+                <textarea class="form-input" id="editResena" rows="4"
+                          placeholder="¿Qué te pareció? (opcional)"
+                          style="resize:vertical;min-height:90px"></textarea>
+            </div>
+
+            <p class="form-error" id="errorEditar"></p>
+
+            <button class="btn btn--primary" style="width:100%;margin-top:8px"
+                    onclick="guardarEdicion()">
+                Guardar cambios
+            </button>
+        </div>
+    </div>
+
     <div class="toast" id="toast"></div>
 
     <script src="../js/api.js"></script>
     <script src="../js/auth.js"></script>
     <script src="../js/nav.js"></script>
     <script>
-        // Paginación: cargamos de 20 en 20
-        let skip = 0;
-        const LIMIT = 20;
-        let movieMap = {};   // { id_pelicula_interno → datos de película }
+        let skip     = 0;
+        const LIMIT  = 20;
+        let movieMap = {};
         let usuarioId = null;
 
         function mostrarToast(msg, tipo = 'ok') {
@@ -49,29 +74,22 @@
             setTimeout(() => { t.className = 'toast'; }, 2800);
         }
 
-        // Construye el mapa id_interno → datos de película a partir de las vistas del usuario.
-        // Esto nos permite mostrar el póster y título en cada entrada del diario.
         async function construirMovieMap() {
             try {
-                // Pedimos hasta 200 vistas para tener datos de las películas
                 const vistas = await api.usuarios.vistas(usuarioId, 0, 200);
                 vistas.forEach(v => { movieMap[v.id_pelicula] = v.pelicula; });
-            } catch {
-                // Si falla, el diario se muestra sin pósters (no es crítico)
-            }
+            } catch { /* no crítico */ }
         }
 
-        // Crea el HTML de una entrada del diario.
         function crearEntradaHTML(entrada) {
             const fecha = new Date(entrada.fecha_visionado);
             const dia   = fecha.getDate();
             const mes   = fecha.toLocaleString('es', { month: 'short' }).toUpperCase();
             const anio  = fecha.getFullYear();
-
             const pelicula = movieMap[entrada.id_pelicula];
 
             return `
-                <div class="diario-entrada">
+                <div class="diario-entrada" id="entrada-${entrada.id}">
                     <div class="diario-fecha">
                         <div class="diario-fecha__dia">${dia}</div>
                         <div class="diario-fecha__mes">${mes}</div>
@@ -89,10 +107,17 @@
                              ${pelicula ? `style="cursor:pointer" onclick="location.href='pelicula.html?id=${pelicula.tmdb_id}'"` : ''}>
                             ${pelicula?.titulo || `Entrada #${entrada.id}`}
                         </div>
-                        ${entrada.resena
-                            ? `<p class="diario-resena">${entrada.resena}</p>`
-                            : `<p class="diario-resena text-faint">Sin reseña</p>`
-                        }
+                        <p class="diario-resena" id="resena-txt-${entrada.id}">${
+                            entrada.resena
+                                ? entrada.resena
+                                : '<span class="text-faint">Sin reseña</span>'
+                        }</p>
+                    </div>
+                    <div class="diario-acciones">
+                        <button class="diario-accion-btn"
+                                onclick="abrirModalEditar(${entrada.id}, '${entrada.fecha_visionado}', ${JSON.stringify(entrada.resena || '')})">
+                            Editar
+                        </button>
                     </div>
                 </div>
             `;
@@ -115,7 +140,6 @@
                 const lista = document.getElementById('listaDiario');
                 lista.insertAdjacentHTML('beforeend', entradas.map(crearEntradaHTML).join(''));
 
-                // Mostramos "Cargar más" solo si recibimos el límite completo (puede haber más)
                 document.getElementById('btnMas').classList.toggle('oculto', entradas.length < LIMIT);
                 skip += entradas.length;
 
@@ -126,6 +150,54 @@
 
         function cargarMas() { cargarEntradas(); }
 
+        // ── Modal editar entrada ──────────────────────────────────────────
+
+        function abrirModalEditar(idEntrada, fecha, resena) {
+            document.getElementById('editIdEntrada').value = idEntrada;
+            document.getElementById('editFecha').value    = fecha;
+            document.getElementById('editResena').value   = resena || '';
+            document.getElementById('errorEditar').className = 'form-error';
+            document.getElementById('modalEditar').classList.remove('modal-overlay--hidden');
+        }
+
+        function cerrarModalEditar() {
+            document.getElementById('modalEditar').classList.add('modal-overlay--hidden');
+        }
+
+        async function guardarEdicion() {
+            const idEntrada = parseInt(document.getElementById('editIdEntrada').value);
+            const fecha     = document.getElementById('editFecha').value;
+            const resena    = document.getElementById('editResena').value.trim() || null;
+            const errorEl   = document.getElementById('errorEditar');
+
+            if (!fecha) {
+                errorEl.textContent = 'La fecha es obligatoria';
+                errorEl.className = 'form-error form-error--visible';
+                return;
+            }
+
+            try {
+                await api.acciones.editarDiario(idEntrada, {
+                    fecha_visionado: fecha,
+                    resena
+                });
+
+                // actualiza el texto en el DOM sin recargar
+                const resenaTxt = document.getElementById(`resena-txt-${idEntrada}`);
+                if (resenaTxt) {
+                    resenaTxt.innerHTML = resena
+                        ? resena
+                        : '<span class="text-faint">Sin reseña</span>';
+                }
+
+                cerrarModalEditar();
+                mostrarToast('Entrada actualizada ✓');
+            } catch (err) {
+                errorEl.textContent = err.message || 'Error al guardar';
+                errorEl.className = 'form-error form-error--visible';
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
             renderNav('../');
 
@@ -134,11 +206,10 @@
                 return;
             }
 
-            // Obtenemos el id del usuario y el mapa de películas antes de cargar el diario
             const usuario = await api.usuarios.mePerfil();
             usuarioId = usuario.id;
 
-            await construirMovieMap();   // necesario para mostrar pósters y títulos
+            await construirMovieMap();
             cargarEntradas();
         });
     </script>

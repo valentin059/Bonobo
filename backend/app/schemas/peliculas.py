@@ -73,6 +73,28 @@ class PersonaCrew(BaseModel):
     person_id: Optional[int] = None     # id de TMDB (para futura página de persona)
 
 
+# Película en la filmografía de una persona
+class PeliculaPersona(BaseModel):
+    tmdb_id: int
+    titulo: Optional[str] = None
+    poster_url: Optional[str] = None
+    anio_estreno: Optional[int] = None
+    personaje: Optional[str] = None   # si es actor
+    rol: Optional[str] = None         # si es crew
+
+
+# Detalle completo de una persona (actor, director, etc.)
+class PersonaDetalle(BaseModel):
+    person_id: int
+    nombre: str
+    foto_url: Optional[str] = None
+    biografia: Optional[str] = None
+    conocido_por: Optional[str] = None
+    fecha_nacimiento: Optional[str] = None
+    lugar_nacimiento: Optional[str] = None
+    filmografia: list[PeliculaPersona] = []
+
+
 # Resumen de una película para mostrar en listados
 class PeliculaResumen(BaseModel):
     tmdb_id: int
