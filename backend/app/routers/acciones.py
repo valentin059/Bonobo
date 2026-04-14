@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from sqlalchemy import select, delete
+from sqlalchemy import select
 from .. import database, models, schemas, oauth2, services
 
 # Todas las rutas de este router empiezan por /api/peliculas
@@ -221,35 +221,6 @@ def crear_entrada_diario(tmdb_id: int, entrada_data: schemas.EntradaDiarioCreate
     return nueva_entrada
 
 
-# PUT /api/peliculas/diario/{id_entrada}
-# Edita una entrada existente del diario. Solo puede editarla su autor.
-@router.put("/diario/{id_entrada}", response_model=schemas.EntradaDiarioOut)
-def editar_entrada_diario(id_entrada: int, entrada_data: schemas.EntradaDiarioUpdate,
-                          db: Session = Depends(database.get_db),
-                          current_user: models.Usuario = Depends(oauth2.get_current_user)):
-
-    entrada = db.execute(select(models.EntradaDiario).where(
-        models.EntradaDiario.id == id_entrada
-    )).scalar_one_or_none()
-
-    if not entrada:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Entrada no encontrada")
-
-    # Verificamos que la entrada pertenece al usuario autenticado
-    if entrada.id_usuario != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No puedes editar esta entrada")
-
-    # Solo actualizamos los campos que se envíen (los que no sean None)
-    if entrada_data.fecha_visionado:
-        entrada.fecha_visionado = entrada_data.fecha_visionado
-    if entrada_data.resena is not None:
-        entrada.resena = entrada_data.resena
-
-    db.commit()
-    db.refresh(entrada)
-
-    return entrada
-
 
 # ─── ME GUSTA ─────────────────────────────────────────────────────────────
 
@@ -355,33 +326,3 @@ def quitar_watchlist(tmdb_id: int, db: Session = Depends(database.get_db),
     return {"detail": "Película eliminada de la watchlist"}
 
 
-# ─── FAVORITAS ────────────────────────────────────────────────────────────
-
-# PUT /api/peliculas/favoritas
-# Reemplaza todas las favoritas del usuario con la nueva lista.
-# Se envía una lista de hasta 4 tmdb_ids en el orden deseado.
-@router.put("/favoritas")
-def configurar_favoritas(tmdb_ids: list[int],
-                         db: Session = Depends(database.get_db),
-                         current_user: models.Usuario = Depends(oauth2.get_current_user)):
-
-    if len(tmdb_ids) > 4:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Máximo 4 películas favoritas")
-
-    # Eliminamos todas las favoritas actuales del usuario
-    db.execute(delete(models.PeliculaFavorita).where(models.PeliculaFavorita.id_usuario == current_user.id))
-    db.commit()
-
-    # Insertamos las nuevas favoritas en el orden indicado (enumerate empieza en 1)
-    for orden, tmdb_id in enumerate(tmdb_ids, start=1):
-        pelicula = get_or_create_pelicula(tmdb_id, db)
-        favorita = models.PeliculaFavorita(
-            id_usuario=current_user.id,
-            id_pelicula=pelicula.id,
-            orden=orden
-        )
-        db.add(favorita)
-
-    db.commit()
-
-    return {"detail": "Favoritas actualizadas"}

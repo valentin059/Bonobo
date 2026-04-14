@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
-from sqlalchemy import select, func
+from sqlalchemy import select, func, delete
 from .. import database, models, schemas, oauth2
 from typing import Optional
+from ..routers.acciones import get_or_create_pelicula
 
 # Todas las rutas de este router empiezan por /api/usuarios
 router = APIRouter(
@@ -42,6 +43,36 @@ def get_mi_perfil(db: Session = Depends(database.get_db),
         seguidos=seguidos,
         yo_sigo=None   # no tiene sentido "si me sigo a mí mismo"
     )
+
+
+# PUT /api/usuarios/me/favoritas
+# Reemplaza todas las favoritas del usuario con la nueva lista.
+# Se envía una lista de hasta 4 tmdb_ids en el orden deseado.
+@router.put("/me/favoritas")
+def configurar_favoritas(tmdb_ids: list[int],
+                         db: Session = Depends(database.get_db),
+                         current_user: models.Usuario = Depends(oauth2.get_current_user)):
+
+    if len(tmdb_ids) > 4:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Máximo 4 películas favoritas")
+
+    # Eliminamos todas las favoritas actuales del usuario
+    db.execute(delete(models.PeliculaFavorita).where(models.PeliculaFavorita.id_usuario == current_user.id))
+    db.commit()
+
+    # Insertamos las nuevas favoritas en el orden indicado (enumerate empieza en 1)
+    for orden, tmdb_id in enumerate(tmdb_ids, start=1):
+        pelicula = get_or_create_pelicula(tmdb_id, db)
+        favorita = models.PeliculaFavorita(
+            id_usuario=current_user.id,
+            id_pelicula=pelicula.id,
+            orden=orden
+        )
+        db.add(favorita)
+
+    db.commit()
+
+    return {"detail": "Favoritas actualizadas"}
 
 
 # PUT /api/usuarios/me

@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from .. import database, models, schemas, oauth2
+from typing import Optional
 
 # Usamos dos routers distintos porque las rutas de comentarios tienen prefijos diferentes:
 # router_diario     -> /api/diario/{id_entrada}/comentarios  y  /api/diario/{id_entrada}/like
@@ -15,6 +16,38 @@ router_comentarios = APIRouter(
     prefix="/api/comentarios",
     tags=["Diario"]
 )
+
+
+# ─── EDITAR ENTRADA ───────────────────────────────────────────────────────
+
+# PUT /api/diario/{id_entrada}
+# Edita una entrada existente del diario. Solo puede editarla su autor.
+@router_diario.put("/{id_entrada}", response_model=schemas.EntradaDiarioOut)
+def editar_entrada_diario(id_entrada: int, entrada_data: schemas.EntradaDiarioUpdate,
+                          db: Session = Depends(database.get_db),
+                          current_user: models.Usuario = Depends(oauth2.get_current_user)):
+
+    entrada = db.execute(select(models.EntradaDiario).where(
+        models.EntradaDiario.id == id_entrada
+    )).scalar_one_or_none()
+
+    if not entrada:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Entrada no encontrada")
+
+    # Verificamos que la entrada pertenece al usuario autenticado
+    if entrada.id_usuario != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No puedes editar esta entrada")
+
+    # Solo actualizamos los campos que se envíen (los que no sean None)
+    if entrada_data.fecha_visionado:
+        entrada.fecha_visionado = entrada_data.fecha_visionado
+    if entrada_data.resena is not None:
+        entrada.resena = entrada_data.resena
+
+    db.commit()
+    db.refresh(entrada)
+
+    return entrada
 
 
 # ─── COMENTARIOS ──────────────────────────────────────────────────────────
