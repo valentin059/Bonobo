@@ -26,6 +26,7 @@
             <!-- Info central: título, meta, géneros, sinopsis -->
             <div class="pelicula-info">
                 <h1 class="pelicula-titulo" id="titulo">—</h1>
+                <p class="pelicula-director" id="director"></p>
                 <div class="pelicula-meta" id="meta"></div>
                 <div class="pelicula-generos" id="generos"></div>
                 <p class="pelicula-sinopsis" id="sinopsis"></p>
@@ -97,16 +98,30 @@
         </div>
     </div>
 
-    <!-- ── SECCIÓN DE REPARTO ────────────────────────────────────────────── -->
+    <!-- ── PESTAÑAS: REPARTO / EQUIPO / DETALLES ────────────────────────── -->
     <main class="contenedor" style="padding-top:32px;padding-bottom:64px">
 
-        <section class="seccion" id="secReparto">
-            <div class="seccion-header">
-                <h2 class="seccion-titulo">Reparto</h2>
-                <div class="seccion-linea"></div>
-            </div>
+        <!-- Barra de pestañas -->
+        <div class="tabs" id="tabBar">
+            <button class="tab tab--activo" data-tab="reparto">Reparto</button>
+            <button class="tab" data-tab="equipo">Equipo</button>
+            <button class="tab" data-tab="detalles">Detalles</button>
+        </div>
+
+        <!-- Panel Reparto -->
+        <div class="tab-panel" id="panelReparto">
             <div class="reparto-grid" id="gridReparto"></div>
-        </section>
+        </div>
+
+        <!-- Panel Equipo técnico (agrupado por departamento) -->
+        <div class="tab-panel oculto" id="panelEquipo">
+            <div id="gridEquipo"></div>
+        </div>
+
+        <!-- Panel Detalles (productora, país, idioma, presupuesto…) -->
+        <div class="tab-panel oculto" id="panelDetalles">
+            <dl class="detalles-lista" id="listaDetalles"></dl>
+        </div>
 
     </main>
 

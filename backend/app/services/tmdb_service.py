@@ -2,13 +2,29 @@ from datetime import datetime
 import httpx
 from ..config import settings
 from ..schemas.peliculas import (
-    PersonaCast, PeliculaResumen, PeliculaCartelera, PeliculaEstreno,
+    PersonaCast, PersonaCrew, PeliculaResumen, PeliculaCartelera, PeliculaEstreno,
     PaginadoPeliculas, PaginadoCartelera, PaginadoEstrenos, PeliculaDetalle
 )
 
+# Cargos del equipo técnico que queremos mostrar, agrupados por departamento TMDB.
+# Un único cargo principal por departamento para mantener la lista limpia.
+CREW_ROLES = {
+    "Directing":         {"Director"},
+    "Writing":           {"Screenplay", "Story", "Writer", "Novel", "Characters", "Original Story"},
+    "Camera":            {"Director of Photography"},
+    "Editing":           {"Editor"},
+    "Sound":             {"Original Music Composer"},
+    "Production":        {"Producer"},
+    "Art":               {"Production Designer"},
+    "Costume & Make-Up": {"Costume Designer"},
+    "Visual Effects":    {"Visual Effects Supervisor", "VFX Supervisor"},
+    "Lighting":          {"Gaffer"},
+}
+
 # URL base de la API de TMDB y de sus imágenes
 TMDB_BASE_URL = "https://api.themoviedb.org/3"
-TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500"   # w500 = ancho de 500px
+TMDB_IMAGE_BASE_URL    = "https://image.tmdb.org/t/p/w500"    # w500 para pósters
+TMDB_BACKDROP_BASE_URL = "https://image.tmdb.org/t/p/w1280"   # w1280 para imágenes de cabecera 16:9
 TMDB_TIMEOUT = 10.0   # segundos máximos de espera para cada petición a TMDB
 
 # Cabeceras que enviamos en cada petición a TMDB (autenticación con token Bearer)
@@ -24,6 +40,13 @@ def build_poster_url(poster_path: str | None) -> str | None:
     if not poster_path:
         return None
     return f"{TMDB_IMAGE_BASE_URL}{poster_path}"
+
+
+# Construye la URL completa de una imagen de cabecera (backdrop) 16:9.
+def build_backdrop_url(backdrop_path: str | None) -> str | None:
+    if not backdrop_path:
+        return None
+    return f"{TMDB_BACKDROP_BASE_URL}{backdrop_path}"
 
 
 # Extrae el año de una fecha en formato "YYYY-MM-DD".
@@ -175,24 +198,61 @@ def obtener_detalle_pelicula(tmdb_id: int) -> PeliculaDetalle:
         )
         creditos.raise_for_status()
 
-    movie = detalle.json()
-    cast = creditos.json().get("cast", [])[:10]   # solo los 10 primeros actores
+    movie      = detalle.json()
+    creditos_data = creditos.json()
+    cast_raw   = creditos_data.get("cast", [])[:15]   # primeros 15 actores
+    crew_raw   = creditos_data.get("crew", [])
+
+    # ── Reparto ───────────────────────────────────────────────────────────────
+    reparto = [
+        PersonaCast(
+            nombre=p.get("name"),
+            personaje=p.get("character"),
+            foto=build_poster_url(p.get("profile_path")),
+            person_id=p.get("id")
+        )
+        for p in cast_raw
+    ]
+
+    # ── Equipo técnico ────────────────────────────────────────────────────────
+    # Solo incluimos los cargos definidos en CREW_ROLES, respetando el orden de
+    # departamentos y eliminando duplicados (misma persona + mismo cargo).
+    vistos = set()
+    crew = []
+    for dept, roles_permitidos in CREW_ROLES.items():
+        for p in crew_raw:
+            if p.get("department") != dept:
+                continue
+            if p.get("job") not in roles_permitidos:
+                continue
+            clave = (p.get("id"), p.get("job"))
+            if clave in vistos:
+                continue
+            vistos.add(clave)
+            crew.append(PersonaCrew(
+                nombre=p.get("name"),
+                rol=p.get("job"),
+                departamento=dept,
+                foto=build_poster_url(p.get("profile_path")),
+                person_id=p.get("id")
+            ))
 
     return PeliculaDetalle(
         tmdb_id=movie["id"],
         titulo=movie.get("title"),
+        titulo_original=movie.get("original_title"),
         poster_url=build_poster_url(movie.get("poster_path")),
+        backdrop_url=build_backdrop_url(movie.get("backdrop_path")),
         anio_estreno=_parse_anio(movie.get("release_date")),
         descripcion=movie.get("overview"),
         generos=[g["name"] for g in movie.get("genres", []) if g.get("name")],
         duracion=movie.get("runtime"),
         puntuacion=movie.get("vote_average"),
-        reparto=[
-            PersonaCast(
-                nombre=p.get("name"),
-                personaje=p.get("character"),
-                foto=build_poster_url(p.get("profile_path"))
-            )
-            for p in cast
-        ]
+        reparto=reparto,
+        crew=crew,
+        productoras=[c["name"] for c in movie.get("production_companies", []) if c.get("name")],
+        paises=[c["name"] for c in movie.get("production_countries", []) if c.get("name")],
+        idioma_original=movie.get("original_language"),
+        presupuesto=movie.get("budget") or None,     # TMDB devuelve 0 si no hay datos → None
+        recaudacion=movie.get("revenue") or None,
     )

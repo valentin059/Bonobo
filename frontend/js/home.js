@@ -84,11 +84,16 @@ async function cargarHeroBg() {
         const heroBg = document.getElementById('heroBg');
         if (!heroBg) return;
 
-        // Usamos los pósters disponibles para rellenar la cuadrícula de fondo
+        // Usamos los pósters disponibles para rellenar la cuadrícula de fondo.
+        // Si no hay suficientes para cubrir el hero, los repetimos en bucle.
         const peliculas = data.results.filter(p => p.poster_url);
-        heroBg.innerHTML = peliculas.map(p => `
-            <div class="hero-bg-poster" style="background-image:url('${p.poster_url}')"></div>
-        `).join('');
+        if (peliculas.length === 0) return;
+
+        const CELDAS = 80;   // suficiente para cualquier pantalla (hasta ~1920px de ancho)
+        heroBg.innerHTML = Array.from({ length: CELDAS }, (_, i) => {
+            const p = peliculas[i % peliculas.length];
+            return `<div class="hero-bg-poster" style="background-image:url('${p.poster_url}')"></div>`;
+        }).join('');
     } catch {
         // Si falla, el hero simplemente muestra el degradado sin fondo
     }

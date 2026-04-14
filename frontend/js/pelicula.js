@@ -63,9 +63,15 @@ function renderizarPuntuacion() {
 function renderizarPelicula(pelicula) {
     document.title = `BONOBO — ${pelicula.titulo || 'Película'}`;
 
-    // Fondo difuminado: usamos el póster como backdrop (efecto cinematográfico)
-    if (pelicula.poster_url) {
-        document.getElementById('heroBg').style.backgroundImage = `url('${pelicula.poster_url}')`;
+    // Fondo del hero: usamos el backdrop 16:9 de TMDB si existe (nítido),
+    // y como fallback el póster muy difuminado.
+    const heroBg    = document.getElementById('heroBg');
+    const heroWrap  = document.getElementById('peliculaHero');
+    if (pelicula.backdrop_url) {
+        heroBg.style.backgroundImage = `url('${pelicula.backdrop_url}')`;
+        heroWrap.classList.add('has-backdrop');   // activa el CSS sin blur
+    } else if (pelicula.poster_url) {
+        heroBg.style.backgroundImage = `url('${pelicula.poster_url}')`;
     }
 
     // Póster principal
@@ -76,6 +82,15 @@ function renderizarPelicula(pelicula) {
 
     // Título
     document.getElementById('titulo').textContent = pelicula.titulo || '—';
+
+    // Director — buscamos el cargo "Director" en el crew y lo mostramos bajo el título
+    const director = (pelicula.crew || []).find(p => p.rol === 'Director');
+    const directorEl = document.getElementById('director');
+    if (director) {
+        directorEl.textContent = `Dirigida por ${director.nombre}`;
+    } else {
+        directorEl.textContent = '';
+    }
 
     // Meta: año, duración, puntuación TMDB
     const metas = [];
@@ -92,7 +107,7 @@ function renderizarPelicula(pelicula) {
     // Sinopsis
     document.getElementById('sinopsis').textContent = pelicula.descripcion || '';
 
-    // Reparto
+    // ── Reparto ──────────────────────────────────────────────────────────────
     const gridReparto = document.getElementById('gridReparto');
     if (pelicula.reparto && pelicula.reparto.length > 0) {
         gridReparto.innerHTML = pelicula.reparto.map(actor => `
@@ -105,9 +120,89 @@ function renderizarPelicula(pelicula) {
                 <div class="actor-personaje">${actor.personaje || ''}</div>
             </div>
         `).join('');
-        document.getElementById('secReparto').classList.remove('oculto');
     } else {
-        document.getElementById('secReparto').classList.add('oculto');
+        gridReparto.innerHTML = `<p class="text-faint" style="font-size:13px">Sin datos de reparto.</p>`;
+    }
+
+    // ── Equipo técnico ────────────────────────────────────────────────────────
+    // Traducción de departamentos TMDB al español
+    const DEPT_ES = {
+        'Directing':         'Dirección',
+        'Writing':           'Guion',
+        'Camera':            'Fotografía',
+        'Editing':           'Montaje',
+        'Sound':             'Música',
+        'Production':        'Producción',
+        'Art':               'Dirección de Arte',
+        'Costume & Make-Up': 'Vestuario',
+        'Visual Effects':    'Efectos Visuales',
+        'Lighting':          'Iluminación',
+    };
+
+    const gridEquipo = document.getElementById('gridEquipo');
+    if (pelicula.crew && pelicula.crew.length > 0) {
+        // Agrupamos por departamento manteniendo el orden de DEPARTAMENTOS_CREW
+        const grupos = {};
+        pelicula.crew.forEach(p => {
+            const dept = p.departamento || 'Otros';
+            if (!grupos[dept]) grupos[dept] = [];
+            grupos[dept].push(p);
+        });
+
+        gridEquipo.innerHTML = Object.entries(grupos).map(([dept, personas]) => `
+            <div class="crew-grupo">
+                <div class="crew-grupo__titulo">${DEPT_ES[dept] || dept}</div>
+                ${personas.map(p => `
+                    <div class="crew-fila">
+                        ${p.foto
+                            ? `<img class="crew-foto" src="${p.foto}" alt="${p.nombre}" loading="lazy">`
+                            : `<div class="crew-foto crew-foto--placeholder">${(p.nombre || '?')[0]}</div>`
+                        }
+                        <div class="crew-info">
+                            <div class="crew-nombre">${p.nombre || '—'}</div>
+                            <div class="crew-rol">${p.rol || ''}</div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `).join('');
+    } else {
+        gridEquipo.innerHTML = `<p class="text-faint" style="font-size:13px">Sin datos de equipo técnico.</p>`;
+    }
+
+    // ── Detalles ──────────────────────────────────────────────────────────────
+    const listaDetalles = document.getElementById('listaDetalles');
+    const filas = [];
+
+    // Función auxiliar para formatear monedas en millones/miles de millones
+    function formatearDinero(n) {
+        if (!n) return null;
+        if (n >= 1_000_000_000) return `$${(n / 1_000_000_000).toFixed(2)}B`;
+        if (n >= 1_000_000)     return `$${Math.round(n / 1_000_000)}M`;
+        return `$${n.toLocaleString('es-ES')}`;
+    }
+
+    if (pelicula.titulo_original && pelicula.titulo_original !== pelicula.titulo)
+        filas.push(['Título original', pelicula.titulo_original]);
+    if (pelicula.idioma_original)
+        filas.push(['Idioma original', new Intl.DisplayNames(['es'], { type: 'language' }).of(pelicula.idioma_original) || pelicula.idioma_original]);
+    if (pelicula.paises?.length)
+        filas.push(['País', pelicula.paises.join(', ')]);
+    if (pelicula.productoras?.length)
+        filas.push(['Productora', pelicula.productoras.join(', ')]);
+    if (pelicula.presupuesto)
+        filas.push(['Presupuesto', formatearDinero(pelicula.presupuesto)]);
+    if (pelicula.recaudacion)
+        filas.push(['Taquilla', formatearDinero(pelicula.recaudacion)]);
+    if (pelicula.duracion)
+        filas.push(['Duración', `${pelicula.duracion} minutos`]);
+
+    if (filas.length > 0) {
+        listaDetalles.innerHTML = filas.map(([k, v]) =>
+            `<dt>${k}</dt><dd>${v}</dd>`
+        ).join('');
+    } else {
+        listaDetalles.innerHTML = `<p class="text-faint" style="font-size:13px;grid-column:1/-1">Sin detalles disponibles.</p>`;
     }
 
     // Ponemos la fecha de hoy como valor por defecto en el campo de diario
@@ -232,8 +327,26 @@ async function guardarDiario() {
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 
+// ── PESTAÑAS ──────────────────────────────────────────────────────────────────
+
+// Cambia la pestaña activa y muestra el panel correspondiente.
+function activarTab(nombre) {
+    document.querySelectorAll('.tab').forEach(btn => {
+        btn.classList.toggle('tab--activo', btn.dataset.tab === nombre);
+    });
+    document.getElementById('panelReparto').classList.toggle('oculto', nombre !== 'reparto');
+    document.getElementById('panelEquipo').classList.toggle('oculto',  nombre !== 'equipo');
+    document.getElementById('panelDetalles').classList.toggle('oculto', nombre !== 'detalles');
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     renderNav('../');
+
+    // Registramos el listener de las pestañas
+    document.getElementById('tabBar').addEventListener('click', e => {
+        const tab = e.target.closest('.tab');
+        if (tab) activarTab(tab.dataset.tab);
+    });
 
     // Leemos el id de la película de los parámetros de la URL (?id=XXXX)
     const params = new URLSearchParams(window.location.search);

@@ -250,9 +250,10 @@ img { display: block; max-width: 100%; }
 /* Versión colapsada: solo una tira fina con CTA cuando se está buscando sin sesión */
 .hero--mini {
     min-height: auto;
-    padding: 28px 24px 20px;
+    /* Espacio superior para no quedar tapado por el navbar fijo */
+    padding: calc(var(--navbar-h) + 20px) 24px 20px;
 }
-.hero--mini .hero-bg    { display: none; }
+.hero--mini .hero-bg      { display: none; }
 .hero--mini .hero-overlay { display: none; }
 .hero--mini .hero-titulo  { font-size: 20px; margin-bottom: 6px; }
 .hero--mini .hero-desc    { display: none; }
@@ -618,14 +619,32 @@ img { display: block; max-width: 100%; }
     inset: 0;
     background-size: cover;
     background-position: center top;
-    filter: blur(24px) brightness(0.3);
+    /* Fallback sin backdrop: el póster sale muy difuminado para dar profundidad */
+    filter: blur(22px) brightness(0.3);
     transform: scale(1.1);
+}
+
+/* Cuando hay un backdrop real de TMDB (16:9) se muestra nítido, solo oscurecido */
+.pelicula-hero.has-backdrop .pelicula-hero__bg {
+    filter: brightness(0.45);
+    transform: none;
+    background-position: center 25%;
 }
 
 .pelicula-hero__overlay {
     position: absolute;
     inset: 0;
     background: linear-gradient(to bottom, transparent 0%, var(--bg) 100%);
+}
+
+/* Con backdrop real el gradiente es más suave — la imagen se ve más */
+.pelicula-hero.has-backdrop .pelicula-hero__overlay {
+    background: linear-gradient(
+        to bottom,
+        rgba(14,14,18,0.15) 0%,
+        rgba(14,14,18,0.55) 65%,
+        rgba(14,14,18,1)    100%
+    );
 }
 
 .pelicula-hero__content {
@@ -665,6 +684,13 @@ img { display: block; max-width: 100%; }
     line-height: 1;
     letter-spacing: 0.02em;
     margin-bottom: 6px;
+}
+
+.pelicula-director {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 10px;
+    margin-top: 4px;
 }
 
 .pelicula-meta {
@@ -808,6 +834,121 @@ img { display: block; max-width: 100%; }
     width: 100%;
     color-scheme: dark;   /* hace que el selector de fecha tenga tema oscuro */
 }
+
+/* ══════════════════════════════════════════════════════════════
+   PESTAÑAS (tabs)
+   ══════════════════════════════════════════════════════════════ */
+
+/* Barra de pestañas */
+.tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 28px;
+}
+
+/* Botón de pestaña individual */
+.tab {
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    padding: 10px 20px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;   /* se superpone al borde de .tabs */
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    letter-spacing: 0.02em;
+}
+.tab:hover { color: var(--text); }
+
+/* Pestaña activa */
+.tab--activo {
+    color: var(--text);
+    border-bottom-color: var(--accent);
+}
+
+/* Contenido de cada pestaña */
+.tab-panel { /* visible por defecto */ }
+
+/* ── Equipo técnico ────────────────────────────────────────── */
+
+/* Agrupa las personas de un mismo departamento */
+.crew-grupo {
+    margin-bottom: 28px;
+}
+.crew-grupo__titulo {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--faint);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 12px;
+}
+
+/* Fila de una persona del equipo */
+.crew-fila {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.12s;
+    border-radius: var(--radius-sm);
+}
+.crew-fila:last-child { border-bottom: none; }
+.crew-fila:hover { background: var(--surface); padding-left: 8px; }
+
+.crew-foto {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+}
+.crew-foto--placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--faint);
+    font-family: var(--font-display);
+    font-size: 14px;
+}
+.crew-info { flex: 1; }
+.crew-nombre { font-size: 13px; font-weight: 500; color: var(--text); }
+.crew-rol    { font-size: 11px; color: var(--faint); margin-top: 1px; }
+
+/* ── Detalles ─────────────────────────────────────────────── */
+
+/* Lista de pares clave-valor para los detalles de la película */
+.detalles-lista {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: 0;
+    max-width: 640px;
+}
+.detalles-lista dt {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--faint);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 10px 16px 10px 0;
+    border-bottom: 1px solid var(--border);
+}
+.detalles-lista dd {
+    font-size: 13px;
+    color: var(--text);
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+}
+.detalles-lista dt:last-of-type,
+.detalles-lista dd:last-of-type { border-bottom: none; }
 
 /* Reparto */
 .reparto-grid {

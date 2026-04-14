@@ -61,6 +61,16 @@ class PersonaCast(BaseModel):
     nombre: Optional[str] = None
     personaje: Optional[str] = None   # personaje que interpreta
     foto: Optional[str] = None        # URL de la foto del actor
+    person_id: Optional[int] = None   # id de TMDB (para futura página de persona)
+
+
+# Datos de una persona del equipo técnico (director, guionista, fotógrafo, etc.)
+class PersonaCrew(BaseModel):
+    nombre: Optional[str] = None
+    rol: Optional[str] = None           # cargo en TMDB (e.g. "Director", "Screenplay")
+    departamento: Optional[str] = None  # departamento TMDB (e.g. "Directing", "Writing")
+    foto: Optional[str] = None
+    person_id: Optional[int] = None     # id de TMDB (para futura página de persona)
 
 
 # Resumen de una película para mostrar en listados
@@ -193,11 +203,19 @@ class EntradaDiarioDetalle(BaseModel):
 class PeliculaDetalle(BaseModel):
     tmdb_id: int
     titulo: Optional[str] = None
+    titulo_original: Optional[str] = None
     poster_url: Optional[str] = None
+    backdrop_url: Optional[str] = None                    # imagen de cabecera 16:9 para el hero
     anio_estreno: Optional[int] = None
     descripcion: Optional[str] = None
-    generos: list[str] = []                              # lista de géneros ("Acción", "Drama"...)
-    duracion: Optional[int] = None                       # duración en minutos
-    puntuacion: Optional[float] = None                   # valoración media en TMDB
-    reparto: list[PersonaCast] = []                      # primeros 10 actores
+    generos: list[str] = []                               # lista de géneros ("Acción", "Drama"...)
+    duracion: Optional[int] = None                        # duración en minutos
+    puntuacion: Optional[float] = None                    # valoración media en TMDB
+    reparto: list[PersonaCast] = []                       # primeros 15 actores
+    crew: list[PersonaCrew] = []                          # equipo técnico relevante
+    productoras: list[str] = []                           # nombres de las productoras
+    paises: list[str] = []                                # países de producción
+    idioma_original: Optional[str] = None                 # código ISO del idioma (e.g. "en")
+    presupuesto: Optional[int] = None                     # en dólares (0 = no disponible)
+    recaudacion: Optional[int] = None                     # taquilla total en dólares
     estado_usuario: Optional[EstadoUsuarioPelicula] = None  # None si el usuario no está logueado
