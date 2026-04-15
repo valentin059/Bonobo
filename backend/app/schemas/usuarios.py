@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, ConfigDict, Field
+from pydantic import BaseModel, EmailStr, ConfigDict, Field, field_validator
 from datetime import datetime
 from typing import Optional
 from .peliculas import PeliculaCache, EntradaDiarioOut
@@ -65,8 +65,15 @@ class UserProfile(BaseModel):
 
 # Datos que puede editar el usuario en su perfil
 class UserUpdate(BaseModel):
-    bio: Optional[str] = None
+    bio: Optional[str] = Field(None, max_length=250)
     avatar_url: Optional[str] = None
+
+    @field_validator('avatar_url')
+    @classmethod
+    def validar_avatar_url(cls, v: Optional[str]) -> Optional[str]:
+        if v and not v.startswith(('http://', 'https://')):
+            raise ValueError('La URL del avatar debe empezar por http:// o https://')
+        return v
 
 
 # Vista de una película con sus datos de película adjuntos (para mostrar en el perfil)

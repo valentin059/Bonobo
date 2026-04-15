@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select, func
 from typing import Optional
 from .. import database, models, schemas, oauth2
-from ..routers.acciones import get_or_create_pelicula
+from ..services import get_or_create_pelicula
 
 # Todas las rutas de este router empiezan por /api/listas
 # y gestionan las listas de películas creadas por los usuarios

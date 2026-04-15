@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select, func, delete
 from .. import database, models, schemas, oauth2
 from typing import Optional
-from ..routers.acciones import get_or_create_pelicula
+from ..services import get_or_create_pelicula
 
 router = APIRouter(
     prefix="/api/usuarios",

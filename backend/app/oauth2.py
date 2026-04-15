@@ -46,7 +46,8 @@ def verify_access_token(token: str, credentials_exception):
 
 
 # Dependencia para endpoints donde el usuario puede estar o no logueado.
-# Si hay token válido devuelve el usuario; si no hay token (o es inválido), devuelve None.
+# Sin token → devuelve None (visitante).
+# Token presente pero inválido/caducado → lanza 401 (no tratar como visitante).
 def get_optional_user(token: str = Depends(oauth2_scheme_optional), db: Session = Depends(database.get_db)):
     if not token:
         return None
@@ -54,10 +55,27 @@ def get_optional_user(token: str = Depends(oauth2_scheme_optional), db: Session 
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id: int = payload.get("user_id")
         if user_id is None:
-            return None
-        return db.execute(select(models.Usuario).where(models.Usuario.id == user_id)).scalar_one_or_none()
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token inválido",
+                headers={"WWW-Authenticate": "Bearer"}
+            )
+        user = db.execute(
+            select(models.Usuario).where(models.Usuario.id == user_id)
+        ).scalar_one_or_none()
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Usuario no encontrado",
+                headers={"WWW-Authenticate": "Bearer"}
+            )
+        return user
     except JWTError:
-        return None
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token caducado o inválido",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
 
 
 # Dependencia para endpoints que requieren usuario logueado obligatoriamente.

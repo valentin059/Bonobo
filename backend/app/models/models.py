@@ -40,8 +40,8 @@ class Vista(Base):
     __tablename__ = "vistas"
 
     id = Column(Integer, primary_key=True, nullable=False)
-    id_usuario = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False)
-    id_pelicula = Column(Integer, ForeignKey("peliculas.id", ondelete="CASCADE"), nullable=False)
+    id_usuario = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False, index=True)
+    id_pelicula = Column(Integer, ForeignKey("peliculas.id", ondelete="CASCADE"), nullable=False, index=True)
     puntuacion = Column(Integer, nullable=True)   # del 1 al 10, puede ser nula si no ha puntuado
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
 
@@ -63,8 +63,8 @@ class EntradaDiario(Base):
     __tablename__ = "entradas_diario"
 
     id = Column(Integer, primary_key=True, nullable=False)
-    id_usuario = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False)
-    id_pelicula = Column(Integer, ForeignKey("peliculas.id", ondelete="CASCADE"), nullable=False)
+    id_usuario = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False, index=True)
+    id_pelicula = Column(Integer, ForeignKey("peliculas.id", ondelete="CASCADE"), nullable=False, index=True)
     fecha_visionado = Column(Date, nullable=False)      # fecha en que vio la película
     resena = Column(Text, nullable=True)                # texto de la reseña (opcional)
     puntuacion = Column(Integer, nullable=True)         # puntuación de este visionado concreto (1-10, opcional)
@@ -127,8 +127,8 @@ class Seguidor(Base):
     __tablename__ = "seguidores"
 
     id = Column(Integer, primary_key=True, nullable=False)
-    id_seguidor = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False)  # el que sigue
-    id_seguido = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False)   # el que es seguido
+    id_seguidor = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False, index=True)
+    id_seguido = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False, index=True)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
 
     __table_args__ = (
@@ -146,7 +146,7 @@ class ComentarioResena(Base):
 
     id = Column(Integer, primary_key=True, nullable=False)
     id_usuario = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False)
-    id_entrada_diario = Column(Integer, ForeignKey("entradas_diario.id", ondelete="CASCADE"), nullable=False)
+    id_entrada_diario = Column(Integer, ForeignKey("entradas_diario.id", ondelete="CASCADE"), nullable=False, index=True)
     texto = Column(Text, nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
 
@@ -161,7 +161,7 @@ class LikeResena(Base):
 
     id = Column(Integer, primary_key=True, nullable=False)
     id_usuario = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False)
-    id_entrada_diario = Column(Integer, ForeignKey("entradas_diario.id", ondelete="CASCADE"), nullable=False)
+    id_entrada_diario = Column(Integer, ForeignKey("entradas_diario.id", ondelete="CASCADE"), nullable=False, index=True)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
 
     # Un usuario solo puede dar like una vez a cada entrada de diario
@@ -176,7 +176,7 @@ class Lista(Base):
     __tablename__ = "listas"
 
     id = Column(Integer, primary_key=True, nullable=False)
-    id_usuario = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False)
+    id_usuario = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False, index=True)
     nombre = Column(String(100), nullable=False)
     descripcion = Column(Text, nullable=True)
     es_publica = Column(Boolean, nullable=False, server_default=text("true"))  # por defecto pública
@@ -189,7 +189,7 @@ class ListaPelicula(Base):
     __tablename__ = "listas_peliculas"
 
     id = Column(Integer, primary_key=True, nullable=False)
-    id_lista = Column(Integer, ForeignKey("listas.id", ondelete="CASCADE"), nullable=False)
+    id_lista = Column(Integer, ForeignKey("listas.id", ondelete="CASCADE"), nullable=False, index=True)
     id_pelicula = Column(Integer, ForeignKey("peliculas.id", ondelete="CASCADE"), nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
 

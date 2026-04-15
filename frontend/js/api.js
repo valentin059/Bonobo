@@ -13,7 +13,43 @@ function escapeHTML(str) {
         .replace(/'/g, '&#39;');
 }
 
-// añade Content-Type y el token JWT si existe
+// ── Loading bar ───────────────────────────────────────────────────────────────
+// Barra fina en la parte superior que aparece mientras hay peticiones en curso.
+
+let _pendingRequests = 0;
+
+function _showLoading() {
+    _pendingRequests++;
+    let bar = document.getElementById('_api-loading-bar');
+    if (!bar) {
+        bar = document.createElement('div');
+        bar.id = '_api-loading-bar';
+        bar.style.cssText = [
+            'position:fixed', 'top:0', 'left:0', 'width:0%', 'height:3px',
+            'background:var(--accent,#e8a020)', 'z-index:99999',
+            'transition:width .25s ease,opacity .3s ease',
+            'pointer-events:none'
+        ].join(';');
+        document.body.appendChild(bar);
+    }
+    bar.style.opacity = '1';
+    bar.style.width   = '40%';
+}
+
+function _hideLoading() {
+    _pendingRequests = Math.max(0, _pendingRequests - 1);
+    if (_pendingRequests > 0) return;
+    const bar = document.getElementById('_api-loading-bar');
+    if (!bar) return;
+    bar.style.width = '100%';
+    setTimeout(() => {
+        bar.style.opacity = '0';
+        setTimeout(() => { bar.style.width = '0%'; }, 300);
+    }, 150);
+}
+
+// ── Cabeceras ─────────────────────────────────────────────────────────────────
+
 function _headers(esJSON = true) {
     const token = localStorage.getItem('bonobo_token');
     const h = {};
@@ -22,28 +58,47 @@ function _headers(esJSON = true) {
     return h;
 }
 
-// petición genérica; lanza Error con el mensaje del backend si falla
-async function _req(method, endpoint, body = null) {
-    const opts = { method, headers: _headers() };
-    if (body !== null) opts.body = JSON.stringify(body);
+// ── Petición central con retry exponencial ────────────────────────────────────
+// Reintenta hasta 3 veces (con espera 300ms, 600ms, 1200ms) solo en errores de red.
+// Los errores HTTP (4xx, 5xx) se lanzan directamente sin reintentar.
 
-    const res = await fetch(`${API_BASE}${endpoint}`, opts);
+async function _req(method, endpoint, body = null, _retry = 0) {
+    _showLoading();
+    try {
+        const opts = { method, headers: _headers() };
+        if (body !== null) opts.body = JSON.stringify(body);
 
-    if (res.status === 204) return null;
+        let res;
+        try {
+            res = await fetch(`${API_BASE}${endpoint}`, opts);
+        } catch (_networkErr) {
+            // error de red (sin respuesta del servidor)
+            if (_retry < 2) {
+                await new Promise(r => setTimeout(r, 300 * (2 ** _retry)));
+                return _req(method, endpoint, body, _retry + 1);
+            }
+            throw new Error('Sin conexión con el servidor. Comprueba tu red e inténtalo de nuevo.');
+        }
 
-    const data = await res.json().catch(() => ({ detail: `Error ${res.status}` }));
+        if (res.status === 204) return null;
 
-    if (res.status === 401 && localStorage.getItem('bonobo_token')) {
-        // token caducado — cerramos sesión y redirigimos a login
-        localStorage.removeItem('bonobo_token');
-        localStorage.removeItem('bonobo_user');
-        const inPages = window.location.pathname.includes('/pages/');
-        window.location.href = inPages ? 'login.html' : 'pages/login.html';
-        return null;
+        const data = await res.json().catch(() => ({ detail: `Error ${res.status}` }));
+
+        if (res.status === 401 && localStorage.getItem('bonobo_token')) {
+            // token caducado — cerramos sesión y redirigimos a login
+            localStorage.removeItem('bonobo_token');
+            localStorage.removeItem('bonobo_user');
+            const inPages = window.location.pathname.includes('/pages/');
+            window.location.href = inPages ? 'login.html' : 'pages/login.html';
+            return null;
+        }
+
+        if (!res.ok) throw new Error(data.detail || `Error ${res.status}`);
+        return data;
+
+    } finally {
+        _hideLoading();
     }
-
-    if (!res.ok) throw new Error(data.detail || `Error ${res.status}`);
-    return data;
 }
 
 const api = {
@@ -53,18 +108,23 @@ const api = {
 
         // el login usa form-urlencoded porque así lo espera FastAPI OAuth2
         login: async (email, password) => {
-            const form = new URLSearchParams();
-            form.append('username', email);
-            form.append('password', password);
+            _showLoading();
+            try {
+                const form = new URLSearchParams();
+                form.append('username', email);
+                form.append('password', password);
 
-            const res = await fetch(`${API_BASE}/api/auth/login`, {
-                method: 'POST',
-                body: form
-            });
+                const res = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    body: form
+                });
 
-            const data = await res.json().catch(() => ({ detail: 'Error al conectar' }));
-            if (!res.ok) throw new Error(data.detail || 'Credenciales incorrectas');
-            return data;
+                const data = await res.json().catch(() => ({ detail: 'Error al conectar' }));
+                if (!res.ok) throw new Error(data.detail || 'Credenciales incorrectas');
+                return data;
+            } finally {
+                _hideLoading();
+            }
         }
     },
 
@@ -93,7 +153,6 @@ const api = {
         añadirWatchlist:    (tmdbId) => _req('POST',   `/api/peliculas/${tmdbId}/watchlist`),
         quitarWatchlist:    (tmdbId) => _req('DELETE', `/api/peliculas/${tmdbId}/watchlist`),
 
-        // body: { fecha_visionado: "YYYY-MM-DD", resena: "..." }
         crearDiario:        (tmdbId, body) => _req('POST', `/api/peliculas/${tmdbId}/diario`, body),
         editarDiario:       (idEntrada, body) => _req('PUT', `/api/diario/${idEntrada}`, body),
     },
@@ -117,8 +176,10 @@ const api = {
     social: {
         seguir:        (id) => _req('POST',   `/api/usuarios/${id}/seguir`),
         dejarDeSeguir: (id) => _req('DELETE', `/api/usuarios/${id}/seguir`),
-        seguidores:    (id) => _req('GET',    `/api/usuarios/${id}/seguidores`),
-        seguidos:      (id) => _req('GET',    `/api/usuarios/${id}/seguidos`),
+        seguidores:    (id, skip = 0, limit = 50) =>
+            _req('GET', `/api/usuarios/${id}/seguidores?skip=${skip}&limit=${limit}`),
+        seguidos:      (id, skip = 0, limit = 50) =>
+            _req('GET', `/api/usuarios/${id}/seguidos?skip=${skip}&limit=${limit}`),
     },
 
     resenas: {
