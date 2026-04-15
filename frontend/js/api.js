@@ -2,6 +2,17 @@
 
 const API_BASE = 'http://localhost:8000';
 
+// escapa texto de usuario antes de insertarlo con innerHTML
+function escapeHTML(str) {
+    if (str == null) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 // añade Content-Type y el token JWT si existe
 function _headers(esJSON = true) {
     const token = localStorage.getItem('bonobo_token');
@@ -21,6 +32,15 @@ async function _req(method, endpoint, body = null) {
     if (res.status === 204) return null;
 
     const data = await res.json().catch(() => ({ detail: `Error ${res.status}` }));
+
+    if (res.status === 401 && localStorage.getItem('bonobo_token')) {
+        // token caducado — cerramos sesión y redirigimos a login
+        localStorage.removeItem('bonobo_token');
+        localStorage.removeItem('bonobo_user');
+        const inPages = window.location.pathname.includes('/pages/');
+        window.location.href = inPages ? 'login.html' : 'pages/login.html';
+        return null;
+    }
 
     if (!res.ok) throw new Error(data.detail || `Error ${res.status}`);
     return data;

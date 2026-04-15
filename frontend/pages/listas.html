@@ -33,7 +33,7 @@
         <div id="vistaDetalle" class="oculto">
 
             <button class="btn btn--ghost btn--sm" style="margin-bottom:24px"
-                    onclick="volverAlIndice()">
+                    id="btnVolver" onclick="volverAlIndice()">
                 ← Volver a mis listas
             </button>
 
@@ -190,8 +190,8 @@
             return `
                 <div class="lista-card" onclick="abrirLista(${l.id})">
                     <div class="lista-card__info">
-                        <div class="lista-card__nombre">${l.nombre}</div>
-                        ${l.descripcion ? `<div class="lista-card__desc">${l.descripcion}</div>` : ''}
+                        <div class="lista-card__nombre">${escapeHTML(l.nombre)}</div>
+                        ${l.descripcion ? `<div class="lista-card__desc">${escapeHTML(l.descripcion)}</div>` : ''}
                     </div>
                     <span class="lista-badge lista-badge--${l.es_publica ? 'publica' : 'privada'}">
                         ${l.es_publica ? 'Pública' : 'Privada'}
@@ -200,7 +200,11 @@
                     ${conAcciones ? `
                     <div class="lista-card__acciones" onclick="event.stopPropagation()">
                         <button class="btn btn--ghost btn--sm"
-                                onclick="abrirModalEditar(${l.id}, '${l.nombre.replace(/'/g, "\\'")}', '${(l.descripcion || '').replace(/'/g, "\\'")}', ${l.es_publica})">
+                                data-id="${l.id}"
+                                data-nombre="${escapeHTML(l.nombre)}"
+                                data-desc="${escapeHTML(l.descripcion || '')}"
+                                data-publica="${l.es_publica}"
+                                onclick="abrirModalEditarDesdeBtn(this)">
                             Editar
                         </button>
                         <button class="btn btn--ghost btn--sm"
@@ -211,6 +215,15 @@
                     </div>` : ''}
                 </div>
             `;
+        }
+
+        function abrirModalEditarDesdeBtn(btn) {
+            abrirModalEditar(
+                parseInt(btn.dataset.id),
+                btn.dataset.nombre,
+                btn.dataset.desc,
+                btn.dataset.publica === 'true'
+            );
         }
 
         // ── Detalle de lista ──────────────────────────────────────────────
@@ -245,7 +258,11 @@
                 if (esListaPropia) {
                     acciones.innerHTML = `
                         <button class="btn btn--ghost btn--sm"
-                                onclick="abrirModalEditar(${lista.id}, '${lista.nombre.replace(/'/g, "\\'")}', '${(lista.descripcion || '').replace(/'/g, "\\'")}', ${lista.es_publica})">
+                                data-id="${lista.id}"
+                                data-nombre="${escapeHTML(lista.nombre)}"
+                                data-desc="${escapeHTML(lista.descripcion || '')}"
+                                data-publica="${lista.es_publica}"
+                                onclick="abrirModalEditarDesdeBtn(this)">
                             Editar
                         </button>
                         <button class="btn btn--ghost btn--sm"
@@ -447,23 +464,28 @@
         document.addEventListener('DOMContentLoaded', async () => {
             renderNav('../');
 
-            if (!auth.estaLogueado()) {
-                window.location.href = 'login.html';
-                return;
-            }
-
-            const usuario = await api.usuarios.mePerfil();
-            usuarioId = usuario.id;
-
-            // si hay ?id= en la URL, abrimos directamente esa lista
-            const params = new URLSearchParams(window.location.search);
+            const params  = new URLSearchParams(window.location.search);
             const idParam = params.get('id');
 
             if (idParam) {
-                // cargamos el índice en background y abrimos el detalle
-                cargarListas(usuarioId);
+                // acceso directo a una lista — no requiere login
+                if (auth.estaLogueado()) {
+                    try {
+                        const usuario = await api.usuarios.mePerfil();
+                        usuarioId = usuario.id;
+                    } catch { /* si falla el perfil, seguimos sin usuarioId */ }
+                }
+                document.getElementById('btnVolver').textContent = '← Volver';
+                document.getElementById('btnVolver').onclick = () => history.back();
                 await abrirLista(parseInt(idParam), false);
             } else {
+                // página de mis listas — requiere login
+                if (!auth.estaLogueado()) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+                const usuario = await api.usuarios.mePerfil();
+                usuarioId = usuario.id;
                 await cargarListas(usuarioId);
             }
         });

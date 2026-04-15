@@ -38,9 +38,9 @@ def editar_entrada_diario(id_entrada: int, entrada_data: schemas.EntradaDiarioUp
 
     if entrada_data.fecha_visionado:
         entrada.fecha_visionado = entrada_data.fecha_visionado
-    if entrada_data.resena is not None:
+    if 'resena' in entrada_data.model_fields_set:
         entrada.resena = entrada_data.resena
-    if entrada_data.puntuacion is not None:
+    if 'puntuacion' in entrada_data.model_fields_set:
         entrada.puntuacion = entrada_data.puntuacion
 
     db.commit()

@@ -89,7 +89,7 @@ def editar_perfil(usuario_data: schemas.UserUpdate,
 # ─── BUSCAR USUARIOS ──────────────────────────────────────────────────────
 
 # GET /api/usuarios/buscar?q=texto
-@router.get("/buscar")
+@router.get("/buscar", response_model=list[schemas.UsuarioResumen])
 def buscar_usuarios(q: str, skip: int = 0, limit: int = 20,
                     db: Session = Depends(database.get_db)):
 
@@ -101,10 +101,7 @@ def buscar_usuarios(q: str, skip: int = 0, limit: int = 20,
         .limit(limit)
     ).scalars().all()
 
-    return [
-        {"id": u.id, "username": u.username, "avatar_url": u.avatar_url}
-        for u in usuarios
-    ]
+    return usuarios
 
 
 # ─── PERFIL DE OTRO USUARIO ───────────────────────────────────────────────
@@ -276,6 +273,7 @@ def get_diario_pelicula(id: int, tmdb_id: int,
             id=entrada.id,
             fecha_visionado=entrada.fecha_visionado,
             resena=entrada.resena,
+            puntuacion=entrada.puntuacion,
             created_at=entrada.created_at,
             total_likes=likes_counts.get(entrada.id, 0),
             total_comentarios=comments_counts.get(entrada.id, 0)

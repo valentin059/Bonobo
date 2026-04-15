@@ -497,20 +497,20 @@ function renderResenaAmigos(amigos) {
     }
     lista.innerHTML = amigos.map(a => {
         const avgEl = a.avatar_url
-            ? `<img src="${a.avatar_url}" alt="${a.username}">`
-            : a.username[0].toUpperCase();
+            ? `<img src="${a.avatar_url}" alt="${escapeHTML(a.username)}">`
+            : escapeHTML(a.username[0].toUpperCase());
         return `
             <div class="amigo-resena">
                 <div class="amigo-resena__avatar">${avgEl}</div>
                 <div class="amigo-resena__info">
                     <div class="amigo-resena__username"
-                         onclick="location.href='usuario.html?id=${a.id_usuario}'">${a.username}</div>
+                         onclick="location.href='usuario.html?id=${a.id_usuario}'">${escapeHTML(a.username)}</div>
                     <div class="amigo-resena__stats">
                         ${a.puntuacion ? `<span>★ ${a.puntuacion}/10</span>` : ''}
                         <span>${a.total_entradas} ${a.total_entradas === 1 ? 'visionado' : 'visionados'}</span>
                     </div>
                     ${a.ultima_resena
-                        ? `<p class="amigo-resena__texto">"${a.ultima_resena}"</p>`
+                        ? `<p class="amigo-resena__texto">"${escapeHTML(a.ultima_resena)}"</p>`
                         : ''}
                 </div>
             </div>
@@ -564,12 +564,12 @@ function crearResenaCardHTML(r) {
                 ${avatarHTML(r.avatar_url, r.username)}
                 <div class="resena-card__meta">
                     <div class="resena-card__username"
-                         onclick="event.stopPropagation();location.href='usuario.html?id=${r.id_usuario}'">${r.username}</div>
+                         onclick="event.stopPropagation();location.href='usuario.html?id=${r.id_usuario}'">${escapeHTML(r.username)}</div>
                     <div class="resena-card__fecha">${fecha}</div>
                 </div>
                 ${r.puntuacion ? `<div class="resena-card__puntuacion">★ ${r.puntuacion}</div>` : ''}
             </div>
-            ${tieneTexto ? `<p class="resena-card__texto diario-resena" style="cursor:pointer" onclick="abrirModalResena(${r.id})">${r.resena}</p>` : ''}
+            ${tieneTexto ? `<p class="resena-card__texto diario-resena" style="cursor:pointer" onclick="abrirModalResena(${r.id})">${escapeHTML(r.resena)}</p>` : ''}
             <div class="resena-card__acciones">
                 <button class="resena-accion-btn ${likedClass}" id="like-btn-${r.id}"
                         onclick="toggleLike(${r.id}, this)" ${auth.estaLogueado() ? '' : 'disabled'}>
@@ -636,13 +636,13 @@ async function cargarComentarios(idEntrada, contenedor) {
                 <div class="comentario-item" id="comentario-${c.id}">
                     <div class="comentario-item__avatar">
                         ${c.avatar_url
-                            ? `<img src="${c.avatar_url}" alt="${c.username}">`
-                            : c.username[0].toUpperCase()
+                            ? `<img src="${c.avatar_url}" alt="${escapeHTML(c.username)}">`
+                            : escapeHTML(c.username[0].toUpperCase())
                         }
                     </div>
                     <div class="comentario-item__body">
-                        <span class="comentario-item__username">${c.username}</span>
-                        <span class="comentario-item__texto">${c.texto}</span>
+                        <span class="comentario-item__username">${escapeHTML(c.username)}</span>
+                        <span class="comentario-item__texto">${escapeHTML(c.texto)}</span>
                         ${miId === c.id_usuario
                             ? `<button class="comentario-item__borrar"
                                        onclick="borrarComentario(${c.id}, ${idEntrada})">✕</button>`
@@ -683,13 +683,13 @@ async function enviarComentario(idEntrada) {
         item.innerHTML = `
             <div class="comentario-item__avatar">
                 ${nuevo.avatar_url
-                    ? `<img src="${nuevo.avatar_url}" alt="${nuevo.username}">`
-                    : nuevo.username[0].toUpperCase()
+                    ? `<img src="${nuevo.avatar_url}" alt="${escapeHTML(nuevo.username)}">`
+                    : escapeHTML(nuevo.username[0].toUpperCase())
                 }
             </div>
             <div class="comentario-item__body">
-                <span class="comentario-item__username">${nuevo.username}</span>
-                <span class="comentario-item__texto">${nuevo.texto}</span>
+                <span class="comentario-item__username">${escapeHTML(nuevo.username)}</span>
+                <span class="comentario-item__texto">${escapeHTML(nuevo.texto)}</span>
                 <button class="comentario-item__borrar"
                         onclick="borrarComentario(${nuevo.id}, ${idEntrada})">✕</button>
             </div>

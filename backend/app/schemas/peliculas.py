@@ -219,6 +219,7 @@ class EntradaDiarioDetalle(BaseModel):
     id: int
     fecha_visionado: date
     resena: Optional[str] = None
+    puntuacion: Optional[int] = None
     created_at: datetime
     total_likes: int = 0
     total_comentarios: int = 0

@@ -126,12 +126,12 @@
                     <div class="diario-contenido diario-contenido--clickable"
                          onclick="${modoAjeno ? `abrirModalVerEntrada(${entrada.id})` : `abrirModalEditar(${entrada.id})`}">
                         <div class="diario-titulo-peli">
-                            ${pelicula?.titulo || `Entrada #${entrada.id}`}
+                            ${escapeHTML(pelicula?.titulo) || `Entrada #${entrada.id}`}
                             <span class="diario-puntuacion" id="punt-${entrada.id}">${entrada.puntuacion ? `★ ${entrada.puntuacion}` : ''}</span>
                         </div>
                         <p class="diario-resena" id="resena-txt-${entrada.id}">${
                             entrada.resena
-                                ? entrada.resena
+                                ? escapeHTML(entrada.resena)
                                 : '<span class="text-faint">Sin reseña</span>'
                         }</p>
                     </div>
@@ -232,7 +232,7 @@
                 const resenaTxt = document.getElementById(`resena-txt-${idEntrada}`);
                 if (resenaTxt) {
                     resenaTxt.innerHTML = resena
-                        ? resena
+                        ? escapeHTML(resena)
                         : '<span class="text-faint">Sin reseña</span>';
                 }
                 const puntEl = document.getElementById(`punt-${idEntrada}`);

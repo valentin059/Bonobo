@@ -144,12 +144,12 @@ function renderizarDiario(entradas) {
                 <div class="diario-contenido diario-contenido--clickable"
                      onclick="abrirModalDiarioEntrada(${entrada.id})">
                     <div class="diario-titulo-peli">
-                        ${pelicula?.titulo || `Película #${entrada.id_pelicula}`}
+                        ${escapeHTML(pelicula?.titulo) || `Película #${entrada.id_pelicula}`}
                         <span class="diario-puntuacion" id="perfil-punt-${entrada.id}">${entrada.puntuacion ? `★ ${entrada.puntuacion}` : ''}</span>
                     </div>
                     <p class="diario-resena">${
                         entrada.resena
-                            ? entrada.resena
+                            ? escapeHTML(entrada.resena)
                             : '<span class="text-faint">Sin reseña</span>'
                     }</p>
                 </div>
@@ -346,11 +346,23 @@ function buscarFav(idx, query) {
                 return;
             }
             resEl.innerHTML = resultados.map(p => `
-                <div class="fav-result-item" onclick="seleccionarFav(${idx}, ${p.tmdb_id}, '${p.titulo.replace(/'/g, "\\'")}', '${p.poster_url || ''}')">
-                    ${p.poster_url ? `<img src="${p.poster_url}" alt="">` : ''}
-                    <span>${p.titulo}${p.anio_estreno ? ` (${p.anio_estreno})` : ''}</span>
+                <div class="fav-result-item"
+                     data-idx="${idx}"
+                     data-tmdb-id="${p.tmdb_id}"
+                     data-titulo="${escapeHTML(p.titulo)}"
+                     data-poster="${escapeHTML(p.poster_url || '')}">
+                    ${p.poster_url ? `<img src="${escapeHTML(p.poster_url)}" alt="">` : ''}
+                    <span>${escapeHTML(p.titulo)}${p.anio_estreno ? ` (${p.anio_estreno})` : ''}</span>
                 </div>
             `).join('');
+            resEl.querySelectorAll('.fav-result-item').forEach(el => {
+                el.addEventListener('click', () => seleccionarFav(
+                    parseInt(el.dataset.idx),
+                    parseInt(el.dataset.tmdbId),
+                    el.dataset.titulo,
+                    el.dataset.poster
+                ));
+            });
             resEl.style.display = 'block';
         } catch { resEl.style.display = 'none'; }
     }, 350);
