@@ -117,13 +117,15 @@ function renderizarPelicula(pelicula) {
     const gridReparto = document.getElementById('gridReparto');
     if (pelicula.reparto && pelicula.reparto.length > 0) {
         gridReparto.innerHTML = pelicula.reparto.map(actor => `
-            <div class="actor-card" ${actor.person_id ? `style="cursor:pointer" onclick="irAPersona(${actor.person_id})"` : ''}>
+            <div class="actor-card" ${actor.person_id ? `onclick="irAPersona(${actor.person_id})"` : ''}>
                 ${actor.foto
                     ? `<img class="actor-foto" src="${actor.foto}" alt="${actor.nombre}" loading="lazy">`
-                    : `<div class="actor-foto" style="display:flex;align-items:center;justify-content:center;color:var(--faint)">?</div>`
+                    : `<div class="actor-foto" style="display:flex;align-items:center;justify-content:center;color:var(--faint);font-family:var(--font-display);font-size:14px">?</div>`
                 }
-                <div class="actor-nombre">${actor.nombre || '—'}</div>
-                <div class="actor-personaje">${actor.personaje || ''}</div>
+                <div class="actor-info">
+                    <div class="actor-nombre">${actor.nombre || '—'}</div>
+                    <div class="actor-personaje">${actor.personaje || ''}</div>
+                </div>
             </div>
         `).join('');
     } else {
