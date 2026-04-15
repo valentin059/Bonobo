@@ -145,6 +145,33 @@
         </div>
     </div>
 
+    <!-- ── MODAL: VER / EDITAR ENTRADA DIARIO ───────────────────────────────── -->
+    <div class="modal-overlay modal-overlay--hidden" id="modalDiarioEntrada">
+        <div class="modal">
+            <button class="modal-close" onclick="cerrarModalDiarioEntrada()">✕</button>
+            <h2 class="modal-titulo" id="modalDiarioTitulo">Entrada del diario</h2>
+            <input type="hidden" id="diarioEntradaId" />
+            <div class="form-grupo">
+                <label class="form-label">Fecha de visionado</label>
+                <input class="form-input" type="date" id="diarioEntradaFecha" style="color-scheme:dark" />
+            </div>
+            <div class="form-grupo">
+                <label class="form-label">Puntuación</label>
+                <div class="puntuacion-selector" id="diarioEntradaSelector"></div>
+            </div>
+            <div class="form-grupo">
+                <label class="form-label">Reseña</label>
+                <textarea class="form-input" id="diarioEntradaResena" rows="4"
+                          placeholder="¿Qué te pareció? (opcional)"
+                          style="resize:vertical;min-height:90px"></textarea>
+            </div>
+            <button class="btn btn--primary" style="width:100%;margin-top:8px"
+                    onclick="guardarEdicionDiario()">
+                Guardar cambios
+            </button>
+        </div>
+    </div>
+
     <div class="toast" id="toast"></div>
 
     <script src="../js/api.js"></script>

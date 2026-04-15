@@ -123,13 +123,14 @@ function renderizarDiario(entradas) {
     }
 
     lista.innerHTML = entradas.slice(0, 5).map(entrada => {
+        diarioCache$[entrada.id] = { entrada, pelicula: movieMap[entrada.id_pelicula] };
         const fecha = new Date(entrada.fecha_visionado);
         const dia   = fecha.getDate();
         const mes   = fecha.toLocaleString('es', { month: 'short' }).toUpperCase();
         const pelicula = movieMap[entrada.id_pelicula];
 
         return `
-            <div class="diario-entrada">
+            <div class="diario-entrada" id="perfil-entrada-${entrada.id}">
                 <div class="diario-fecha">
                     <div class="diario-fecha__dia">${dia}</div>
                     <div class="diario-fecha__mes">${mes}</div>
@@ -140,19 +141,88 @@ function renderizarDiario(entradas) {
                        </div>`
                     : `<div class="diario-poster"></div>`
                 }
-                <div class="diario-contenido">
-                    <div class="diario-titulo-peli"
-                         ${pelicula ? `style="cursor:pointer" onclick="irAPelicula(${pelicula.tmdb_id})"` : ''}>
+                <div class="diario-contenido diario-contenido--clickable"
+                     onclick="abrirModalDiarioEntrada(${entrada.id})">
+                    <div class="diario-titulo-peli">
                         ${pelicula?.titulo || `Película #${entrada.id_pelicula}`}
+                        <span class="diario-puntuacion" id="perfil-punt-${entrada.id}">${entrada.puntuacion ? `★ ${entrada.puntuacion}` : ''}</span>
                     </div>
-                    ${entrada.resena
-                        ? `<p class="diario-resena">${entrada.resena}</p>`
-                        : `<p class="diario-resena text-faint">Sin reseña</p>`
-                    }
+                    <p class="diario-resena">${
+                        entrada.resena
+                            ? entrada.resena
+                            : '<span class="text-faint">Sin reseña</span>'
+                    }</p>
                 </div>
             </div>
         `;
     }).join('');
+}
+
+// ── Modal editar entrada desde perfil ────────────────────────────────────────
+
+const diarioCache$ = {};
+let perfilEditPuntuacion = null;
+
+function abrirModalDiarioEntrada(id) {
+    const cached = diarioCache$[id];
+    if (!cached) return;
+    const { entrada, pelicula } = cached;
+
+    const sel = document.getElementById('diarioEntradaSelector');
+    if (!sel.innerHTML) {
+        sel.innerHTML = Array.from({ length: 10 }, (_, i) => {
+            const v = i + 1;
+            return `<button class="punt-btn" data-val="${v}" onclick="setPerfilPuntuacion(${v})">${v}</button>`;
+        }).join('');
+    }
+    document.getElementById('diarioEntradaId').value    = entrada.id;
+    document.getElementById('diarioEntradaFecha').value = entrada.fecha_visionado;
+    document.getElementById('diarioEntradaResena').value = entrada.resena || '';
+    document.getElementById('modalDiarioTitulo').textContent = pelicula?.titulo || 'Entrada del diario';
+    perfilEditPuntuacion = entrada.puntuacion || null;
+    document.querySelectorAll('#diarioEntradaSelector .punt-btn').forEach(btn => {
+        btn.classList.toggle('punt-btn--activo', parseInt(btn.dataset.val) === perfilEditPuntuacion);
+    });
+    document.getElementById('modalDiarioEntrada').classList.remove('modal-overlay--hidden');
+}
+
+function cerrarModalDiarioEntrada() {
+    document.getElementById('modalDiarioEntrada').classList.add('modal-overlay--hidden');
+}
+
+function setPerfilPuntuacion(val) {
+    perfilEditPuntuacion = perfilEditPuntuacion === val ? null : val;
+    document.querySelectorAll('#diarioEntradaSelector .punt-btn').forEach(btn => {
+        btn.classList.toggle('punt-btn--activo', parseInt(btn.dataset.val) === perfilEditPuntuacion);
+    });
+}
+
+async function guardarEdicionDiario() {
+    const id    = parseInt(document.getElementById('diarioEntradaId').value);
+    const fecha = document.getElementById('diarioEntradaFecha').value;
+    const resena = document.getElementById('diarioEntradaResena').value.trim() || null;
+
+    if (!fecha) return;
+
+    try {
+        await api.acciones.editarDiario(id, {
+            fecha_visionado: fecha,
+            resena,
+            puntuacion: perfilEditPuntuacion,
+        });
+
+        if (diarioCache$[id]) {
+            diarioCache$[id].entrada.resena     = resena;
+            diarioCache$[id].entrada.puntuacion = perfilEditPuntuacion;
+        }
+        const puntEl = document.getElementById(`perfil-punt-${id}`);
+        if (puntEl) puntEl.textContent = perfilEditPuntuacion ? `★ ${perfilEditPuntuacion}` : '';
+
+        cerrarModalDiarioEntrada();
+        mostrarToast('Entrada actualizada ✓');
+    } catch (err) {
+        mostrarToast(err.message || 'Error al guardar', 'error');
+    }
 }
 
 function renderizarListas(listas) {

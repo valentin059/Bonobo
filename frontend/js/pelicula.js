@@ -211,10 +211,6 @@ function renderizarPelicula(pelicula) {
         listaDetalles.innerHTML = `<p class="text-faint" style="font-size:13px;grid-column:1/-1">Sin detalles disponibles.</p>`;
     }
 
-    // Ponemos la fecha de hoy como valor por defecto en el campo de diario
-    const hoy = new Date().toISOString().split('T')[0];
-    const fechaInput = document.getElementById('fechaVisionado');
-    if (fechaInput) fechaInput.value = hoy;
 }
 
 // ── ACCIONES ──────────────────────────────────────────────────────────────────
@@ -306,6 +302,37 @@ function irAPersona(personId) {
     window.location.href = `persona.html?id=${personId}`;
 }
 
+// ── MODAL DIARIO ──────────────────────────────────────────────────────────────
+
+let puntuacionDiario = null;
+
+function abrirModalDiario() {
+    inicializarSelectorPuntuacionDiario();
+    const hoy = new Date().toISOString().split('T')[0];
+    document.getElementById('fechaVisionado').value = hoy;
+    document.getElementById('modalDiario').classList.remove('modal-overlay--hidden');
+}
+
+function cerrarModalDiario() {
+    document.getElementById('modalDiario').classList.add('modal-overlay--hidden');
+}
+
+function inicializarSelectorPuntuacionDiario() {
+    const sel = document.getElementById('selectorPuntuacionDiario');
+    if (!sel || sel.innerHTML) return;
+    sel.innerHTML = Array.from({ length: 10 }, (_, i) => {
+        const v = i + 1;
+        return `<button class="punt-btn" data-val="${v}" onclick="setPuntuacionDiario(${v})">${v}</button>`;
+    }).join('');
+}
+
+function setPuntuacionDiario(val) {
+    puntuacionDiario = puntuacionDiario === val ? null : val;
+    document.querySelectorAll('#selectorPuntuacionDiario .punt-btn').forEach(btn => {
+        btn.classList.toggle('punt-btn--activo', parseInt(btn.dataset.val) === puntuacionDiario);
+    });
+}
+
 // Guarda una nueva entrada en el diario del usuario.
 async function guardarDiario() {
     const fecha  = document.getElementById('fechaVisionado').value;
@@ -319,16 +346,20 @@ async function guardarDiario() {
     try {
         await api.acciones.crearDiario(tmdbId, {
             fecha_visionado: fecha,
-            resena: resena || null   // si está vacío, mandamos null (es opcional)
+            resena: resena || null,
+            puntuacion: puntuacionDiario,
         });
 
-        // Crear entrada de diario marca la película como vista automáticamente
         estado.vista = true;
         if (estado.en_watchlist) estado.en_watchlist = false;
         actualizarBotonesAccion();
 
-        // Limpiamos el campo de reseña tras guardar
         document.getElementById('resena').value = '';
+        puntuacionDiario = null;
+        document.querySelectorAll('#selectorPuntuacionDiario .punt-btn')
+            .forEach(b => b.classList.remove('punt-btn--activo'));
+
+        cerrarModalDiario();
         mostrarToast('Entrada guardada en el diario ✓');
     } catch (err) {
         mostrarToast(err.message || 'Error al guardar en el diario', 'error');
@@ -357,50 +388,55 @@ function activarTab(nombre) {
     }
 }
 
-// ── AÑADIR A LISTA ────────────────────────────────────────────────────────────
+// ── MODAL LISTAS ──────────────────────────────────────────────────────────────
 
 let listasUsuarioCargadas = false;
-let panelListasAbierto    = false;
 
-async function togglePanelListas() {
-    const panel = document.getElementById('panelListas');
-    const arrow = document.getElementById('toggleListasArrow');
-    panelListasAbierto = !panelListasAbierto;
-    panel.classList.toggle('oculto', !panelListasAbierto);
-    arrow.textContent = panelListasAbierto ? '▴' : '▾';
-
-    if (panelListasAbierto && !listasUsuarioCargadas) {
+async function abrirModalListas() {
+    document.getElementById('modalListas').classList.remove('modal-overlay--hidden');
+    if (!listasUsuarioCargadas) {
         listasUsuarioCargadas = true;
-        await cargarPanelListas();
+        await cargarModalListas();
     }
 }
 
-async function cargarPanelListas() {
+function cerrarModalListas() {
+    document.getElementById('modalListas').classList.add('modal-overlay--hidden');
+}
+
+async function cargarModalListas() {
     const contenedor = document.getElementById('listasUsuario');
     try {
-        const usuario = await api.usuarios.mePerfil();
-        const listas  = await api.usuarios.listas(usuario.id);
+        const usuario  = await api.usuarios.mePerfil();
+        const [listas, yaEn] = await Promise.all([
+            api.usuarios.listas(usuario.id),
+            api.listas.listasConPelicula(tmdbId),
+        ]);
 
         if (listas.length === 0) {
             contenedor.innerHTML = `
-                <p class="text-faint" style="font-size:12px">Sin listas.
+                <p class="text-faint" style="font-size:13px">Sin listas.
                     <a href="listas.html" style="color:var(--accent)">Crea una →</a>
                 </p>`;
             return;
         }
 
-        contenedor.innerHTML = listas.map(l => `
-            <button class="btn btn--surface btn--sm"
-                    style="width:100%;justify-content:flex-start;font-weight:400;font-size:12px"
-                    onclick="añadirALista(${l.id}, '${l.nombre.replace(/'/g, "\\'")}')">
-                ${l.nombre}
-                <span style="margin-left:auto;color:var(--faint);font-size:10px">
-                    ${l.es_publica ? 'Pública' : 'Privada'}
-                </span>
-            </button>
-        `).join('');
+        contenedor.innerHTML = listas.map(l => {
+            const añadida = yaEn.includes(l.id);
+            return `
+                <button class="btn btn--sm lista-modal-btn ${añadida ? 'lista-modal-btn--añadida' : 'btn--surface'}"
+                        style="width:100%;justify-content:flex-start;font-weight:400"
+                        id="lista-btn-${l.id}"
+                        ${añadida ? 'disabled' : `onclick="añadirALista(${l.id}, '${l.nombre.replace(/'/g, "\\'")}')"`}>
+                    ${l.nombre}
+                    <span style="margin-left:auto;font-size:11px">
+                        ${añadida ? 'Añadida ✓' : (l.es_publica ? 'Pública' : 'Privada')}
+                    </span>
+                </button>
+            `;
+        }).join('');
     } catch {
-        contenedor.innerHTML = '<p class="text-faint" style="font-size:12px">Error al cargar listas.</p>';
+        contenedor.innerHTML = '<p class="text-faint" style="font-size:13px">Error al cargar listas.</p>';
     }
 }
 
@@ -408,10 +444,13 @@ async function añadirALista(idLista, nombreLista) {
     try {
         await api.listas.añadirPelicula(idLista, tmdbId);
         mostrarToast(`Añadida a "${nombreLista}" ✓`);
-        // cerramos el panel
-        document.getElementById('panelListas').classList.add('oculto');
-        document.getElementById('toggleListasArrow').textContent = '▾';
-        panelListasAbierto = false;
+        const btn = document.getElementById(`lista-btn-${idLista}`);
+        if (btn) {
+            btn.classList.remove('btn--surface');
+            btn.classList.add('lista-modal-btn--añadida');
+            btn.disabled = true;
+            btn.querySelector('span').textContent = 'Añadida ✓';
+        }
     } catch (err) {
         mostrarToast(err.message || 'Error al añadir', 'error');
     }
@@ -488,25 +527,49 @@ function renderResenasComunidad(resenas) {
     lista.innerHTML = resenas.map(r => crearResenaCardHTML(r)).join('');
 }
 
+const resenasCache = {};
+
+function abrirModalResena(id) {
+    const r = resenasCache[id];
+    if (!r) return;
+    const fecha = new Date(r.fecha_visionado).toLocaleDateString('es', {
+        day: 'numeric', month: 'short', year: 'numeric'
+    });
+    const avatarEl = document.getElementById('resenaModalAvatar');
+    avatarEl.innerHTML = r.avatar_url
+        ? `<img src="${r.avatar_url}" alt="${r.username}">`
+        : r.username[0].toUpperCase();
+    document.getElementById('resenaModalUsername').textContent   = r.username;
+    document.getElementById('resenaModalFecha').textContent      = fecha;
+    document.getElementById('resenaModalPuntuacion').textContent = r.puntuacion ? `★ ${r.puntuacion}` : '';
+    document.getElementById('resenaModalTexto').textContent      = r.resena || '';
+    document.getElementById('modalVerResena').classList.remove('modal-overlay--hidden');
+}
+
+function cerrarModalResena() {
+    document.getElementById('modalVerResena').classList.add('modal-overlay--hidden');
+}
+
 function crearResenaCardHTML(r) {
+    resenasCache[r.id] = r;
     const fecha = new Date(r.fecha_visionado).toLocaleDateString('es', {
         day: 'numeric', month: 'short', year: 'numeric'
     });
     const likedClass = r.yo_di_like ? 'resena-accion-btn--liked' : '';
-    const likeLabel  = r.yo_di_like ? 'Me gusta' : 'Me gusta';
+    const tieneTexto = !!r.resena;
 
     return `
         <div class="resena-card" id="resena-${r.id}">
-            <div class="resena-card__header">
+            <div class="resena-card__header" ${tieneTexto ? `style="cursor:pointer" onclick="abrirModalResena(${r.id})"` : ''}>
                 ${avatarHTML(r.avatar_url, r.username)}
                 <div class="resena-card__meta">
                     <div class="resena-card__username"
-                         onclick="location.href='usuario.html?id=${r.id_usuario}'">${r.username}</div>
+                         onclick="event.stopPropagation();location.href='usuario.html?id=${r.id_usuario}'">${r.username}</div>
                     <div class="resena-card__fecha">${fecha}</div>
                 </div>
                 ${r.puntuacion ? `<div class="resena-card__puntuacion">★ ${r.puntuacion}</div>` : ''}
             </div>
-            ${r.resena ? `<p class="resena-card__texto">${r.resena}</p>` : ''}
+            ${tieneTexto ? `<p class="resena-card__texto diario-resena" style="cursor:pointer" onclick="abrirModalResena(${r.id})">${r.resena}</p>` : ''}
             <div class="resena-card__acciones">
                 <button class="resena-accion-btn ${likedClass}" id="like-btn-${r.id}"
                         onclick="toggleLike(${r.id}, this)" ${auth.estaLogueado() ? '' : 'disabled'}>

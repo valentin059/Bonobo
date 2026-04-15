@@ -18,14 +18,16 @@ class PuntuacionCreate(BaseModel):
 
 # Datos para crear una nueva entrada en el diario
 class EntradaDiarioCreate(BaseModel):
-    fecha_visionado: date             # fecha en que se vio la película
-    resena: Optional[str] = None      # texto de la reseña (opcional)
+    fecha_visionado: date
+    resena: Optional[str] = None
+    puntuacion: Optional[int] = Field(None, ge=1, le=10)
 
 
 # Datos para editar una entrada existente del diario (todos los campos son opcionales)
 class EntradaDiarioUpdate(BaseModel):
     fecha_visionado: Optional[date] = None
     resena: Optional[str] = None
+    puntuacion: Optional[int] = Field(None, ge=1, le=10)
 
 
 # Datos de una entrada de diario que devuelve la API
@@ -35,6 +37,7 @@ class EntradaDiarioOut(BaseModel):
     id_pelicula: int
     fecha_visionado: date
     resena: Optional[str] = None
+    puntuacion: Optional[int] = None
     model_config = ConfigDict(from_attributes=True)
 
 

@@ -67,6 +67,7 @@ class EntradaDiario(Base):
     id_pelicula = Column(Integer, ForeignKey("peliculas.id", ondelete="CASCADE"), nullable=False)
     fecha_visionado = Column(Date, nullable=False)      # fecha en que vio la película
     resena = Column(Text, nullable=True)                # texto de la reseña (opcional)
+    puntuacion = Column(Integer, nullable=True)         # puntuación de este visionado concreto (1-10, opcional)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
 
 

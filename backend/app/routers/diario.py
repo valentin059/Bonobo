@@ -40,6 +40,8 @@ def editar_entrada_diario(id_entrada: int, entrada_data: schemas.EntradaDiarioUp
         entrada.fecha_visionado = entrada_data.fecha_visionado
     if entrada_data.resena is not None:
         entrada.resena = entrada_data.resena
+    if entrada_data.puntuacion is not None:
+        entrada.puntuacion = entrada_data.puntuacion
 
     db.commit()
     db.refresh(entrada)

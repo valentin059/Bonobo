@@ -41,6 +41,10 @@
                 <input class="form-input" type="date" id="editFecha" style="color-scheme:dark" />
             </div>
             <div class="form-grupo">
+                <label class="form-label">Puntuación del visionado</label>
+                <div class="puntuacion-selector" id="editSelectorPuntuacion"></div>
+            </div>
+            <div class="form-grupo">
                 <label class="form-label">Reseña</label>
                 <textarea class="form-input" id="editResena" rows="4"
                           placeholder="¿Qué te pareció? (opcional)"
@@ -64,8 +68,9 @@
     <script>
         let skip     = 0;
         const LIMIT  = 20;
-        let movieMap = {};
-        let usuarioId = null;
+        let movieMap    = {};
+        let usuarioId   = null;
+        const entradas$ = {};   // caché de entradas por id
 
         function mostrarToast(msg, tipo = 'ok') {
             const t = document.getElementById('toast');
@@ -82,6 +87,7 @@
         }
 
         function crearEntradaHTML(entrada) {
+            entradas$[entrada.id] = entrada;
             const fecha = new Date(entrada.fecha_visionado);
             const dia   = fecha.getDate();
             const mes   = fecha.toLocaleString('es', { month: 'short' }).toUpperCase();
@@ -102,22 +108,17 @@
                            </div>`
                         : `<div class="diario-poster"></div>`
                     }
-                    <div class="diario-contenido">
-                        <div class="diario-titulo-peli"
-                             ${pelicula ? `style="cursor:pointer" onclick="location.href='pelicula.html?id=${pelicula.tmdb_id}'"` : ''}>
+                    <div class="diario-contenido diario-contenido--clickable"
+                         onclick="abrirModalEditar(${entrada.id})">
+                        <div class="diario-titulo-peli">
                             ${pelicula?.titulo || `Entrada #${entrada.id}`}
+                            <span class="diario-puntuacion" id="punt-${entrada.id}">${entrada.puntuacion ? `★ ${entrada.puntuacion}` : ''}</span>
                         </div>
                         <p class="diario-resena" id="resena-txt-${entrada.id}">${
                             entrada.resena
                                 ? entrada.resena
                                 : '<span class="text-faint">Sin reseña</span>'
                         }</p>
-                    </div>
-                    <div class="diario-acciones">
-                        <button class="diario-accion-btn"
-                                onclick="abrirModalEditar(${entrada.id}, '${entrada.fecha_visionado}', ${JSON.stringify(entrada.resena || '')})">
-                            Editar
-                        </button>
                     </div>
                 </div>
             `;
@@ -152,11 +153,36 @@
 
         // ── Modal editar entrada ──────────────────────────────────────────
 
-        function abrirModalEditar(idEntrada, fecha, resena) {
-            document.getElementById('editIdEntrada').value = idEntrada;
-            document.getElementById('editFecha').value    = fecha;
-            document.getElementById('editResena').value   = resena || '';
+        let editPuntuacion = null;
+
+        function initEditSelector() {
+            const sel = document.getElementById('editSelectorPuntuacion');
+            if (sel.innerHTML) return;
+            sel.innerHTML = Array.from({ length: 10 }, (_, i) => {
+                const v = i + 1;
+                return `<button class="punt-btn" data-val="${v}" onclick="setEditPuntuacion(${v})">${v}</button>`;
+            }).join('');
+        }
+
+        function setEditPuntuacion(val) {
+            editPuntuacion = editPuntuacion === val ? null : val;
+            document.querySelectorAll('#editSelectorPuntuacion .punt-btn').forEach(btn => {
+                btn.classList.toggle('punt-btn--activo', parseInt(btn.dataset.val) === editPuntuacion);
+            });
+        }
+
+        function abrirModalEditar(id) {
+            const e = entradas$[id];
+            if (!e) return;
+            initEditSelector();
+            document.getElementById('editIdEntrada').value = e.id;
+            document.getElementById('editFecha').value    = e.fecha_visionado;
+            document.getElementById('editResena').value   = e.resena || '';
             document.getElementById('errorEditar').className = 'form-error';
+            editPuntuacion = e.puntuacion || null;
+            document.querySelectorAll('#editSelectorPuntuacion .punt-btn').forEach(btn => {
+                btn.classList.toggle('punt-btn--activo', parseInt(btn.dataset.val) === editPuntuacion);
+            });
             document.getElementById('modalEditar').classList.remove('modal-overlay--hidden');
         }
 
@@ -179,16 +205,22 @@
             try {
                 await api.acciones.editarDiario(idEntrada, {
                     fecha_visionado: fecha,
-                    resena
+                    resena,
+                    puntuacion: editPuntuacion,
                 });
 
-                // actualiza el texto en el DOM sin recargar
+                if (entradas$[idEntrada]) {
+                    entradas$[idEntrada].resena     = resena;
+                    entradas$[idEntrada].puntuacion = editPuntuacion;
+                }
                 const resenaTxt = document.getElementById(`resena-txt-${idEntrada}`);
                 if (resenaTxt) {
                     resenaTxt.innerHTML = resena
                         ? resena
                         : '<span class="text-faint">Sin reseña</span>';
                 }
+                const puntEl = document.getElementById(`punt-${idEntrada}`);
+                if (puntEl) puntEl.textContent = editPuntuacion ? `★ ${editPuntuacion}` : '';
 
                 cerrarModalEditar();
                 mostrarToast('Entrada actualizada ✓');

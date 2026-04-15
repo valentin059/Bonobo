@@ -195,7 +195,8 @@ def crear_entrada_diario(tmdb_id: int, entrada_data: schemas.EntradaDiarioCreate
         id_usuario=current_user.id,
         id_pelicula=pelicula.id,
         fecha_visionado=entrada_data.fecha_visionado,
-        resena=entrada_data.resena
+        resena=entrada_data.resena,
+        puntuacion=entrada_data.puntuacion,
     )
     db.add(nueva_entrada)
     db.commit()

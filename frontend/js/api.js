@@ -123,5 +123,7 @@ const api = {
             _req('POST',   `/api/listas/${idLista}/peliculas/${tmdbId}`),
         quitarPelicula: (idLista, tmdbId) =>
             _req('DELETE', `/api/listas/${idLista}/peliculas/${tmdbId}`),
+        listasConPelicula: (tmdbId) =>
+            _req('GET', `/api/listas/mis-listas-con-pelicula/${tmdbId}`),
     },
 };

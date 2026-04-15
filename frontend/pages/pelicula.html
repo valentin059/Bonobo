@@ -76,33 +76,16 @@
                     </div>
 
                     <!-- Añadir al diario -->
-                    <div>
-                        <p class="puntuacion-label" style="margin-bottom:8px">Añadir al diario</p>
-                        <div class="diario-form">
-                            <input type="date" id="fechaVisionado" />
-                            <textarea id="resena" placeholder="¿Qué te pareció? (opcional)"></textarea>
-                            <button class="btn btn--surface btn--sm" onclick="guardarDiario()">
-                                Guardar en diario
-                            </button>
-                        </div>
-                    </div>
+                    <button class="btn btn--surface btn--sm" style="width:100%"
+                            onclick="abrirModalDiario()">
+                        Añadir al diario
+                    </button>
 
                     <!-- Añadir a lista -->
-                    <div>
-                        <button class="btn btn--surface btn--sm"
-                                style="width:100%;justify-content:space-between"
-                                id="btnToggleListas"
-                                onclick="togglePanelListas()">
-                            <span>Añadir a lista</span>
-                            <span id="toggleListasArrow">▾</span>
-                        </button>
-                        <div id="panelListas" class="oculto" style="margin-top:6px">
-                            <div id="listasUsuario"
-                                 style="display:flex;flex-direction:column;gap:4px">
-                                <p class="text-faint" style="font-size:12px">Cargando…</p>
-                            </div>
-                        </div>
-                    </div>
+                    <button class="btn btn--surface btn--sm" style="width:100%"
+                            onclick="abrirModalListas()">
+                        Añadir a lista
+                    </button>
                 </div>
 
                 <!-- Mensaje para visitantes no logueados -->
@@ -157,10 +140,63 @@
 
     </main>
 
+    <!-- ── MODAL: AÑADIR AL DIARIO ──────────────────────────────────────────── -->
+    <div class="modal-overlay modal-overlay--hidden" id="modalDiario">
+        <div class="modal">
+            <button class="modal-close" onclick="cerrarModalDiario()">✕</button>
+            <h2 class="modal-titulo">Añadir al diario</h2>
+            <div class="form-grupo">
+                <label class="form-label">Fecha de visionado</label>
+                <input class="form-input" type="date" id="fechaVisionado" style="color-scheme:dark" />
+            </div>
+            <div class="form-grupo">
+                <label class="form-label">Puntuación del visionado</label>
+                <div class="puntuacion-selector" id="selectorPuntuacionDiario"></div>
+            </div>
+            <div class="form-grupo">
+                <label class="form-label">Reseña</label>
+                <textarea class="form-input" id="resena" rows="3"
+                          placeholder="¿Qué te pareció? (opcional)"
+                          style="resize:vertical"></textarea>
+            </div>
+            <button class="btn btn--primary" style="width:100%;margin-top:4px"
+                    onclick="guardarDiario()">
+                Guardar en diario
+            </button>
+        </div>
+    </div>
+
+    <!-- ── MODAL: AÑADIR A LISTA ─────────────────────────────────────────────── -->
+    <div class="modal-overlay modal-overlay--hidden" id="modalListas">
+        <div class="modal">
+            <button class="modal-close" onclick="cerrarModalListas()">✕</button>
+            <h2 class="modal-titulo">Añadir a lista</h2>
+            <div id="listasUsuario" style="display:flex;flex-direction:column;gap:6px">
+                <p class="text-faint" style="font-size:13px">Cargando…</p>
+            </div>
+        </div>
+    </div>
+
     <!-- Overlay póster ampliado -->
     <div class="poster-overlay poster-overlay--hidden" id="posterOverlay"
          onclick="this.classList.add('poster-overlay--hidden')">
         <img id="posterOverlayImg" src="" alt="" />
+    </div>
+
+    <!-- ── MODAL: VER RESEÑA COMPLETA ──────────────────────────────────────── -->
+    <div class="modal-overlay modal-overlay--hidden" id="modalVerResena">
+        <div class="modal">
+            <button class="modal-close" onclick="cerrarModalResena()">✕</button>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+                <div id="resenaModalAvatar" class="resena-card__avatar" style="width:40px;height:40px;flex-shrink:0"></div>
+                <div>
+                    <div id="resenaModalUsername" style="font-weight:600;font-size:14px"></div>
+                    <div id="resenaModalFecha" style="font-size:12px;color:var(--faint)"></div>
+                </div>
+                <div id="resenaModalPuntuacion" class="resena-card__puntuacion" style="margin-left:auto"></div>
+            </div>
+            <p id="resenaModalTexto" style="font-size:14px;line-height:1.7;color:var(--muted);white-space:pre-wrap"></p>
+        </div>
     </div>
 
     <!-- Toast de notificaciones -->

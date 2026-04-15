@@ -40,6 +40,7 @@ function renderNav(base = '') {
                         placeholder="Buscar película o @usuario…"
                         autocomplete="off"
                     />
+                    <div id="navDropdown" class="nav-dropdown" style="display:none"></div>
                 </div>
 
                 ${logueado ? `
@@ -58,23 +59,83 @@ function renderNav(base = '') {
     const placeholder = document.getElementById('nav-placeholder');
     if (placeholder) placeholder.innerHTML = navHTML;
 
-    // buscar al pulsar Enter
-    // si empieza por @ → busca usuarios; si no → busca películas
     const searchInput = document.getElementById('navSearch');
-    if (searchInput) {
+    const dropdown    = document.getElementById('navDropdown');
+
+    if (searchInput && dropdown) {
+        let navTimer = null;
+
+        const cerrarDropdown = () => {
+            dropdown.style.display = 'none';
+            dropdown.innerHTML = '';
+        };
+
+        // Sugerencias en tiempo real
+        searchInput.addEventListener('input', () => {
+            clearTimeout(navTimer);
+            const q = searchInput.value.trim();
+            if (!q) { cerrarDropdown(); return; }
+
+            navTimer = setTimeout(async () => {
+                try {
+                    let items = [];
+                    if (q.startsWith('@')) {
+                        const usuarios = await api.usuarios.buscar(q.slice(1), 0, 6);
+                        items = usuarios.map(u => ({
+                            img:      u.avatar_url || '',
+                            titulo:   u.username,
+                            sub:      u.bio ? u.bio.slice(0, 40) : '',
+                            href:     `${base}pages/usuario.html?id=${u.id}`,
+                            esAvatar: true,
+                        }));
+                    } else {
+                        const data = await api.peliculas.buscar(q, 0, 6);
+                        items = (data.results || []).map(p => ({
+                            img:    p.poster_url || '',
+                            titulo: p.titulo,
+                            sub:    p.anio_estreno ? String(p.anio_estreno) : '',
+                            href:   `${base}pages/pelicula.html?id=${p.tmdb_id}`,
+                        }));
+                    }
+
+                    if (!items.length) { cerrarDropdown(); return; }
+
+                    dropdown.innerHTML = items.map(it => `
+                        <div class="nav-dropdown-item" onclick="location.href='${it.href}'">
+                            ${it.img
+                                ? `<img src="${it.img}" alt="" ${it.esAvatar ? 'style="height:28px;border-radius:50%"' : ''}>`
+                                : `<div style="width:28px;height:42px;background:var(--surface3);border-radius:2px;flex-shrink:0"></div>`
+                            }
+                            <div class="nav-dropdown-item__info">
+                                <div class="nav-dropdown-item__title">${it.titulo}</div>
+                                ${it.sub ? `<div class="nav-dropdown-item__sub">${it.sub}</div>` : ''}
+                            </div>
+                        </div>
+                    `).join('');
+                    dropdown.style.display = 'block';
+                } catch { cerrarDropdown(); }
+            }, 300);
+        });
+
+        // Enter → página de resultados completa
         searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') { cerrarDropdown(); return; }
             if (e.key !== 'Enter') return;
             const q = searchInput.value.trim();
             if (!q) return;
-
+            cerrarDropdown();
             if (q.startsWith('@')) {
-                // búsqueda de usuarios: quitamos el @ y vamos a buscar.html
-                const usuario = q.slice(1).trim();
-                window.location.href = `${base}pages/buscar.html?q=${encodeURIComponent(usuario)}`;
+                window.location.href = `${base}pages/buscar.html?q=${encodeURIComponent(q.slice(1).trim())}`;
             } else {
-                // búsqueda de películas: guardamos y vamos a la home
                 sessionStorage.setItem('nav_search', q);
                 window.location.href = `${base}index.html`;
+            }
+        });
+
+        // Cerrar al hacer clic fuera
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+                cerrarDropdown();
             }
         });
     }

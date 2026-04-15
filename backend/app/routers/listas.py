@@ -185,6 +185,32 @@ def eliminar_lista(id_lista: int,
     db.commit()
 
 
+# GET /api/listas/mis-listas-con-pelicula/{tmdb_id}
+# Devuelve los IDs de las listas del usuario que ya contienen esta película.
+@router.get("/mis-listas-con-pelicula/{tmdb_id}", response_model=list[int])
+def mis_listas_con_pelicula(tmdb_id: int,
+                             db: Session = Depends(database.get_db),
+                             current_user: models.Usuario = Depends(oauth2.get_current_user)):
+
+    pelicula = db.execute(
+        select(models.Pelicula).where(models.Pelicula.tmdb_id == tmdb_id)
+    ).scalar_one_or_none()
+
+    if not pelicula:
+        return []
+
+    rows = db.execute(
+        select(models.ListaPelicula.id_lista)
+        .join(models.Lista, models.Lista.id == models.ListaPelicula.id_lista)
+        .where(
+            models.Lista.id_usuario == current_user.id,
+            models.ListaPelicula.id_pelicula == pelicula.id
+        )
+    ).scalars().all()
+
+    return list(rows)
+
+
 # ─── PELÍCULAS EN LISTA ───────────────────────────────────────────────────
 
 # POST /api/listas/{id_lista}/peliculas/{tmdb_id}
