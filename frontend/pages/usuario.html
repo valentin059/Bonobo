@@ -54,23 +54,25 @@
 
         </div>
 
-        <!-- ── PELÍCULAS VISTAS ──────────────────────────────────────────── -->
-        <section class="seccion">
-            <div class="seccion-header">
-                <h2 class="seccion-titulo">Películas vistas</h2>
-                <div class="seccion-linea"></div>
-                <span class="seccion-meta" id="lblVistas"></span>
-            </div>
-            <div class="peliculas-grid" id="gridVistas"></div>
-        </section>
-
         <!-- ── DIARIO RECIENTE ───────────────────────────────────────────── -->
         <section class="seccion" id="seccionDiario">
             <div class="seccion-header">
                 <h2 class="seccion-titulo">Diario reciente</h2>
                 <div class="seccion-linea"></div>
+                <a id="linkVerTodoDiario" href="#" class="seccion-meta" style="color:var(--accent)">Ver todo →</a>
             </div>
             <div class="diario-lista" id="listaDiario"></div>
+        </section>
+
+        <!-- ── PELÍCULAS VISTAS ──────────────────────────────────────────── -->
+        <section class="seccion">
+            <div class="seccion-header">
+                <h2 class="seccion-titulo">Películas vistas</h2>
+                <div class="seccion-linea"></div>
+                <a id="linkVerTodoVistas" href="#" class="seccion-meta" style="color:var(--accent)">Ver todo →</a>
+            </div>
+            <div class="peliculas-grid peliculas-grid--sm" id="gridVistas"
+                 style="overflow:hidden;max-height:140px"></div>
         </section>
 
         <!-- ── LISTAS PÚBLICAS ───────────────────────────────────────────── -->
@@ -102,15 +104,29 @@
         </div>
     </div>
 
+    <!-- ── MODAL: VER ENTRADA DIARIO (solo lectura) ────────────────────────── -->
+    <div class="modal-overlay modal-overlay--hidden" id="modalVerEntrada">
+        <div class="modal">
+            <button class="modal-close" onclick="cerrarModalVerEntrada()">✕</button>
+            <h2 class="modal-titulo" id="verEntradaTitulo">Entrada del diario</h2>
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+                <span id="verEntradaFecha" style="font-size:13px;color:var(--muted)"></span>
+                <span id="verEntradaPuntuacion" style="font-size:13px;font-weight:600;color:var(--accent)"></span>
+            </div>
+            <p id="verEntradaResena" style="font-size:14px;line-height:1.7;color:var(--muted);white-space:pre-wrap"></p>
+        </div>
+    </div>
+
     <div class="toast" id="toast"></div>
 
     <script src="../js/api.js"></script>
     <script src="../js/auth.js"></script>
     <script src="../js/nav.js"></script>
     <script>
-        let usuarioId = null;
-        let yoSigo    = false;
-        let movieMap  = {};
+        let usuarioId    = null;
+        let yoSigo       = false;
+        let movieMap     = {};
+        const entradas$  = {};
 
         function mostrarToast(msg, tipo = 'ok') {
             const t = document.getElementById('toast');
@@ -224,9 +240,7 @@
         }
 
         function renderizarVistas(vistas) {
-            const lbl  = document.getElementById('lblVistas');
             const grid = document.getElementById('gridVistas');
-            lbl.textContent = `${vistas.length} película${vistas.length !== 1 ? 's' : ''}`;
 
             if (vistas.length === 0) {
                 grid.innerHTML = `<div class="estado-vacio" style="grid-column:1/-1">
@@ -264,15 +278,18 @@
                 return;
             }
             lista.innerHTML = entradas.slice(0, 5).map(entrada => {
+                entradas$[entrada.id] = { entrada, pelicula: movieMap[entrada.id_pelicula] };
                 const fecha = new Date(entrada.fecha_visionado);
                 const dia   = fecha.getDate();
                 const mes   = fecha.toLocaleString('es', { month: 'short' }).toUpperCase();
+                const anio  = fecha.getFullYear();
                 const pelicula = movieMap[entrada.id_pelicula];
                 return `
                     <div class="diario-entrada">
                         <div class="diario-fecha">
                             <div class="diario-fecha__dia">${dia}</div>
                             <div class="diario-fecha__mes">${mes}</div>
+                            <div class="diario-fecha__mes">${anio}</div>
                         </div>
                         ${pelicula?.poster_url
                             ? `<div class="diario-poster" style="cursor:pointer"
@@ -281,19 +298,39 @@
                                </div>`
                             : `<div class="diario-poster"></div>`
                         }
-                        <div class="diario-contenido">
-                            <div class="diario-titulo-peli"
-                                 ${pelicula ? `style="cursor:pointer" onclick="irAPelicula(${pelicula.tmdb_id})"` : ''}>
+                        <div class="diario-contenido diario-contenido--clickable"
+                             onclick="abrirModalVerEntrada(${entrada.id})">
+                            <div class="diario-titulo-peli">
                                 ${pelicula?.titulo || `Entrada #${entrada.id}`}
+                                ${entrada.puntuacion ? `<span class="diario-puntuacion">★ ${entrada.puntuacion}</span>` : ''}
                             </div>
-                            ${entrada.resena
-                                ? `<p class="diario-resena">${entrada.resena}</p>`
-                                : `<p class="diario-resena text-faint">Sin reseña</p>`
-                            }
+                            <p class="diario-resena">${
+                                entrada.resena
+                                    ? entrada.resena
+                                    : '<span class="text-faint">Sin reseña</span>'
+                            }</p>
                         </div>
                     </div>
                 `;
             }).join('');
+        }
+
+        function abrirModalVerEntrada(id) {
+            const cached = entradas$[id];
+            if (!cached) return;
+            const { entrada, pelicula } = cached;
+            const fecha = new Date(entrada.fecha_visionado).toLocaleDateString('es', {
+                day: 'numeric', month: 'long', year: 'numeric'
+            });
+            document.getElementById('verEntradaTitulo').textContent    = pelicula?.titulo || 'Entrada del diario';
+            document.getElementById('verEntradaFecha').textContent     = fecha;
+            document.getElementById('verEntradaPuntuacion').textContent = entrada.puntuacion ? `★ ${entrada.puntuacion}` : '';
+            document.getElementById('verEntradaResena').textContent    = entrada.resena || '';
+            document.getElementById('modalVerEntrada').classList.remove('modal-overlay--hidden');
+        }
+
+        function cerrarModalVerEntrada() {
+            document.getElementById('modalVerEntrada').classList.add('modal-overlay--hidden');
         }
 
         function renderizarListas(listas) {
@@ -365,6 +402,9 @@
                     api.usuarios.diario(id, 0, 5),
                     api.usuarios.listas(id),
                 ]);
+
+                document.getElementById('linkVerTodoDiario').href = `diario.html?id=${id}`;
+                document.getElementById('linkVerTodoVistas').href = `vistas.html?id=${id}`;
 
                 renderizarFavoritas(favoritas);
                 renderizarVistas(vistas);      // construye movieMap

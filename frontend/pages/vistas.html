@@ -97,17 +97,31 @@
         document.addEventListener('DOMContentLoaded', async () => {
             renderNav('../');
 
-            if (!auth.estaLogueado()) {
+            const params    = new URLSearchParams(window.location.search);
+            const idParam   = parseInt(params.get('id'));
+            const esAjeno   = !!idParam;
+
+            if (!esAjeno && !auth.estaLogueado()) {
                 location.href = 'login.html';
                 return;
             }
 
-            const usuario = await api.usuarios.mePerfil();
-            usuarioId = usuario.id;
-            total     = usuario.total_vistas;
-
-            document.getElementById('lblTotal').textContent =
-                `${total} película${total !== 1 ? 's' : ''}`;
+            if (esAjeno) {
+                usuarioId = idParam;
+                try {
+                    const u = await api.usuarios.perfil(idParam);
+                    document.title = `BONOBO — Vistas de ${u.username}`;
+                    document.querySelector('.seccion-titulo').textContent = `Películas vistas de ${u.username}`;
+                    document.getElementById('lblTotal').textContent =
+                        `${u.total_vistas} película${u.total_vistas !== 1 ? 's' : ''}`;
+                } catch { /* si falla el perfil cargamos igual */ }
+            } else {
+                const usuario = await api.usuarios.mePerfil();
+                usuarioId = usuario.id;
+                total     = usuario.total_vistas;
+                document.getElementById('lblTotal').textContent =
+                    `${total} película${total !== 1 ? 's' : ''}`;
+            }
 
             await cargarVistas();
         });

@@ -215,14 +215,18 @@
 
         // ── Detalle de lista ──────────────────────────────────────────────
 
-        async function abrirLista(idLista) {
+        async function abrirLista(idLista, pushHistory = true) {
             document.getElementById('vistaIndice').classList.add('oculto');
             document.getElementById('vistaDetalle').classList.remove('oculto');
             document.getElementById('gridDetalle').innerHTML =
                 '<p class="text-faint" style="font-size:13px">Cargando…</p>';
 
             // actualizamos la URL sin navegar
-            history.pushState({ idLista }, '', `listas.html?id=${idLista}`);
+            if (pushHistory) {
+                history.pushState({ idLista }, '', `listas.html?id=${idLista}`);
+            } else {
+                history.replaceState({ idLista }, '', `listas.html?id=${idLista}`);
+            }
 
             try {
                 const lista = await api.listas.detalle(idLista);
@@ -458,7 +462,7 @@
             if (idParam) {
                 // cargamos el índice en background y abrimos el detalle
                 cargarListas(usuarioId);
-                await abrirLista(parseInt(idParam));
+                await abrirLista(parseInt(idParam), false);
             } else {
                 await cargarListas(usuarioId);
             }

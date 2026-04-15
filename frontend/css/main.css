@@ -1320,6 +1320,8 @@ img { display: block; max-width: 100%; }
     padding: 32px;
     width: 100%;
     max-width: 480px;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
     position: relative;
 }
 

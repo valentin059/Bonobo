@@ -48,6 +48,7 @@
                 <label class="form-label">Reseña</label>
                 <textarea class="form-input" id="editResena" rows="4"
                           placeholder="¿Qué te pareció? (opcional)"
+                          maxlength="5000"
                           style="resize:vertical;min-height:90px"></textarea>
             </div>
 
@@ -57,6 +58,19 @@
                     onclick="guardarEdicion()">
                 Guardar cambios
             </button>
+        </div>
+    </div>
+
+    <!-- ── MODAL: VER ENTRADA (solo lectura, modo ajeno) ───────────────────── -->
+    <div class="modal-overlay modal-overlay--hidden" id="modalVerEntrada">
+        <div class="modal">
+            <button class="modal-close" onclick="cerrarModalVerEntrada()">✕</button>
+            <h2 class="modal-titulo" id="verEntradaTitulo">Entrada del diario</h2>
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+                <span id="verEntradaFecha" style="font-size:13px;color:var(--muted)"></span>
+                <span id="verEntradaPuntuacion" style="font-size:13px;font-weight:600;color:var(--accent)"></span>
+            </div>
+            <p id="verEntradaResena" style="font-size:14px;line-height:1.7;color:var(--muted);white-space:pre-wrap"></p>
         </div>
     </div>
 
@@ -70,7 +84,8 @@
         const LIMIT  = 20;
         let movieMap    = {};
         let usuarioId   = null;
-        const entradas$ = {};   // caché de entradas por id
+        let modoAjeno   = false;
+        const entradas$ = {};
 
         function mostrarToast(msg, tipo = 'ok') {
             const t = document.getElementById('toast');
@@ -87,7 +102,7 @@
         }
 
         function crearEntradaHTML(entrada) {
-            entradas$[entrada.id] = entrada;
+            entradas$[entrada.id] = { entrada, pelicula: movieMap[entrada.id_pelicula] };
             const fecha = new Date(entrada.fecha_visionado);
             const dia   = fecha.getDate();
             const mes   = fecha.toLocaleString('es', { month: 'short' }).toUpperCase();
@@ -109,7 +124,7 @@
                         : `<div class="diario-poster"></div>`
                     }
                     <div class="diario-contenido diario-contenido--clickable"
-                         onclick="abrirModalEditar(${entrada.id})">
+                         onclick="${modoAjeno ? `abrirModalVerEntrada(${entrada.id})` : `abrirModalEditar(${entrada.id})`}">
                         <div class="diario-titulo-peli">
                             ${pelicula?.titulo || `Entrada #${entrada.id}`}
                             <span class="diario-puntuacion" id="punt-${entrada.id}">${entrada.puntuacion ? `★ ${entrada.puntuacion}` : ''}</span>
@@ -172,8 +187,9 @@
         }
 
         function abrirModalEditar(id) {
-            const e = entradas$[id];
-            if (!e) return;
+            const cached = entradas$[id];
+            if (!cached) return;
+            const e = cached.entrada || cached;
             initEditSelector();
             document.getElementById('editIdEntrada').value = e.id;
             document.getElementById('editFecha').value    = e.fecha_visionado;
@@ -209,9 +225,9 @@
                     puntuacion: editPuntuacion,
                 });
 
-                if (entradas$[idEntrada]) {
-                    entradas$[idEntrada].resena     = resena;
-                    entradas$[idEntrada].puntuacion = editPuntuacion;
+                if (entradas$[idEntrada]?.entrada) {
+                    entradas$[idEntrada].entrada.resena     = resena;
+                    entradas$[idEntrada].entrada.puntuacion = editPuntuacion;
                 }
                 const resenaTxt = document.getElementById(`resena-txt-${idEntrada}`);
                 if (resenaTxt) {
@@ -230,16 +246,49 @@
             }
         }
 
+        function abrirModalVerEntrada(id) {
+            const cached = entradas$[id];
+            if (!cached) return;
+            const { entrada, pelicula } = typeof cached === 'object' && 'entrada' in cached
+                ? cached
+                : { entrada: cached, pelicula: movieMap[cached.id_pelicula] };
+            const fecha = new Date(entrada.fecha_visionado).toLocaleDateString('es', {
+                day: 'numeric', month: 'long', year: 'numeric'
+            });
+            document.getElementById('verEntradaTitulo').textContent     = pelicula?.titulo || 'Entrada del diario';
+            document.getElementById('verEntradaFecha').textContent      = fecha;
+            document.getElementById('verEntradaPuntuacion').textContent = entrada.puntuacion ? `★ ${entrada.puntuacion}` : '';
+            document.getElementById('verEntradaResena').textContent     = entrada.resena || '';
+            document.getElementById('modalVerEntrada').classList.remove('modal-overlay--hidden');
+        }
+
+        function cerrarModalVerEntrada() {
+            document.getElementById('modalVerEntrada').classList.add('modal-overlay--hidden');
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
             renderNav('../');
 
-            if (!auth.estaLogueado()) {
+            const params  = new URLSearchParams(window.location.search);
+            const idParam = parseInt(params.get('id'));
+            modoAjeno     = !!idParam;
+
+            if (!modoAjeno && !auth.estaLogueado()) {
                 window.location.href = 'login.html';
                 return;
             }
 
-            const usuario = await api.usuarios.mePerfil();
-            usuarioId = usuario.id;
+            if (modoAjeno) {
+                usuarioId = idParam;
+                try {
+                    const u = await api.usuarios.perfil(idParam);
+                    document.title = `BONOBO — Diario de ${u.username}`;
+                    document.querySelector('.seccion-titulo').textContent = `Diario de ${u.username}`;
+                } catch { /* cargamos igual */ }
+            } else {
+                const usuario = await api.usuarios.mePerfil();
+                usuarioId = usuario.id;
+            }
 
             await construirMovieMap();
             cargarEntradas();
