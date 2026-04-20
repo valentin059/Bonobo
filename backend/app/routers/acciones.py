@@ -21,9 +21,6 @@ def eliminar_de_watchlist(id_usuario: int, id_pelicula: int, db: Session):
         db.commit()
 
 
-# ─── VISTA ────────────────────────────────────────────────────────────────
-
-# POST /api/peliculas/{tmdb_id}/vista
 @router.post("/{tmdb_id}/vista", status_code=status.HTTP_201_CREATED)
 def marcar_vista(tmdb_id: int, db: Session = Depends(database.get_db),
                  current_user: models.Usuario = Depends(oauth2.get_current_user)):
@@ -48,8 +45,7 @@ def marcar_vista(tmdb_id: int, db: Session = Depends(database.get_db),
     return {"detail": "Película marcada como vista"}
 
 
-# DELETE /api/peliculas/{tmdb_id}/vista
-# no se permite si tiene puntuación, diario o me gusta asociados
+# no se puede desmarcar si tiene puntuación, diario o me gusta asociados
 @router.delete("/{tmdb_id}/vista", status_code=status.HTTP_204_NO_CONTENT)
 def desmarcar_vista(tmdb_id: int, db: Session = Depends(database.get_db),
                     current_user: models.Usuario = Depends(oauth2.get_current_user)):
@@ -87,9 +83,6 @@ def desmarcar_vista(tmdb_id: int, db: Session = Depends(database.get_db),
     db.commit()
 
 
-# ─── PUNTUACIÓN ───────────────────────────────────────────────────────────
-
-# PUT /api/peliculas/{tmdb_id}/puntuacion
 # si no la tenía vista, la marca automáticamente
 @router.put("/{tmdb_id}/puntuacion")
 def puntuar(tmdb_id: int, puntuacion_data: schemas.PuntuacionCreate,
@@ -121,7 +114,6 @@ def puntuar(tmdb_id: int, puntuacion_data: schemas.PuntuacionCreate,
     return {"detail": "Puntuación guardada", "puntuacion": vista.puntuacion}
 
 
-# DELETE /api/peliculas/{tmdb_id}/puntuacion
 @router.delete("/{tmdb_id}/puntuacion")
 def eliminar_puntuacion(tmdb_id: int, db: Session = Depends(database.get_db),
                         current_user: models.Usuario = Depends(oauth2.get_current_user)):
@@ -147,9 +139,6 @@ def eliminar_puntuacion(tmdb_id: int, db: Session = Depends(database.get_db),
     return {"detail": "Puntuación eliminada"}
 
 
-# ─── DIARIO ───────────────────────────────────────────────────────────────
-
-# POST /api/peliculas/{tmdb_id}/diario
 # marca como vista si no lo estaba
 @router.post("/{tmdb_id}/diario", status_code=status.HTTP_201_CREATED, response_model=schemas.EntradaDiarioOut)
 def crear_entrada_diario(tmdb_id: int, entrada_data: schemas.EntradaDiarioCreate,
@@ -183,9 +172,6 @@ def crear_entrada_diario(tmdb_id: int, entrada_data: schemas.EntradaDiarioCreate
     return nueva_entrada
 
 
-# ─── ME GUSTA ─────────────────────────────────────────────────────────────
-
-# POST /api/peliculas/{tmdb_id}/me-gusta
 @router.post("/{tmdb_id}/me-gusta", status_code=status.HTTP_201_CREATED)
 def dar_me_gusta(tmdb_id: int, db: Session = Depends(database.get_db),
                  current_user: models.Usuario = Depends(oauth2.get_current_user)):
@@ -207,7 +193,6 @@ def dar_me_gusta(tmdb_id: int, db: Session = Depends(database.get_db),
     return {"detail": "Me gusta añadido"}
 
 
-# DELETE /api/peliculas/{tmdb_id}/me-gusta
 @router.delete("/{tmdb_id}/me-gusta")
 def quitar_me_gusta(tmdb_id: int, db: Session = Depends(database.get_db),
                     current_user: models.Usuario = Depends(oauth2.get_current_user)):
@@ -233,9 +218,6 @@ def quitar_me_gusta(tmdb_id: int, db: Session = Depends(database.get_db),
     return {"detail": "Me gusta eliminado"}
 
 
-# ─── WATCHLIST ────────────────────────────────────────────────────────────
-
-# POST /api/peliculas/{tmdb_id}/watchlist
 @router.post("/{tmdb_id}/watchlist", status_code=status.HTTP_201_CREATED)
 def añadir_watchlist(tmdb_id: int, db: Session = Depends(database.get_db),
                      current_user: models.Usuario = Depends(oauth2.get_current_user)):
@@ -257,7 +239,6 @@ def añadir_watchlist(tmdb_id: int, db: Session = Depends(database.get_db),
     return {"detail": "Película añadida a la watchlist"}
 
 
-# DELETE /api/peliculas/{tmdb_id}/watchlist
 @router.delete("/{tmdb_id}/watchlist")
 def quitar_watchlist(tmdb_id: int, db: Session = Depends(database.get_db),
                      current_user: models.Usuario = Depends(oauth2.get_current_user)):

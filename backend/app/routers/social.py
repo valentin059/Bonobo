@@ -9,9 +9,6 @@ router = APIRouter(
 )
 
 
-# ─── SEGUIR / DEJAR DE SEGUIR ─────────────────────────────────────────────
-
-# POST /api/usuarios/{id}/seguir
 @router.post("/{id}/seguir", status_code=status.HTTP_201_CREATED)
 def seguir_usuario(id: int,
                    db: Session = Depends(database.get_db),
@@ -44,7 +41,6 @@ def seguir_usuario(id: int,
     return {"detail": f"Ahora sigues a {objetivo.username}."}
 
 
-# DELETE /api/usuarios/{id}/seguir
 @router.delete("/{id}/seguir", status_code=status.HTTP_200_OK)
 def dejar_seguir_usuario(id: int,
                          db: Session = Depends(database.get_db),
@@ -66,9 +62,6 @@ def dejar_seguir_usuario(id: int,
     return {"detail": "Has dejado de seguir al usuario."}
 
 
-# ─── LISTAS DE SEGUIDORES / SEGUIDOS ─────────────────────────────────────
-
-# GET /api/usuarios/{id}/seguidores
 @router.get("/{id}/seguidores", response_model=list[schemas.UsuarioResumen])
 def get_seguidores(id: int,
                    skip: int = 0,
@@ -90,7 +83,6 @@ def get_seguidores(id: int,
     return seguidores
 
 
-# GET /api/usuarios/{id}/seguidos
 @router.get("/{id}/seguidos", response_model=list[schemas.UsuarioResumen])
 def get_seguidos(id: int,
                  skip: int = 0,

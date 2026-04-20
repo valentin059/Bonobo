@@ -18,9 +18,6 @@ router_comentarios = APIRouter(
 )
 
 
-# ─── EDITAR ENTRADA ───────────────────────────────────────────────────────
-
-# PUT /api/diario/{id_entrada}
 @router_diario.put("/{id_entrada}", response_model=schemas.EntradaDiarioOut)
 def editar_entrada_diario(id_entrada: int, entrada_data: schemas.EntradaDiarioUpdate,
                           db: Session = Depends(database.get_db),
@@ -49,9 +46,6 @@ def editar_entrada_diario(id_entrada: int, entrada_data: schemas.EntradaDiarioUp
     return entrada
 
 
-# ─── COMENTARIOS ──────────────────────────────────────────────────────────
-
-# POST /api/diario/{id_entrada}/comentarios
 @router_diario.post("/{id_entrada}/comentarios",
                     response_model=schemas.ComentarioOut,
                     status_code=status.HTTP_201_CREATED)
@@ -88,7 +82,6 @@ def crear_comentario(id_entrada: int,
     )
 
 
-# GET /api/diario/{id_entrada}/comentarios
 @router_diario.get("/{id_entrada}/comentarios",
                    response_model=list[schemas.ComentarioOut])
 def get_comentarios(id_entrada: int,
@@ -125,7 +118,6 @@ def get_comentarios(id_entrada: int,
     ]
 
 
-# DELETE /api/comentarios/{id_comentario}
 @router_comentarios.delete("/{id_comentario}", status_code=status.HTTP_204_NO_CONTENT)
 def eliminar_comentario(id_comentario: int,
                         db: Session = Depends(database.get_db),
@@ -146,9 +138,6 @@ def eliminar_comentario(id_comentario: int,
     db.commit()
 
 
-# ─── LIKES ────────────────────────────────────────────────────────────────
-
-# POST /api/diario/{id_entrada}/like
 @router_diario.post("/{id_entrada}/like", status_code=status.HTTP_201_CREATED)
 def dar_like(id_entrada: int,
              db: Session = Depends(database.get_db),
@@ -177,7 +166,6 @@ def dar_like(id_entrada: int,
     return {"detail": "Like añadido."}
 
 
-# DELETE /api/diario/{id_entrada}/like
 @router_diario.delete("/{id_entrada}/like", status_code=status.HTTP_200_OK)
 def quitar_like(id_entrada: int,
                 db: Session = Depends(database.get_db),

@@ -3,7 +3,6 @@ from datetime import date, datetime
 from typing import Optional
 
 
-# Datos básicos de una película tal como los guardamos en nuestra BD (caché de TMDB)
 class PeliculaCache(BaseModel):
     tmdb_id: int
     titulo: Optional[str] = None
@@ -11,26 +10,22 @@ class PeliculaCache(BaseModel):
     anio_estreno: Optional[int] = None
 
 
-# Datos para puntuar una película (del 1 al 10)
 class PuntuacionCreate(BaseModel):
-    puntuacion: int = Field(..., ge=1, le=10)   # ge=1 (mayor o igual a 1), le=10 (menor o igual a 10)
+    puntuacion: int = Field(..., ge=1, le=10)
 
 
-# Datos para crear una nueva entrada en el diario
 class EntradaDiarioCreate(BaseModel):
     fecha_visionado: date
     resena: Optional[str] = None
     puntuacion: Optional[int] = Field(None, ge=1, le=10)
 
 
-# Datos para editar una entrada existente del diario (todos los campos son opcionales)
 class EntradaDiarioUpdate(BaseModel):
     fecha_visionado: Optional[date] = None
     resena: Optional[str] = None
     puntuacion: Optional[int] = Field(None, ge=1, le=10)
 
 
-# Datos de una entrada de diario que devuelve la API
 class EntradaDiarioOut(BaseModel):
     id: int
     id_usuario: int
@@ -41,7 +36,6 @@ class EntradaDiarioOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# Datos de una vista que devuelve la API
 class VistaOut(BaseModel):
     id: int
     id_usuario: int
@@ -50,8 +44,6 @@ class VistaOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# Estado de una película para el usuario autenticado.
-# Indica si la tiene vista, puntuada, con me gusta o en watchlist.
 class EstadoUsuarioPelicula(BaseModel):
     vista: bool = False
     puntuacion: Optional[int] = None
@@ -59,34 +51,30 @@ class EstadoUsuarioPelicula(BaseModel):
     en_watchlist: bool = False
 
 
-# Datos de una persona del reparto de una película
 class PersonaCast(BaseModel):
     nombre: Optional[str] = None
-    personaje: Optional[str] = None   # personaje que interpreta
-    foto: Optional[str] = None        # URL de la foto del actor
-    person_id: Optional[int] = None   # id de TMDB (para futura página de persona)
+    personaje: Optional[str] = None
+    foto: Optional[str] = None
+    person_id: Optional[int] = None
 
 
-# Datos de una persona del equipo técnico (director, guionista, fotógrafo, etc.)
 class PersonaCrew(BaseModel):
     nombre: Optional[str] = None
-    rol: Optional[str] = None           # cargo en TMDB (e.g. "Director", "Screenplay")
-    departamento: Optional[str] = None  # departamento TMDB (e.g. "Directing", "Writing")
+    rol: Optional[str] = None
+    departamento: Optional[str] = None
     foto: Optional[str] = None
-    person_id: Optional[int] = None     # id de TMDB (para futura página de persona)
+    person_id: Optional[int] = None
 
 
-# Película en la filmografía de una persona
 class PeliculaPersona(BaseModel):
     tmdb_id: int
     titulo: Optional[str] = None
     poster_url: Optional[str] = None
     anio_estreno: Optional[int] = None
-    personaje: Optional[str] = None   # si es actor
-    rol: Optional[str] = None         # si es crew
+    personaje: Optional[str] = None
+    rol: Optional[str] = None
 
 
-# Detalle completo de una persona (actor, director, etc.)
 class PersonaDetalle(BaseModel):
     person_id: int
     nombre: str
@@ -98,7 +86,6 @@ class PersonaDetalle(BaseModel):
     filmografia: list[PeliculaPersona] = []
 
 
-# Resumen de una película para mostrar en listados
 class PeliculaResumen(BaseModel):
     tmdb_id: int
     titulo: Optional[str] = None
@@ -107,79 +94,68 @@ class PeliculaResumen(BaseModel):
     descripcion: Optional[str] = None
 
 
-# Película en cartelera (añade la puntuación de TMDB)
 class PeliculaCartelera(PeliculaResumen):
-    puntuacion: Optional[float] = None   # valoración media en TMDB
+    puntuacion: Optional[float] = None
 
 
-# Próximo estreno (añade la fecha exacta de estreno)
 class PeliculaEstreno(PeliculaResumen):
-    fecha_exacta: Optional[str] = None   # formato "YYYY-MM-DD"
+    fecha_exacta: Optional[str] = None
 
 
-# Respuesta paginada para búsquedas de películas
 class PaginadoPeliculas(BaseModel):
     results: list[PeliculaResumen]
-    total: int    # total de resultados en TMDB (no solo los de esta página)
-    page: int     # página actual
+    total: int
+    page: int
 
 
-# Respuesta paginada para la cartelera
 class PaginadoCartelera(BaseModel):
     results: list[PeliculaCartelera]
     total: int
     page: int
 
 
-# Respuesta paginada para próximos estrenos
 class PaginadoEstrenos(BaseModel):
     results: list[PeliculaEstreno]
     total: int
     page: int
 
 
-# Datos para crear una lista de películas
 class ListaCreate(BaseModel):
     nombre: str = Field(..., min_length=1, max_length=100)
     descripcion: Optional[str] = None
-    es_publica: bool = True    # por defecto la lista es pública
+    es_publica: bool = True
 
 
-# Datos para editar una lista (todos opcionales, solo se actualiza lo que se envíe)
 class ListaUpdate(BaseModel):
     nombre: Optional[str] = Field(None, min_length=1, max_length=100)
     descripcion: Optional[str] = None
     es_publica: Optional[bool] = None
 
 
-# Resumen de una lista para mostrar en listados
 class ListaOut(BaseModel):
     id: int
     nombre: str
     descripcion: Optional[str] = None
     es_publica: bool
-    total_peliculas: int = 0   # número de películas que contiene
+    total_peliculas: int = 0
     created_at: datetime
 
 
-# Detalle completo de una lista, incluyendo las películas que contiene
 class ListaDetalle(BaseModel):
     id: int
     id_usuario: int
-    username: str           # nombre del creador de la lista
+    username: str
     nombre: str
     descripcion: Optional[str] = None
     es_publica: bool
-    peliculas: list[PeliculaCache]   # las películas de la lista
+    peliculas: list[PeliculaCache]
     total_peliculas: int = 0
 
 
-# Datos para crear un comentario en una reseña
 class ComentarioCreate(BaseModel):
     texto: str = Field(..., min_length=1, max_length=1000)
 
 
-# Datos de un comentario que devuelve la API
 class ComentarioOut(BaseModel):
     id: int
     id_usuario: int
@@ -189,20 +165,18 @@ class ComentarioOut(BaseModel):
     created_at: datetime
 
 
-# Reseña de un amigo (usuario seguido) para una película concreta
 class ResenaAmigo(BaseModel):
     id_usuario: int
     username: str
     avatar_url: Optional[str] = None
     puntuacion: Optional[int] = None
-    ultima_resena: Optional[str] = None      # primeros 200 caracteres de su última reseña
-    ultima_entrada_id: Optional[int] = None  # id de esa entrada de diario
-    total_entradas: int = 0                  # cuántas veces ha visto esta película
+    ultima_resena: Optional[str] = None
+    ultima_entrada_id: Optional[int] = None
+    total_entradas: int = 0
 
 
-# Reseña de cualquier usuario de la comunidad (para la sección de reseñas generales)
 class ResenaGeneral(BaseModel):
-    id: int                         # id de la entrada de diario
+    id: int
     id_usuario: int
     username: str
     avatar_url: Optional[str] = None
@@ -211,10 +185,9 @@ class ResenaGeneral(BaseModel):
     puntuacion: Optional[int] = None
     total_likes: int = 0
     total_comentarios: int = 0
-    yo_di_like: Optional[bool] = None   # si el usuario autenticado ya le dio like (None si no hay sesión)
+    yo_di_like: Optional[bool] = None
 
 
-# Detalle de una entrada de diario con sus contadores sociales
 class EntradaDiarioDetalle(BaseModel):
     id: int
     fecha_visionado: date
@@ -225,23 +198,22 @@ class EntradaDiarioDetalle(BaseModel):
     total_comentarios: int = 0
 
 
-# Detalle completo de una película obtenida de TMDB
 class PeliculaDetalle(BaseModel):
     tmdb_id: int
     titulo: Optional[str] = None
     titulo_original: Optional[str] = None
     poster_url: Optional[str] = None
-    backdrop_url: Optional[str] = None                    # imagen de cabecera 16:9 para el hero
+    backdrop_url: Optional[str] = None
     anio_estreno: Optional[int] = None
     descripcion: Optional[str] = None
-    generos: list[str] = []                               # lista de géneros ("Acción", "Drama"...)
-    duracion: Optional[int] = None                        # duración en minutos
-    puntuacion: Optional[float] = None                    # valoración media en TMDB
-    reparto: list[PersonaCast] = []                       # primeros 15 actores
-    crew: list[PersonaCrew] = []                          # equipo técnico relevante
-    productoras: list[str] = []                           # nombres de las productoras
-    paises: list[str] = []                                # países de producción
-    idioma_original: Optional[str] = None                 # código ISO del idioma (e.g. "en")
-    presupuesto: Optional[int] = None                     # en dólares (0 = no disponible)
-    recaudacion: Optional[int] = None                     # taquilla total en dólares
-    estado_usuario: Optional[EstadoUsuarioPelicula] = None  # None si el usuario no está logueado
+    generos: list[str] = []
+    duracion: Optional[int] = None
+    puntuacion: Optional[float] = None
+    reparto: list[PersonaCast] = []
+    crew: list[PersonaCrew] = []
+    productoras: list[str] = []
+    paises: list[str] = []
+    idioma_original: Optional[str] = None
+    presupuesto: Optional[int] = None
+    recaudacion: Optional[int] = None
+    estado_usuario: Optional[EstadoUsuarioPelicula] = None

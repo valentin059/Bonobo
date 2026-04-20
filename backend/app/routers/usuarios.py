@@ -11,9 +11,6 @@ router = APIRouter(
 )
 
 
-# ─── MI PERFIL ────────────────────────────────────────────────────────────
-
-# GET /api/usuarios/me
 @router.get("/me", response_model=schemas.UserProfile)
 def get_mi_perfil(db: Session = Depends(database.get_db),
                   current_user: models.Usuario = Depends(oauth2.get_current_user)):
@@ -42,7 +39,6 @@ def get_mi_perfil(db: Session = Depends(database.get_db),
     )
 
 
-# PUT /api/usuarios/me/favoritas
 # reemplaza todas las favoritas con la nueva lista (máx. 4 tmdb_ids)
 @router.put("/me/favoritas")
 def configurar_favoritas(tmdb_ids: list[int],
@@ -69,7 +65,6 @@ def configurar_favoritas(tmdb_ids: list[int],
     return {"detail": "Favoritas actualizadas"}
 
 
-# PUT /api/usuarios/me
 @router.put("/me", response_model=schemas.UserOut)
 def editar_perfil(usuario_data: schemas.UserUpdate,
                   db: Session = Depends(database.get_db),
@@ -86,9 +81,6 @@ def editar_perfil(usuario_data: schemas.UserUpdate,
     return current_user
 
 
-# ─── BUSCAR USUARIOS ──────────────────────────────────────────────────────
-
-# GET /api/usuarios/buscar?q=texto
 @router.get("/buscar", response_model=list[schemas.UsuarioResumen])
 def buscar_usuarios(q: str, skip: int = 0, limit: int = 20,
                     db: Session = Depends(database.get_db)):
@@ -104,9 +96,6 @@ def buscar_usuarios(q: str, skip: int = 0, limit: int = 20,
     return usuarios
 
 
-# ─── PERFIL DE OTRO USUARIO ───────────────────────────────────────────────
-
-# GET /api/usuarios/{id}
 # incluye yo_sigo si hay sesión activa
 @router.get("/{id}", response_model=schemas.UserProfile)
 def get_perfil(id: int,
@@ -153,9 +142,6 @@ def get_perfil(id: int,
     )
 
 
-# ─── DATOS DEL USUARIO ────────────────────────────────────────────────────
-
-# GET /api/usuarios/{id}/vistas
 @router.get("/{id}/vistas", response_model=list[schemas.VistaConPelicula])
 def get_vistas(id: int, skip: int = 0, limit: int = 20,
                db: Session = Depends(database.get_db)):
@@ -173,7 +159,6 @@ def get_vistas(id: int, skip: int = 0, limit: int = 20,
     return vistas
 
 
-# GET /api/usuarios/{id}/diario
 @router.get("/{id}/diario", response_model=list[schemas.EntradaDiarioOut])
 def get_diario(id: int, skip: int = 0, limit: int = 20,
                db: Session = Depends(database.get_db)):
@@ -192,7 +177,6 @@ def get_diario(id: int, skip: int = 0, limit: int = 20,
     return entradas
 
 
-# GET /api/usuarios/{id}/watchlist
 @router.get("/{id}/watchlist")
 def get_watchlist(id: int, skip: int = 0, limit: int = 20,
                   db: Session = Depends(database.get_db)):
@@ -223,7 +207,6 @@ def get_watchlist(id: int, skip: int = 0, limit: int = 20,
     ]
 
 
-# GET /api/usuarios/{id}/diario/pelicula/{tmdb_id}
 @router.get("/{id}/diario/pelicula/{tmdb_id}", response_model=list[schemas.EntradaDiarioDetalle])
 def get_diario_pelicula(id: int, tmdb_id: int,
                         skip: int = 0,
@@ -282,7 +265,6 @@ def get_diario_pelicula(id: int, tmdb_id: int,
     ]
 
 
-# GET /api/usuarios/{id}/listas
 # si es el propio usuario ve también las privadas
 @router.get("/{id}/listas", response_model=list[schemas.ListaOut])
 def get_listas_usuario(id: int,
@@ -324,7 +306,6 @@ def get_listas_usuario(id: int,
     ]
 
 
-# GET /api/usuarios/{id}/favoritas
 @router.get("/{id}/favoritas", response_model=list[schemas.FavoritaOut])
 def get_favoritas(id: int, db: Session = Depends(database.get_db)):
 

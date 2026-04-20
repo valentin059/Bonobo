@@ -11,7 +11,6 @@ router = APIRouter(
 )
 
 
-# POST /api/auth/registro
 @router.post('/registro', status_code=status.HTTP_201_CREATED, response_model=schemas.UserOut)
 def crear_usuario(usuario: schemas.UserCreate, db: Session = Depends(database.get_db)):
 
@@ -35,15 +34,13 @@ def crear_usuario(usuario: schemas.UserCreate, db: Session = Depends(database.ge
     return nuevo_usuario
 
 
-# POST /api/auth/login
-# OAuth2PasswordRequestForm espera form-urlencoded con campos "username" y "password"
 @router.post('/login', response_model=schemas.Token)
 def login(user_credentials: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(database.get_db)):
 
-    # el campo "username" de OAuth2 contiene el email en nuestra app
+    # OAuth2PasswordRequestForm usa "username" como campo, aquí contiene el email
     user = db.execute(select(models.Usuario).where(models.Usuario.email == user_credentials.username)).scalar_one_or_none()
 
-    # mismo error para email y contraseña incorrectos — no revelamos cuál es
+    # mismo mensaje para email y contraseña incorrectos — no revelamos cuál falla
     if not user:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Credenciales inválidas")
 
