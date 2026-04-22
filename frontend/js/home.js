@@ -152,6 +152,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Renderizamos el navbar (desde la raíz, sin prefijo de ruta)
     renderNav('');
+    actualizarBadgesLogros();
 
     const estaLogueado = auth.estaLogueado();
     const hero = document.getElementById('hero');

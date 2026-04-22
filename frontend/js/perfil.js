@@ -39,6 +39,8 @@ function renderizarCabecera(usuario) {
     document.getElementById('statVistas').textContent        = usuario.total_vistas;
     document.getElementById('statSeguidores').textContent    = usuario.seguidores;
     document.getElementById('statSeguidos').textContent      = usuario.seguidos;
+    document.getElementById('statNivel').textContent         = usuario.nivel || 1;
+    document.getElementById('statXP').textContent            = `${usuario.xp_total || 0} XP`;
 
     document.getElementById('inputAvatar').value = usuario.avatar_url || '';
     document.getElementById('inputBio').value    = usuario.bio || '';
@@ -444,6 +446,7 @@ async function abrirModalSeguidos() {
 
 document.addEventListener('DOMContentLoaded', async () => {
     renderNav('../');
+    actualizarBadgesLogros();
 
     if (!auth.estaLogueado()) {
         window.location.href = 'login.html';

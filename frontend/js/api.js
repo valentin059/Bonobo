@@ -207,4 +207,15 @@ const api = {
         listasConPelicula: (tmdbId) =>
             _req('GET', `/api/listas/mis-listas-con-pelicula/${tmdbId}`),
     },
+
+    logros: {
+        // GET /api/logros/todos → devuelve los 18 logros con flag "desbloqueado" por cada uno
+        todos:      () => _req('GET',  '/api/logros/todos'),
+
+        // GET /api/logros/mis-logros → solo los logros que el usuario ya desbloqueó
+        misLogros:  () => _req('GET',  '/api/logros/mis-logros'),
+
+        // POST /api/logros/{id}/reclamar → suma la XP de un logro al total del usuario
+        reclamar:   (idUsuarioLogro) => _req('POST', `/api/logros/${idUsuarioLogro}/reclamar`),
+    },
 };

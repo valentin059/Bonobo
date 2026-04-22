@@ -36,10 +36,6 @@ def get_mis_logros(db: Session = Depends(database.get_db),
     ]
 
 
-# POST /api/logros/{id_usuario_logro}/reclamar
-# Reclama la XP de un logro desbloqueado
-@router.post("/{id_usuario_logro}/reclamar")
-
 # GET /api/logros/todos
 # Devuelve todos los logros disponibles indicando cuáles tiene el usuario
 @router.get("/todos")
@@ -73,6 +69,10 @@ def get_todos_logros(db: Session = Depends(database.get_db),
         for l in todos
     ]
 
+
+# POST /api/logros/{id_usuario_logro}/reclamar
+# Reclama la XP de un logro desbloqueado
+@router.post("/{id_usuario_logro}/reclamar")
 def reclamar_xp(id_usuario_logro: int,
                 db: Session = Depends(database.get_db),
                 current_user: models.Usuario = Depends(oauth2.get_current_user)):
@@ -101,7 +101,7 @@ def reclamar_xp(id_usuario_logro: int,
 
     # sumar XP y recalcular nivel
     current_user.xp_total += logro.xp
-    current_user.nivel = max(1, current_user.xp_total // 100)
+    current_user.nivel = max(1, current_user.xp_total // 100 + 1)
 
     db.commit()
 
@@ -110,4 +110,3 @@ def reclamar_xp(id_usuario_logro: int,
         "xp_total": current_user.xp_total,
         "nivel": current_user.nivel
     }
-
