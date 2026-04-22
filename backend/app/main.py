@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .routers import auth, peliculas, acciones, usuarios, social, diario, listas
-
+from .routers import logros
 # Creamos la aplicación FastAPI. El título aparece en la documentación automática (/docs)
 app = FastAPI(title="Bonobo API")
 
@@ -31,6 +31,7 @@ app.include_router(social.router)          # rutas para seguir/dejar de seguir u
 app.include_router(diario.router_diario)   # rutas del diario (entradas, likes, comentarios)
 app.include_router(diario.router_comentarios)  # rutas para eliminar comentarios
 app.include_router(listas.router)          # rutas para gestionar listas de películas
+app.include_router(logros.router)          # 👈 aquí, después de crear app
 
 # Ruta raíz para comprobar que la API está funcionando
 @app.get("/")

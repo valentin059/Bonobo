@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select
 from .. import database, models, schemas, oauth2
 from ..services import get_or_create_pelicula
+from ..services.logros import verificar_logros, otorgar_logros
+from fastapi import APIRouter, Depends, HTTPException, status
 
 router = APIRouter(
     prefix="/api/peliculas",
@@ -44,6 +46,8 @@ def marcar_vista(tmdb_id: int, db: Session = Depends(database.get_db),
     db.commit()
 
     eliminar_de_watchlist(current_user.id, pelicula.id, db)
+    logros = verificar_logros(db, current_user.id)
+    otorgar_logros(db, current_user.id, logros)
 
     return {"detail": "Película marcada como vista"}
 
@@ -178,6 +182,10 @@ def crear_entrada_diario(tmdb_id: int, entrada_data: schemas.EntradaDiarioCreate
     )
     db.add(nueva_entrada)
     db.commit()
+
+    logros = verificar_logros(db, current_user.id)  
+
+    otorgar_logros(db, current_user.id, logros)      
     db.refresh(nueva_entrada)
 
     return nueva_entrada
@@ -203,7 +211,8 @@ def dar_me_gusta(tmdb_id: int, db: Session = Depends(database.get_db),
     me_gusta = models.MeGusta(id_usuario=current_user.id, id_pelicula=pelicula.id)
     db.add(me_gusta)
     db.commit()
-
+    logros = verificar_logros(db, current_user.id)
+    otorgar_logros(db, current_user.id, logros)
     return {"detail": "Me gusta añadido"}
 
 
@@ -253,9 +262,10 @@ def añadir_watchlist(tmdb_id: int, db: Session = Depends(database.get_db),
     watchlist = models.Watchlist(id_usuario=current_user.id, id_pelicula=pelicula.id)
     db.add(watchlist)
     db.commit()
-
+    logros = verificar_logros(db, current_user.id)
+    otorgar_logros(db, current_user.id, logros)
     return {"detail": "Película añadida a la watchlist"}
-
+    
 
 # DELETE /api/peliculas/{tmdb_id}/watchlist
 @router.delete("/{tmdb_id}/watchlist")

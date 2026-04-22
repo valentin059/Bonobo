@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select
 from .. import database, models, schemas, oauth2
 from typing import Optional
+from ..services.logros import verificar_logros, otorgar_logros
 
 # dos routers porque las rutas de comentarios tienen prefijos distintos:
 # router_diario      -> /api/diario/{id}/*
@@ -46,6 +47,7 @@ def editar_entrada_diario(id_entrada: int, entrada_data: schemas.EntradaDiarioUp
     db.commit()
     db.refresh(entrada)
 
+
     return entrada
 
 
@@ -75,7 +77,10 @@ def crear_comentario(id_entrada: int,
     )
     db.add(comentario)
     db.commit()
+    logros = verificar_logros(db, current_user.id)
+    otorgar_logros(db, current_user.id, logros)
     db.refresh(comentario)
+    
 
     # construimos la respuesta manualmente para incluir username y avatar
     return schemas.ComentarioOut(

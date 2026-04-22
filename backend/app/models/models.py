@@ -19,7 +19,8 @@ class Usuario(Base):
     bio = Column(Text, nullable=True)                                # descripción del perfil (opcional)
     avatar_url = Column(String(500), nullable=True)                  # URL de la foto de perfil (opcional)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))  # fecha de registro
-
+    xp_total = Column(Integer, nullable=False, server_default=text("0"))
+    nivel = Column(Integer, nullable=False, server_default=text("1"))
 
 # ── Tabla: peliculas ───────────────────────────────────────────────────────
 # Caché local de películas. No guardamos toda la info de TMDB, solo lo esencial
@@ -198,4 +199,25 @@ class ListaPelicula(Base):
     # Una película no puede aparecer dos veces en la misma lista
     __table_args__ = (
         UniqueConstraint("id_lista", "id_pelicula", name="unique_lista_pelicula"),
+    )
+
+class Logro(Base):
+    __tablename__ = "logros"
+
+    id = Column(Integer, primary_key=True)
+    nombre = Column(String(100), nullable=False)
+    descripcion = Column(Text, nullable=False)
+    codigo = Column(String(50), unique=True, nullable=False)  # clave internaS
+    xp = Column(Integer, nullable=False, server_default=text("0"))
+    
+class UsuarioLogro(Base):
+    __tablename__ = "usuario_logros"
+
+    id = Column(Integer, primary_key=True)
+    id_usuario = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"))
+    id_logro = Column(Integer, ForeignKey("logros.id", ondelete="CASCADE"))
+    created_at = Column(TIMESTAMP(timezone=True), server_default=text("now()"))
+    xp_reclamado = Column(Boolean, nullable=False, server_default=text("false"))
+    __table_args__ = (
+        UniqueConstraint("id_usuario", "id_logro"),
     )

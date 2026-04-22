@@ -1,4 +1,4 @@
-from .usuarios import UserCreate, UserOut, UserLogin, Token, TokenData, UserProfile, UserUpdate, VistaConPelicula, FavoritaOut, UsuarioResumen
+from .usuarios import UserCreate, UserOut, UserLogin, Token, TokenData, UserProfile, UserUpdate, VistaConPelicula, FavoritaOut, UsuarioResumen, LogroOut
 from .peliculas import (
     PeliculaCache, PuntuacionCreate, EntradaDiarioCreate, EntradaDiarioUpdate,
     EntradaDiarioOut, VistaOut, EstadoUsuarioPelicula, PersonaCast, PersonaCrew,

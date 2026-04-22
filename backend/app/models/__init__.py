@@ -2,7 +2,7 @@ from .models import (
     Base, 
     Usuario, 
     Pelicula, 
-    Vista, 
+    Vista,
     MeGusta, 
     Watchlist, 
     EntradaDiario, 
@@ -11,5 +11,7 @@ from .models import (
     ComentarioResena, 
     LikeResena, 
     Lista, 
-    ListaPelicula
+    ListaPelicula,
+    Logro,          
+    UsuarioLogro,
 )

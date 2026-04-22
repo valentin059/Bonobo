@@ -41,12 +41,24 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     id: Optional[int] = None   # id del usuario autenticado
 
+    # Logro desbloqueado para mostrar en el perfil
+class LogroOut(BaseModel):
+    codigo: str
+    nombre: str
+    descripcion: str
+    xp: int
+    xp_reclamado: bool
+    desbloqueado_el: datetime
+    model_config = ConfigDict(from_attributes=True)
+
 
 # Resumen mínimo de un usuario para mostrar en listas (seguidores, buscador...)
 class UsuarioResumen(BaseModel):
     id: int
     username: str
     avatar_url: Optional[str] = None
+    xp_total: int = 0   
+    nivel: int = 1  
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -60,6 +72,9 @@ class UserProfile(BaseModel):
     seguidores: int = 0
     seguidos: int = 0
     yo_sigo: Optional[bool] = None  # si el usuario autenticado sigue a este (None si no hay sesión)
+    xp_total: int = 0          # Para mostrar en el perfil
+    nivel: int = 1             # 
+    logros: list[LogroOut] = [] # 
     model_config = ConfigDict(from_attributes=True)
 
 
