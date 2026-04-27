@@ -162,6 +162,9 @@ const api = {
         editarPerfil:        (body) => _req('PUT', '/api/usuarios/me', body),
         configurarFavoritas: (tmdbIds) => _req('PUT', '/api/usuarios/me/favoritas', tmdbIds),
 
+        cambiarPassword: (password_actual, password_nueva) =>
+            _req('PUT', '/api/usuarios/me/password', { password_actual, password_nueva }),
+
         buscar:    (q, skip = 0, limit = 20) =>
             _req('GET', `/api/usuarios/buscar?q=${encodeURIComponent(q)}&skip=${skip}&limit=${limit}`),
 

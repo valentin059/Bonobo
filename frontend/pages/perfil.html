@@ -42,9 +42,14 @@
                     </div>
                 </div>
 
-                <button class="btn btn--ghost btn--sm" onclick="abrirModalEditar()">
-                    Editar perfil
-                </button>
+                <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+                    <button class="btn btn--ghost btn--sm" onclick="abrirModalEditar()">
+                        Editar perfil
+                    </button>
+                    <button class="btn btn--ghost btn--sm" onclick="abrirModalPassword()" style="font-size:11px;opacity:.7">
+                        Cambiar contraseña
+                    </button>
+                </div>
             </div>
 
             <!-- Películas favoritas (hasta 4 pósters) -->
@@ -127,6 +132,33 @@
 
             <button class="btn btn--primary" style="width:100%;margin-top:8px" onclick="guardarPerfil()">
                 Guardar cambios
+            </button>
+        </div>
+    </div>
+
+    <!-- ── MODAL: CAMBIAR CONTRASEÑA ──────────────────────────────────────── -->
+    <div class="modal-overlay modal-overlay--hidden" id="modalPassword">
+        <div class="modal">
+            <button class="modal-close" onclick="cerrarModal('modalPassword')">✕</button>
+            <h2 class="modal-titulo">Cambiar contraseña</h2>
+
+            <div class="form-grupo">
+                <label class="form-label">Contraseña actual</label>
+                <input class="form-input" type="password" id="inputPasswordActual" autocomplete="current-password" />
+            </div>
+            <div class="form-grupo">
+                <label class="form-label">Nueva contraseña</label>
+                <input class="form-input" type="password" id="inputPasswordNueva" autocomplete="new-password" />
+            </div>
+            <div class="form-grupo">
+                <label class="form-label">Repetir nueva contraseña</label>
+                <input class="form-input" type="password" id="inputPasswordRepetir" autocomplete="new-password" />
+            </div>
+
+            <p class="form-error" id="errorPassword"></p>
+
+            <button class="btn btn--primary" style="width:100%;margin-top:8px" onclick="guardarPassword()">
+                Guardar contraseña
             </button>
         </div>
     </div>

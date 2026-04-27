@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func, delete
-from .. import database, models, schemas, oauth2
+from .. import database, models, schemas, oauth2, utils
 from typing import Optional
 from ..services import get_or_create_pelicula
 from ..services.logros import verificar_logros, otorgar_logros
@@ -89,6 +89,18 @@ def configurar_favoritas(tmdb_ids: list[int],
     otorgar_logros(db, current_user.id, logros)  
     
     return {"detail": "Favoritas actualizadas"}
+
+
+@router.put("/me/password", status_code=status.HTTP_204_NO_CONTENT)
+def cambiar_password(datos: schemas.PasswordChange,
+                     db: Session = Depends(database.get_db),
+                     current_user: models.Usuario = Depends(oauth2.get_current_user)):
+
+    if not utils.verify_password(datos.password_actual, current_user.password_hash):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La contraseña actual no es correcta")
+
+    current_user.password_hash = utils.hash_password(datos.password_nueva)
+    db.commit()
 
 
 @router.put("/me", response_model=schemas.UserOut)

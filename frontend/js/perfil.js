@@ -18,6 +18,7 @@ function cerrarModal(id) {
     document.getElementById(id).classList.add('modal-overlay--hidden');
     document.getElementById('errorEditar')?.classList.remove('form-error--visible');
     document.getElementById('errorFavoritas')?.classList.remove('form-error--visible');
+    document.getElementById('errorPassword')?.classList.remove('form-error--visible');
 }
 
 // ── RENDER ────────────────────────────────────────────────────────────────────
@@ -280,6 +281,43 @@ async function guardarPerfil() {
         mostrarToast('Perfil actualizado ✓');
     } catch (err) {
         errorEl.textContent = err.message || 'Error al guardar';
+        errorEl.className = 'form-error form-error--visible';
+    }
+}
+
+// ── MODAL CAMBIAR CONTRASEÑA ──────────────────────────────────────────────────
+
+function abrirModalPassword() {
+    document.getElementById('inputPasswordActual').value = '';
+    document.getElementById('inputPasswordNueva').value  = '';
+    document.getElementById('inputPasswordRepetir').value = '';
+    document.getElementById('errorPassword').className = 'form-error';
+    document.getElementById('modalPassword').classList.remove('modal-overlay--hidden');
+}
+
+async function guardarPassword() {
+    const actual   = document.getElementById('inputPasswordActual').value;
+    const nueva    = document.getElementById('inputPasswordNueva').value;
+    const repetir  = document.getElementById('inputPasswordRepetir').value;
+    const errorEl  = document.getElementById('errorPassword');
+
+    if (nueva.length < 8) {
+        errorEl.textContent = 'La nueva contraseña debe tener al menos 8 caracteres.';
+        errorEl.className = 'form-error form-error--visible';
+        return;
+    }
+    if (nueva !== repetir) {
+        errorEl.textContent = 'Las contraseñas no coinciden.';
+        errorEl.className = 'form-error form-error--visible';
+        return;
+    }
+
+    try {
+        await api.usuarios.cambiarPassword(actual, nueva);
+        cerrarModal('modalPassword');
+        mostrarToast('Contraseña actualizada ✓');
+    } catch (err) {
+        errorEl.textContent = err.message || 'Error al cambiar la contraseña.';
         errorEl.className = 'form-error form-error--visible';
     }
 }
