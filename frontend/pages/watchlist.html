@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BONOBO — Watchlist</title>
+    <link rel="stylesheet" href="../css/main.css" />
+</head>
+<body>
+
+    <header id="nav-placeholder"></header>
+
+    <main class="contenedor pagina">
+
+        <div class="seccion-header" style="margin-bottom:32px">
+            <h1 class="seccion-titulo">Mi Watchlist</h1>
+            <div class="seccion-linea"></div>
+            <span class="seccion-meta" id="lblTotal"></span>
+        </div>
+
+        <!-- Grid de películas en la watchlist -->
+        <div class="peliculas-grid" id="gridWatchlist"></div>
+
+    </main>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/nav.js"></script>
+    <script>
+        function mostrarToast(msg, tipo = 'ok') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `toast toast--${tipo} toast--visible`;
+            setTimeout(() => { t.className = 'toast'; }, 2800);
+        }
+
+        // Quita una película de la watchlist y actualiza el grid sin recargar la página.
+        async function quitarDeWatchlist(tmdbId, cardEl) {
+            try {
+                await api.acciones.quitarWatchlist(tmdbId);
+                cardEl.remove();   // eliminamos la tarjeta del DOM directamente
+
+                // Actualizamos el contador
+                const grid = document.getElementById('gridWatchlist');
+                const restantes = grid.querySelectorAll('.pelicula-card').length;
+                document.getElementById('lblTotal').textContent =
+                    `${restantes} película${restantes !== 1 ? 's' : ''}`;
+
+                if (restantes === 0) {
+                    grid.innerHTML = `<div class="estado-vacio" style="grid-column:1/-1">
+                        <p class="estado-vacio__titulo">Tu watchlist está vacía</p>
+                        <p class="estado-vacio__desc">Añade películas desde su ficha con el botón de bookmark.</p>
+                    </div>`;
+                }
+
+                mostrarToast('Eliminada de la watchlist');
+            } catch (err) {
+                mostrarToast(err.message || 'Error', 'error');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            renderNav('../');
+
+            if (!auth.estaLogueado()) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                const usuario = await api.usuarios.mePerfil();
+                // La API devuelve { id, pelicula: { tmdb_id, titulo, poster_url, anio_estreno } }
+                const watchlist = await api.usuarios.watchlist(usuario.id, 0, 100);
+
+                const lbl  = document.getElementById('lblTotal');
+                const grid = document.getElementById('gridWatchlist');
+
+                lbl.textContent = `${watchlist.length} película${watchlist.length !== 1 ? 's' : ''}`;
+
+                if (watchlist.length === 0) {
+                    grid.innerHTML = `<div class="estado-vacio" style="grid-column:1/-1">
+                        <p class="estado-vacio__titulo">Tu watchlist está vacía</p>
+                        <p class="estado-vacio__desc">Añade películas desde su ficha con el botón de bookmark.</p>
+                    </div>`;
+                    return;
+                }
+
+                // Cada elemento de watchlist: { id, pelicula: { tmdb_id, titulo, poster_url, anio_estreno } }
+                grid.innerHTML = watchlist.map(item => {
+                    const p = item.pelicula;
+                    return `
+                        <div class="pelicula-card" id="card-${p.tmdb_id}">
+                            <div class="pelicula-card__poster" onclick="location.href='pelicula.html?id=${p.tmdb_id}'">
+                                ${p.poster_url
+                                    ? `<img class="pelicula-card__img" src="${p.poster_url}" alt="${p.titulo}" loading="lazy">`
+                                    : `<div class="pelicula-card__no-img">SIN IMAGEN</div>`
+                                }
+                                <div class="pelicula-card__overlay">
+                                    <!-- Botón para quitar de watchlist desde la propia tarjeta -->
+                                    <button
+                                        class="btn btn--ghost btn--sm"
+                                        style="font-size:10px"
+                                        onclick="event.stopPropagation(); quitarDeWatchlist(${p.tmdb_id}, document.getElementById('card-${p.tmdb_id}'))"
+                                    >
+                                        Quitar
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="pelicula-card__info">
+                                <div class="pelicula-card__titulo">${p.titulo || '—'}</div>
+                                <div class="pelicula-card__anio">${p.anio_estreno || ''}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch {
+                mostrarToast('Error al cargar la watchlist', 'error');
+            }
+        });
+    </script>
+
+</body>
+</html>

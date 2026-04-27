@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BONOBO — Iniciar sesión</title>
+    <link rel="stylesheet" href="../css/main.css" />
+</head>
+<body>
+
+    <header id="nav-placeholder"></header>
+
+    <div class="form-pagina">
+        <div class="form-caja">
+
+            <h1 class="form-titulo">Bienvenido</h1>
+            <p class="form-subtitulo">Entra para ver tu diario, puntuar películas y más.</p>
+
+            <form id="formLogin">
+
+                <div class="form-grupo">
+                    <label class="form-label" for="email">Email</label>
+                    <input
+                        class="form-input"
+                        type="email"
+                        id="email"
+                        placeholder="tucorreo@ejemplo.com"
+                        autocomplete="email"
+                        required
+                    />
+                </div>
+
+                <div class="form-grupo">
+                    <label class="form-label" for="password">Contraseña</label>
+                    <input
+                        class="form-input"
+                        type="password"
+                        id="password"
+                        placeholder="Mínimo 8 caracteres"
+                        autocomplete="current-password"
+                        required
+                    />
+                </div>
+
+                <!-- Mensaje de error (se hace visible si el login falla) -->
+                <p class="form-error" id="errorMsg"></p>
+
+                <button class="btn btn--primary form-btn" type="submit" id="btnLogin">
+                    Iniciar sesión
+                </button>
+
+            </form>
+
+            <p class="form-footer">
+                ¿No tienes cuenta? <a href="registro.html">Regístrate gratis</a>
+            </p>
+
+        </div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/nav.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Renderizamos el nav (desde pages/, la raíz está un nivel arriba)
+            renderNav('../');
+
+            // Si ya está logueado, no tiene sentido estar aquí → lo mandamos a inicio
+            if (auth.estaLogueado()) {
+                window.location.href = '../index.html';
+                return;
+            }
+
+            const form    = document.getElementById('formLogin');
+            const btn     = document.getElementById('btnLogin');
+            const errorEl = document.getElementById('errorMsg');
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();   // evitamos que el formulario recargue la página
+                errorEl.className = 'form-error';   // ocultamos el error anterior
+
+                const email    = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value;
+
+                btn.textContent = 'Entrando…';
+                btn.disabled = true;
+
+                try {
+                    await auth.login(email, password);
+                    // Login exitoso → redirigimos a inicio
+                    window.location.href = '../index.html';
+                } catch (err) {
+                    // Mostramos el mensaje de error del backend
+                    errorEl.textContent = err.message || 'Credenciales incorrectas';
+                    errorEl.className = 'form-error form-error--visible';
+                    btn.textContent = 'Iniciar sesión';
+                    btn.disabled = false;
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

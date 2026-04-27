@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BONOBO — Mi Perfil</title>
+    <link rel="stylesheet" href="../css/main.css" />
+</head>
+<body>
+
+    <header id="nav-placeholder"></header>
+
+    <main class="contenedor pagina">
+
+        <!-- ── CABECERA DEL PERFIL ──────────────────────────────────────── -->
+        <div class="perfil-cabecera" id="perfilCabecera">
+
+            <div class="perfil-top">
+                <div class="perfil-avatar perfil-avatar--placeholder" id="perfilAvatar">?</div>
+
+                <div class="perfil-datos">
+                    <h1 class="perfil-username" id="perfilUsername">—</h1>
+                    <p class="perfil-bio" id="perfilBio"></p>
+
+                    <div class="perfil-stats">
+                        <div class="perfil-stat" style="cursor:pointer" onclick="location.href='vistas.html'">
+                            <div class="perfil-stat__num" id="statVistas">0</div>
+                            <div class="perfil-stat__label">Vistas</div>
+                        </div>
+                        <div class="perfil-stat" style="cursor:pointer" onclick="abrirModalSeguidores()">
+                            <div class="perfil-stat__num" id="statSeguidores">0</div>
+                            <div class="perfil-stat__label">Seguidores</div>
+                        </div>
+                        <div class="perfil-stat" style="cursor:pointer" onclick="abrirModalSeguidos()">
+                            <div class="perfil-stat__num" id="statSeguidos">0</div>
+                            <div class="perfil-stat__label">Siguiendo</div>
+                        </div>
+                        <div class="perfil-stat perfil-stat--logros" onclick="location.href='logros.html'" title="Ver logros">
+                            <div class="perfil-stat__num perfil-stat__num--nivel" id="statNivel">1</div>
+                            <div class="perfil-stat__label" id="statXP">0 XP</div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn--ghost btn--sm" onclick="abrirModalEditar()">
+                    Editar perfil
+                </button>
+            </div>
+
+            <!-- Películas favoritas (hasta 4 pósters) -->
+            <div>
+                <p style="font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">
+                    Películas favoritas
+                    <span style="color:var(--border2);margin-left:6px;font-size:10px">(clic para editar)</span>
+                </p>
+                <!-- Vista normal de favoritas -->
+                <div class="favoritas-grid" id="favoritasGrid"></div>
+
+                <!-- Editor inline de favoritas (oculto por defecto) -->
+                <div id="favEditInline" class="oculto" style="max-width:500px">
+                    <div class="favoritas-edit-grid" id="favEditGrid"></div>
+                    <p class="form-error" id="errorFavoritas"></p>
+                    <div style="display:flex;gap:8px;margin-top:4px">
+                        <button class="btn btn--primary btn--sm" onclick="guardarFavoritas()">
+                            Guardar
+                        </button>
+                        <button class="btn btn--ghost btn--sm" onclick="cerrarEditFavoritas()">
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ── DIARIO RECIENTE ───────────────────────────────────────────── -->
+        <section class="seccion">
+            <div class="seccion-header">
+                <h2 class="seccion-titulo">Diario reciente</h2>
+                <div class="seccion-linea"></div>
+                <a href="diario.html" class="seccion-meta" style="color:var(--accent)">Ver todo →</a>
+            </div>
+            <div class="diario-lista" id="listaDiario"></div>
+        </section>
+
+        <!-- ── PELÍCULAS VISTAS ──────────────────────────────────────────── -->
+        <section class="seccion">
+            <div class="seccion-header">
+                <h2 class="seccion-titulo">Películas vistas</h2>
+                <div class="seccion-linea"></div>
+                <span class="seccion-meta" id="lblVistas"></span>
+            </div>
+            <div class="peliculas-grid peliculas-grid--sm" id="gridVistas"
+                 style="overflow:hidden;max-height:140px"></div>
+        </section>
+
+        <!-- ── MIS LISTAS ─────────────────────────────────────────────────── -->
+        <section class="seccion">
+            <div class="seccion-header">
+                <h2 class="seccion-titulo">Mis listas</h2>
+                <div class="seccion-linea"></div>
+                <a href="listas.html" class="seccion-meta" style="color:var(--accent)">Ver todo →</a>
+            </div>
+            <div class="listas-lista" id="listaListas">
+                <p class="text-faint" style="font-size:13px">Sin listas todavía.</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ── MODAL: EDITAR PERFIL ─────────────────────────────────────────── -->
+    <div class="modal-overlay modal-overlay--hidden" id="modalEditar">
+        <div class="modal">
+            <button class="modal-close" onclick="cerrarModal('modalEditar')">✕</button>
+            <h2 class="modal-titulo">Editar perfil</h2>
+
+            <div class="form-grupo">
+                <label class="form-label">URL del avatar</label>
+                <input class="form-input" type="url" id="inputAvatar" placeholder="https://…" />
+            </div>
+            <div class="form-grupo">
+                <label class="form-label">Biografía</label>
+                <input class="form-input" type="text" id="inputBio" placeholder="Cuéntanos algo…" maxlength="200" />
+            </div>
+
+            <p class="form-error" id="errorEditar"></p>
+
+            <button class="btn btn--primary" style="width:100%;margin-top:8px" onclick="guardarPerfil()">
+                Guardar cambios
+            </button>
+        </div>
+    </div>
+
+    <!-- ── MODAL: SEGUIDORES ─────────────────────────────────────────────── -->
+    <div class="modal-overlay modal-overlay--hidden" id="modalSeguidores">
+        <div class="modal">
+            <button class="modal-close" onclick="cerrarModal('modalSeguidores')">✕</button>
+            <h2 class="modal-titulo">Seguidores</h2>
+            <div class="modal-usuarios-lista" id="listaModalSeguidores"></div>
+        </div>
+    </div>
+
+    <!-- ── MODAL: SEGUIDOS ───────────────────────────────────────────────── -->
+    <div class="modal-overlay modal-overlay--hidden" id="modalSeguidos">
+        <div class="modal">
+            <button class="modal-close" onclick="cerrarModal('modalSeguidos')">✕</button>
+            <h2 class="modal-titulo">Siguiendo</h2>
+            <div class="modal-usuarios-lista" id="listaModalSeguidos"></div>
+        </div>
+    </div>
+
+    <!-- ── MODAL: VER / EDITAR ENTRADA DIARIO ───────────────────────────────── -->
+    <div class="modal-overlay modal-overlay--hidden" id="modalDiarioEntrada">
+        <div class="modal">
+            <button class="modal-close" onclick="cerrarModalDiarioEntrada()">✕</button>
+            <h2 class="modal-titulo" id="modalDiarioTitulo">Entrada del diario</h2>
+            <input type="hidden" id="diarioEntradaId" />
+            <div class="form-grupo">
+                <label class="form-label">Fecha de visionado</label>
+                <input class="form-input" type="date" id="diarioEntradaFecha" style="color-scheme:dark" />
+            </div>
+            <div class="form-grupo">
+                <label class="form-label">Puntuación</label>
+                <div class="puntuacion-selector" id="diarioEntradaSelector"></div>
+            </div>
+            <div class="form-grupo">
+                <label class="form-label">Reseña</label>
+                <textarea class="form-input" id="diarioEntradaResena" rows="4"
+                          placeholder="¿Qué te pareció? (opcional)"
+                          maxlength="5000"
+                          style="resize:vertical;min-height:90px"></textarea>
+            </div>
+            <button class="btn btn--primary" style="width:100%;margin-top:8px"
+                    onclick="guardarEdicionDiario()">
+                Guardar cambios
+            </button>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/nav.js"></script>
+    <script src="../js/logros-notif.js"></script>
+    <script src="../js/perfil.js"></script>
+
+</body>
+</html>

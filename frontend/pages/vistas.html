@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BONOBO — Películas vistas</title>
+    <link rel="stylesheet" href="../css/main.css" />
+</head>
+<body>
+
+    <header id="nav-placeholder"></header>
+
+    <main class="contenedor pagina">
+
+        <div class="seccion-header" style="margin-bottom:32px">
+            <h1 class="seccion-titulo">Películas vistas</h1>
+            <div class="seccion-linea"></div>
+            <span class="seccion-meta" id="lblTotal"></span>
+        </div>
+
+        <div class="peliculas-grid" id="gridVistas"></div>
+
+        <div style="text-align:center;margin-top:32px">
+            <button class="btn btn--ghost oculto" id="btnMas" onclick="cargarMas()">
+                Cargar más
+            </button>
+        </div>
+
+    </main>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/nav.js"></script>
+    <script>
+        let skip      = 0;
+        const LIMIT   = 40;
+        let usuarioId = null;
+        let total     = 0;
+
+        function mostrarToast(msg, tipo = 'ok') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `toast toast--${tipo} toast--visible`;
+            setTimeout(() => { t.className = 'toast'; }, 2800);
+        }
+
+        async function cargarVistas() {
+            try {
+                const vistas = await api.usuarios.vistas(usuarioId, skip, LIMIT);
+
+                if (skip === 0 && vistas.length === 0) {
+                    document.getElementById('gridVistas').innerHTML = `
+                        <div class="estado-vacio" style="grid-column:1/-1">
+                            <p class="estado-vacio__titulo">Sin películas vistas</p>
+                            <p class="estado-vacio__desc">Marca películas como vistas desde su ficha.</p>
+                        </div>`;
+                    return;
+                }
+
+                const grid = document.getElementById('gridVistas');
+                grid.insertAdjacentHTML('beforeend', vistas.map(v => {
+                    const p = v.pelicula;
+                    return `
+                        <div class="pelicula-card" onclick="location.href='pelicula.html?id=${p.tmdb_id}'">
+                            <div class="pelicula-card__poster">
+                                ${p.poster_url
+                                    ? `<img class="pelicula-card__img" src="${p.poster_url}" alt="${p.titulo}" loading="lazy">`
+                                    : `<div class="pelicula-card__no-img">SIN IMAGEN</div>`
+                                }
+                                <div class="pelicula-card__overlay">
+                                    ${v.puntuacion ? `<div class="pelicula-card__puntuacion">★ ${v.puntuacion}</div>` : ''}
+                                </div>
+                                <div class="pelicula-card__badges">
+                                    <div class="badge badge--watched">✓</div>
+                                </div>
+                            </div>
+                            <div class="pelicula-card__info">
+                                <div class="pelicula-card__titulo">${p.titulo || '—'}</div>
+                                <div class="pelicula-card__anio">${p.anio_estreno || ''}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join(''));
+
+                skip += vistas.length;
+                document.getElementById('btnMas').classList.toggle('oculto', vistas.length < LIMIT);
+
+            } catch {
+                mostrarToast('Error al cargar las películas', 'error');
+            }
+        }
+
+        function cargarMas() { cargarVistas(); }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            renderNav('../');
+
+            const params    = new URLSearchParams(window.location.search);
+            const idParam   = parseInt(params.get('id'));
+            const esAjeno   = !!idParam;
+
+            if (!esAjeno && !auth.estaLogueado()) {
+                location.href = 'login.html';
+                return;
+            }
+
+            if (esAjeno) {
+                usuarioId = idParam;
+                try {
+                    const u = await api.usuarios.perfil(idParam);
+                    document.title = `BONOBO — Vistas de ${u.username}`;
+                    document.querySelector('.seccion-titulo').textContent = `Películas vistas de ${u.username}`;
+                    document.getElementById('lblTotal').textContent =
+                        `${u.total_vistas} película${u.total_vistas !== 1 ? 's' : ''}`;
+                } catch { /* si falla el perfil cargamos igual */ }
+            } else {
+                const usuario = await api.usuarios.mePerfil();
+                usuarioId = usuario.id;
+                total     = usuario.total_vistas;
+                document.getElementById('lblTotal').textContent =
+                    `${total} película${total !== 1 ? 's' : ''}`;
+            }
+
+            await cargarVistas();
+        });
+    </script>
+
+</body>
+</html>

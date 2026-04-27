@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BONOBO — Película</title>
+    <link rel="stylesheet" href="../css/main.css" />
+</head>
+<body>
+
+    <header id="nav-placeholder"></header>
+
+    <!-- ── CABECERA DE LA PELÍCULA (póster de fondo difuminado) ─────────── -->
+    <div class="pelicula-hero" id="peliculaHero">
+        <!-- Fondo: el póster de la película difuminado (se rellena por JS) -->
+        <div class="pelicula-hero__bg" id="heroBg"></div>
+        <div class="pelicula-hero__overlay"></div>
+
+        <div class="pelicula-hero__content">
+
+            <!-- Póster principal a la izquierda -->
+            <div class="pelicula-poster" id="posterWrap">
+                <div class="skeleton" style="aspect-ratio:2/3;width:200px"></div>
+            </div>
+
+            <!-- Info central: título, meta, géneros, sinopsis -->
+            <div class="pelicula-info">
+                <h1 class="pelicula-titulo" id="titulo">—</h1>
+                <p class="pelicula-director" id="director"></p>
+                <div class="pelicula-meta" id="meta"></div>
+                <div class="pelicula-generos" id="generos"></div>
+                <p class="pelicula-sinopsis" id="sinopsis"></p>
+            </div>
+
+            <!-- Sidebar derecho: acciones del usuario -->
+            <div class="pelicula-sidebar">
+
+                <!-- Panel de acciones: solo visible si está logueado -->
+                <div class="acciones-panel oculto" id="accionesPanel">
+                    <p class="acciones-panel__titulo">Tu actividad</p>
+
+                    <!-- Fila de acciones: Vista · Me gusta · Watchlist -->
+                    <div class="acciones-fila">
+                        <button class="accion-btn" id="btnVista" onclick="toggleVista()">
+                            <!-- Ojo: icono de "vista" -->
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                            <span id="lblVista">Vista</span>
+                        </button>
+
+                        <button class="accion-btn" id="btnLike" onclick="toggleMeGusta()">
+                            <!-- Corazón: icono de "me gusta" -->
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                            </svg>
+                            <span>Me gusta</span>
+                        </button>
+
+                        <button class="accion-btn" id="btnWatchlist" onclick="toggleWatchlist()">
+                            <!-- Bookmark: icono de "watchlist" -->
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                            </svg>
+                            <span>Watchlist</span>
+                        </button>
+                    </div>
+
+                    <!-- Puntuación del 1 al 10 -->
+                    <div class="puntuacion-wrap">
+                        <p class="puntuacion-label">Tu puntuación</p>
+                        <div class="puntuacion-selector" id="selectorPuntuacion">
+                            <!-- Los botones del 1 al 10 se generan por JS -->
+                        </div>
+                    </div>
+
+                    <!-- Añadir al diario -->
+                    <button class="btn btn--surface btn--sm" style="width:100%"
+                            onclick="abrirModalDiario()">
+                        Añadir al diario
+                    </button>
+
+                    <!-- Añadir a lista -->
+                    <button class="btn btn--surface btn--sm" style="width:100%"
+                            onclick="abrirModalListas()">
+                        Añadir a lista
+                    </button>
+                </div>
+
+                <!-- Mensaje para visitantes no logueados -->
+                <div id="panelVisitante" class="oculto">
+                    <a href="login.html" class="btn btn--primary">Entrar para registrarla</a>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ── PESTAÑAS: REPARTO / EQUIPO / DETALLES ────────────────────────── -->
+    <main class="contenedor" style="padding-top:32px;padding-bottom:64px">
+
+        <!-- Barra de pestañas -->
+        <div class="tabs" id="tabBar">
+            <button class="tab tab--activo" data-tab="reparto">Reparto</button>
+            <button class="tab" data-tab="equipo">Equipo</button>
+            <button class="tab" data-tab="detalles">Detalles</button>
+            <button class="tab" data-tab="resenas">Reseñas</button>
+        </div>
+
+        <!-- Panel Reparto -->
+        <div class="tab-panel" id="panelReparto">
+            <div class="reparto-grid" id="gridReparto"></div>
+        </div>
+
+        <!-- Panel Equipo técnico (agrupado por departamento) -->
+        <div class="tab-panel oculto" id="panelEquipo">
+            <div id="gridEquipo"></div>
+        </div>
+
+        <!-- Panel Detalles (productora, país, idioma, presupuesto…) -->
+        <div class="tab-panel oculto" id="panelDetalles">
+            <dl class="detalles-lista" id="listaDetalles"></dl>
+        </div>
+
+        <!-- Panel Reseñas -->
+        <div class="tab-panel oculto" id="panelResenas">
+            <!-- Reseñas de amigos (solo logueados) -->
+            <div id="seccionAmigos" class="oculto">
+                <p class="resenas-subtitulo">Amigos</p>
+                <div id="listaAmigos"></div>
+            </div>
+            <!-- Reseñas de la comunidad -->
+            <p class="resenas-subtitulo" id="subtituloComunidad">Comunidad</p>
+            <div id="listaComunidad">
+                <p class="text-faint" style="font-size:13px">Cargando reseñas…</p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ── MODAL: AÑADIR AL DIARIO ──────────────────────────────────────────── -->
+    <div class="modal-overlay modal-overlay--hidden" id="modalDiario">
+        <div class="modal">
+            <button class="modal-close" onclick="cerrarModalDiario()">✕</button>
+            <h2 class="modal-titulo">Añadir al diario</h2>
+            <div class="form-grupo">
+                <label class="form-label">Fecha de visionado</label>
+                <input class="form-input" type="date" id="fechaVisionado" style="color-scheme:dark" />
+            </div>
+            <div class="form-grupo">
+                <label class="form-label">Puntuación del visionado</label>
+                <div class="puntuacion-selector" id="selectorPuntuacionDiario"></div>
+            </div>
+            <div class="form-grupo">
+                <label class="form-label">Reseña</label>
+                <textarea class="form-input" id="resena" rows="3"
+                          placeholder="¿Qué te pareció? (opcional)"
+                          maxlength="5000"
+                          style="resize:vertical"></textarea>
+            </div>
+            <button class="btn btn--primary" style="width:100%;margin-top:4px"
+                    onclick="guardarDiario()">
+                Guardar en diario
+            </button>
+        </div>
+    </div>
+
+    <!-- ── MODAL: AÑADIR A LISTA ─────────────────────────────────────────────── -->
+    <div class="modal-overlay modal-overlay--hidden" id="modalListas">
+        <div class="modal">
+            <button class="modal-close" onclick="cerrarModalListas()">✕</button>
+            <h2 class="modal-titulo">Añadir a lista</h2>
+            <div id="listasUsuario" style="display:flex;flex-direction:column;gap:6px">
+                <p class="text-faint" style="font-size:13px">Cargando…</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay póster ampliado -->
+    <div class="poster-overlay poster-overlay--hidden" id="posterOverlay"
+         onclick="this.classList.add('poster-overlay--hidden')">
+        <img id="posterOverlayImg" src="" alt="" />
+    </div>
+
+    <!-- ── MODAL: VER RESEÑA COMPLETA ──────────────────────────────────────── -->
+    <div class="modal-overlay modal-overlay--hidden" id="modalVerResena">
+        <div class="modal">
+            <button class="modal-close" onclick="cerrarModalResena()">✕</button>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+                <div id="resenaModalAvatar" class="resena-card__avatar" style="width:40px;height:40px;flex-shrink:0"></div>
+                <div>
+                    <div id="resenaModalUsername" style="font-weight:600;font-size:14px"></div>
+                    <div id="resenaModalFecha" style="font-size:12px;color:var(--faint)"></div>
+                </div>
+                <div id="resenaModalPuntuacion" class="resena-card__puntuacion" style="margin-left:auto"></div>
+            </div>
+            <p id="resenaModalTexto" style="font-size:14px;line-height:1.7;color:var(--muted);white-space:pre-wrap"></p>
+        </div>
+    </div>
+
+    <!-- Toast de notificaciones -->
+    <div class="toast" id="toast"></div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/nav.js"></script>
+    <script src="../js/pelicula.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BONOBO — Diario Cinematográfico</title>
+    <link rel="stylesheet" href="css/main.css" />
+</head>
+<body>
+
+    <!-- El navbar se inyecta aquí por nav.js -->
+    <header id="nav-placeholder"></header>
+
+    <!-- ── HERO (solo visible para visitantes no logueados) ──────────────── -->
+    <!-- Se oculta automáticamente si el usuario tiene sesión iniciada -->
+    <section class="hero" id="hero">
+
+        <!-- Mosaico de pósters de fondo, rellenado dinámicamente con películas de cartelera -->
+        <div class="hero-bg" id="heroBg"></div>
+
+        <!-- Degradado oscuro para que el texto sea legible sobre el mosaico -->
+        <div class="hero-overlay"></div>
+
+        <!-- Texto central del hero -->
+        <div class="hero-content">
+            <h1 class="hero-titulo">
+                <span>BONOBO</span><br>
+                DIARIO<br>CINEMATOGRÁFICO
+            </h1>
+            <p class="hero-desc">
+                Registra las películas que ves. Puntúalas, escribe lo que sientes.<br>
+                Descubre qué ven los que te importan.
+            </p>
+            <div class="hero-cta">
+                <a href="pages/registro.html" class="btn btn--primary btn--lg">Empezar gratis</a>
+                <a href="pages/login.html"    class="btn btn--ghost btn--lg">Iniciar sesión</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── CONTENIDO PRINCIPAL ───────────────────────────────────────────── -->
+    <main class="contenedor pagina" id="contenidoPrincipal">
+
+        <!-- Resultados de búsqueda (se muestra cuando el usuario busca desde el nav) -->
+        <section class="seccion oculto" id="seccionBusqueda">
+            <div class="seccion-header">
+                <h2 class="seccion-titulo">Resultados</h2>
+                <div class="seccion-linea"></div>
+                <span class="seccion-meta" id="labelBusqueda"></span>
+            </div>
+            <div class="peliculas-grid" id="gridBusqueda"></div>
+        </section>
+
+        <!-- En cartelera -->
+        <section class="seccion" id="seccionCartelera">
+            <div class="seccion-header">
+                <h2 class="seccion-titulo">En cartelera</h2>
+                <div class="seccion-linea"></div>
+                <span class="seccion-meta">En cines ahora</span>
+            </div>
+            <div class="peliculas-grid" id="gridCartelera"></div>
+        </section>
+
+        <!-- Próximos estrenos -->
+        <section class="seccion" id="seccionEstrenos">
+            <div class="seccion-header">
+                <h2 class="seccion-titulo">Próximos estrenos</h2>
+                <div class="seccion-linea"></div>
+                <span class="seccion-meta">Pronto en cines</span>
+            </div>
+            <div class="peliculas-grid" id="gridEstrenos"></div>
+        </section>
+
+    </main>
+
+    <!-- Toast de notificación (feedback rápido al usuario) -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Scripts: primero los de utilidades, luego la lógica de la página -->
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/nav.js"></script>
+    <script src="js/logros-notif.js"></script>
+    <script src="js/home.js"></script>
+
+</body>
+</html>

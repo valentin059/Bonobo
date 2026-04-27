@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BONOBO — Crear cuenta</title>
+    <link rel="stylesheet" href="../css/main.css" />
+</head>
+<body>
+
+    <header id="nav-placeholder"></header>
+
+    <div class="form-pagina">
+        <div class="form-caja">
+
+            <h1 class="form-titulo">Crear cuenta</h1>
+            <p class="form-subtitulo">Gratis para siempre. Sin anuncios. Solo películas.</p>
+
+            <form id="formRegistro">
+
+                <div class="form-grupo">
+                    <label class="form-label" for="username">Nombre de usuario</label>
+                    <input
+                        class="form-input"
+                        type="text"
+                        id="username"
+                        placeholder="tuusuario"
+                        autocomplete="username"
+                        minlength="3"
+                        required
+                    />
+                </div>
+
+                <div class="form-grupo">
+                    <label class="form-label" for="email">Email</label>
+                    <input
+                        class="form-input"
+                        type="email"
+                        id="email"
+                        placeholder="tucorreo@ejemplo.com"
+                        autocomplete="email"
+                        required
+                    />
+                </div>
+
+                <div class="form-grupo">
+                    <label class="form-label" for="password">Contraseña</label>
+                    <input
+                        class="form-input"
+                        type="password"
+                        id="password"
+                        placeholder="Mínimo 8 caracteres"
+                        autocomplete="new-password"
+                        minlength="8"
+                        required
+                    />
+                </div>
+
+                <!-- Mensaje de error (aparece si el registro falla) -->
+                <p class="form-error" id="errorMsg"></p>
+
+                <button class="btn btn--primary form-btn" type="submit" id="btnRegistro">
+                    Crear cuenta
+                </button>
+
+            </form>
+
+            <p class="form-footer">
+                ¿Ya tienes cuenta? <a href="login.html">Inicia sesión</a>
+            </p>
+
+        </div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/nav.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            renderNav('../');
+
+            // Si ya está logueado, no necesita registrarse
+            if (auth.estaLogueado()) {
+                window.location.href = '../index.html';
+                return;
+            }
+
+            const form    = document.getElementById('formRegistro');
+            const btn     = document.getElementById('btnRegistro');
+            const errorEl = document.getElementById('errorMsg');
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                errorEl.className = 'form-error';
+
+                const username = document.getElementById('username').value.trim();
+                const email    = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value;
+
+                btn.textContent = 'Creando cuenta…';
+                btn.disabled = true;
+
+                try {
+                    // 1. Registramos al usuario
+                    await api.auth.registro({ username, email, password });
+
+                    // 2. Hacemos login automáticamente para no obligarle a entrar de nuevo
+                    await auth.login(email, password);
+
+                    // 3. Redirigimos al inicio ya logueado
+                    window.location.href = '../index.html';
+                } catch (err) {
+                    errorEl.textContent = err.message || 'Error al crear la cuenta';
+                    errorEl.className = 'form-error form-error--visible';
+                    btn.textContent = 'Crear cuenta';
+                    btn.disabled = false;
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
