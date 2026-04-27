@@ -175,7 +175,6 @@ class Logro(Base):
     nombre = Column(String(100), nullable=False)
     descripcion = Column(Text, nullable=False)
     xp = Column(Integer, nullable=False, server_default=text("0"))
-    created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
 
 
 # logros que ha desbloqueado cada usuario
