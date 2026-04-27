@@ -1094,6 +1094,8 @@ img { display: block; max-width: 100%; }
     letter-spacing: 0.06em;
     margin-top: 2px;
 }
+.perfil-stat--logros { cursor: pointer; }
+.perfil-stat__num--nivel { color: var(--accent); }
 
 /* Películas favoritas en el perfil (4 pósters en una fila) */
 .favoritas-grid {
@@ -1894,3 +1896,341 @@ img { display: block; max-width: 100%; }
     cursor: default;
     opacity: 0.85;
 }
+
+/* ══════════════════════════════════════════════════════════════
+   NIVEL 3 — LOGROS (pantalla al estilo Steam/PlayStation)
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Cabecera: nivel + barra de progreso ─────────────────────── */
+.logros-cabecera {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+    border: 1px solid var(--accent-border);
+    border-radius: var(--radius-lg);
+    padding: 28px 32px;
+    margin-bottom: 32px;
+}
+
+.logros-nivel-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 110px;
+    padding: 18px 22px;
+    background: var(--accent-bg);
+    border: 2px solid var(--accent);
+    border-radius: var(--radius);
+    box-shadow: 0 0 24px rgba(232, 160, 32, 0.15);
+}
+.logros-nivel-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+}
+.logros-nivel-num {
+    font-family: var(--font-display);
+    font-size: 52px;
+    color: var(--accent);
+    line-height: 1;
+}
+
+.logros-progreso { flex: 1; }
+.logros-progreso-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 10px;
+}
+.logros-xp-total {
+    font-family: var(--font-display);
+    font-size: 26px;
+    color: var(--text);
+    letter-spacing: 0.02em;
+}
+.logros-xp-siguiente {
+    font-size: 12px;
+    color: var(--faint);
+    letter-spacing: 0.05em;
+}
+
+.logros-barra {
+    height: 10px;
+    background: var(--surface3);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+.logros-barra-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent) 0%, var(--accent-hover) 100%);
+    border-radius: 6px;
+    transition: width 0.6s ease;
+    box-shadow: 0 0 10px rgba(232, 160, 32, 0.4);
+}
+.logros-resumen {
+    font-size: 11px;
+    color: var(--faint);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+/* ── Filtros ─────────────────────────────────────────────────── */
+.logros-filtros {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+.logros-filtro {
+    background: var(--surface2);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 8px 18px;
+    border-radius: 100px;
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: 0.02em;
+}
+.logros-filtro:hover {
+    background: var(--surface3);
+    color: var(--text);
+    border-color: var(--border2);
+}
+.logros-filtro--activo {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+    font-weight: 600;
+}
+.logros-filtro-badge {
+    background: rgba(0, 0, 0, 0.25);
+    color: inherit;
+    padding: 1px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 700;
+}
+.logros-filtro:not(.logros-filtro--activo) .logros-filtro-badge {
+    background: var(--accent);
+    color: #000;
+}
+
+/* ── Grid de tarjetas ────────────────────────────────────────── */
+.logros-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+}
+
+/* ── Tarjeta individual ──────────────────────────────────────── */
+.logro-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px 18px 18px;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    overflow: hidden;
+}
+.logro-card:hover { transform: translateY(-3px); }
+
+/* Desbloqueado */
+.logro-card--desbloqueado {
+    border-color: var(--accent-border);
+    background: linear-gradient(180deg, var(--surface) 0%, var(--surface2) 100%);
+}
+.logro-card--desbloqueado:hover {
+    border-color: var(--accent);
+    box-shadow: 0 4px 20px rgba(232, 160, 32, 0.15);
+}
+
+/* Bloqueado */
+.logro-card--bloqueado { opacity: 0.55; }
+.logro-card--bloqueado .logro-icono { filter: grayscale(1); }
+
+/* Icono grande */
+.logro-icono {
+    font-size: 52px;
+    line-height: 1;
+    margin-bottom: 12px;
+    user-select: none;
+}
+
+/* Nombre del logro */
+.logro-nombre {
+    font-family: var(--font-display);
+    font-size: 18px;
+    letter-spacing: 0.03em;
+    color: var(--text);
+    margin-bottom: 6px;
+}
+
+/* Descripción */
+.logro-desc {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin-bottom: 14px;
+    min-height: 36px;
+}
+
+/* Pie con badge de XP o botón reclamar */
+.logro-pie {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: auto;
+}
+.logro-xp-badge {
+    background: var(--accent-bg);
+    color: var(--accent);
+    border: 1px solid var(--accent-border);
+    padding: 5px 14px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+.logro-card--bloqueado .logro-xp-badge {
+    background: var(--surface3);
+    color: var(--faint);
+    border-color: var(--surface3);
+}
+.logro-xp-reclamado {
+    color: var(--faint);
+    font-size: 10px;
+    padding: 5px 14px;
+    border-radius: 100px;
+    border: 1px dashed var(--border);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+/* Botón reclamar XP */
+.logro-btn-reclamar {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 100px;
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+.logro-btn-reclamar:hover { background: var(--accent-hover); }
+.logro-btn-reclamar:active { transform: scale(0.96); }
+
+/* Cinta de "NUEVO" en esquina superior derecha */
+.logro-cinta-nuevo {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--accent);
+    color: #000;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    padding: 3px 8px;
+    border-radius: var(--radius-sm);
+    animation: logroPulse 2s ease-in-out infinite;
+}
+@keyframes logroPulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.55; }
+}
+
+/* Fecha de desbloqueo en esquina superior izquierda */
+.logro-fecha {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 9px;
+    color: var(--faint);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+/* Responsive — pantallas pequeñas */
+@media (max-width: 600px) {
+    .logros-cabecera {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+        padding: 20px;
+    }
+    .logros-nivel-box { align-self: center; }
+    .logros-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 10px;
+    }
+    .logro-icono { font-size: 42px; }
+    .logro-nombre { font-size: 15px; }
+    .logro-desc { font-size: 11px; }
+}
+/* ══════════════════════════════════════════════════════════════
+   BADGE DE NOTIFICACIÓN — Contador de logros pendientes
+   ══════════════════════════════════════════════════════════════ */
+
+/* Círculo rojo tipo WhatsApp posicionado sobre otro elemento */
+
+.notif-badge {
+    position: absolute;
+    top: -4px;
+    right: -6px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    background: var(--error);
+    color: #fff;
+    border-radius: 100px;
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 0 2px var(--bg);
+    line-height: 1;
+    font-feature-settings: "tnum";  /* dígitos tabulares, evita el "0 raro" */
+    pointer-events: none;           /* no interfiere con clics */
+    animation: notifPop 0.4s ease;
+    z-index: 2;
+}
+
+/* Variante para el navbar (fondo distinto → sombra distinta) */
+.notif-badge--navbar {
+    box-shadow: 0 0 0 2px rgba(14, 14, 18, 0.95);
+    top: 2px;
+    right: 2px;
+}
+
+/* Pequeña animación al aparecer */
+@keyframes notifPop {
+    0%   { transform: scale(0);    opacity: 0; }
+    60%  { transform: scale(1.15); opacity: 1; }
+    100% { transform: scale(1);    opacity: 1; }
+}
+
+/* Aseguramos que los contenedores tengan posición relativa */
+.perfil-stat { position: relative; }
+.nav-link    { position: relative; }

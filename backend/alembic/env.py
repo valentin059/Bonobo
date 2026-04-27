@@ -6,7 +6,8 @@ from sqlalchemy import pool
 from alembic import context
 
 from app.config import settings
-from app.models.models import Base
+from app.models.models import Base  # 👈 IMPORTA TODO EL ARCHIVO
+
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -86,3 +87,4 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
+

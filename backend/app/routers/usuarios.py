@@ -4,6 +4,7 @@ from sqlalchemy import select, func, delete
 from .. import database, models, schemas, oauth2
 from typing import Optional
 from ..services import get_or_create_pelicula
+from ..services.logros import verificar_logros, otorgar_logros
 
 router = APIRouter(
     prefix="/api/usuarios",
@@ -26,6 +27,25 @@ def get_mi_perfil(db: Session = Depends(database.get_db),
     seguidos = db.execute(
         select(func.count(models.Seguidor.id)).where(models.Seguidor.id_seguidor == current_user.id)
     ).scalar()
+    
+    logros = db.execute(
+        select(models.UsuarioLogro, models.Logro)
+        .join(models.Logro, models.UsuarioLogro.id_logro == models.Logro.id)
+        .where(models.UsuarioLogro.id_usuario == current_user.id)
+        .order_by(models.UsuarioLogro.created_at.desc())
+    ).all()
+
+    logros_out = [
+        schemas.LogroOut(
+            codigo=l.codigo,
+            nombre=l.nombre,
+            descripcion=l.descripcion,
+            xp=l.xp,
+            xp_reclamado=ul.xp_reclamado,
+            desbloqueado_el=ul.created_at
+        )
+        for ul, l in logros
+    ]
 
     return schemas.UserProfile(
         id=current_user.id,
@@ -36,6 +56,9 @@ def get_mi_perfil(db: Session = Depends(database.get_db),
         seguidores=seguidores,
         seguidos=seguidos,
         yo_sigo=None,
+        xp_total=current_user.xp_total,   # 👈
+        nivel=current_user.nivel,          # 👈
+        logros=logros_out,
     )
 
 
@@ -62,6 +85,9 @@ def configurar_favoritas(tmdb_ids: list[int],
 
     db.commit()
 
+    logros = verificar_logros(db, current_user.id)  # 👈
+    otorgar_logros(db, current_user.id, logros)  
+    
     return {"detail": "Favoritas actualizadas"}
 
 
@@ -319,3 +345,24 @@ def get_favoritas(id: int, db: Session = Depends(database.get_db)):
     ).scalars().all()
 
     return favoritas
+
+# GET /api/usuarios/me/ranking-amigos
+@router.get("/me/ranking-amigos", response_model=list[schemas.UsuarioResumen])
+def get_ranking_amigos(db: Session = Depends(database.get_db),
+                       current_user: models.Usuario = Depends(oauth2.get_current_user)):
+
+    seguidos_ids = db.execute(
+        select(models.Seguidor.id_seguido)
+        .where(models.Seguidor.id_seguidor == current_user.id)
+    ).scalars().all()
+
+    if not seguidos_ids:
+        return []
+
+    usuarios = db.execute(
+        select(models.Usuario)
+        .where(models.Usuario.id.in_(seguidos_ids))
+        .order_by(models.Usuario.xp_total.desc())
+    ).scalars().all()
+
+    return usuarios

@@ -15,7 +15,8 @@ class Usuario(Base):
     bio = Column(Text, nullable=True)
     avatar_url = Column(String(500), nullable=True)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
-
+    xp_total = Column(Integer, nullable=False, server_default=text("0"))
+    nivel = Column(Integer, nullable=False, server_default=text("1"))
 
 # Caché local de películas de TMDB. Solo guardamos lo esencial para relacionar
 # acciones del usuario con una película concreta.
@@ -162,4 +163,31 @@ class ListaPelicula(Base):
 
     __table_args__ = (
         UniqueConstraint("id_lista", "id_pelicula", name="unique_lista_pelicula"),
+    )
+
+
+# catálogo de logros disponibles en el juego
+class Logro(Base):
+    __tablename__ = "logros"
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    codigo = Column(String(50), nullable=False, unique=True)
+    nombre = Column(String(100), nullable=False)
+    descripcion = Column(Text, nullable=False)
+    xp = Column(Integer, nullable=False, server_default=text("0"))
+    created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
+
+
+# logros que ha desbloqueado cada usuario
+class UsuarioLogro(Base):
+    __tablename__ = "usuario_logros"
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    id_usuario = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False, index=True)
+    id_logro = Column(Integer, ForeignKey("logros.id", ondelete="CASCADE"), nullable=False, index=True)
+    xp_reclamado = Column(Boolean, nullable=False, server_default=text("false"))
+    created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
+
+    __table_args__ = (
+        UniqueConstraint("id_usuario", "id_logro"),
     )

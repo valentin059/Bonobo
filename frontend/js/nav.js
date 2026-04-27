@@ -48,6 +48,7 @@ function renderNav(base = '') {
                     <a href="${base}pages/diario.html"    class="nav-link">Diario</a>
                     <a href="${base}pages/watchlist.html" class="nav-link">Watchlist</a>
                     <a href="${base}pages/listas.html"    class="nav-link">Listas</a>
+                    <a href="${base}pages/logros.html"    class="nav-link">Logros</a>
                 </div>
                 ` : ''}
 

@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from .. import database, models, schemas, oauth2
+from ..services.logros import verificar_logros, otorgar_logros
+
 
 router = APIRouter(
     prefix="/api/usuarios",
@@ -37,6 +39,8 @@ def seguir_usuario(id: int,
 
     db.add(models.Seguidor(id_seguidor=current_user.id, id_seguido=id))
     db.commit()
+    logros = verificar_logros(db, current_user.id)
+    otorgar_logros(db, current_user.id, logros)
 
     return {"detail": f"Ahora sigues a {objetivo.username}."}
 

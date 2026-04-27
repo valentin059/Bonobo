@@ -207,4 +207,10 @@ const api = {
         listasConPelicula: (tmdbId) =>
             _req('GET', `/api/listas/mis-listas-con-pelicula/${tmdbId}`),
     },
+
+    logros: {
+        todos:     () => _req('GET',  '/api/logros/todos'),
+        misLogros: () => _req('GET',  '/api/logros/mis-logros'),
+        reclamar:  (idUsuarioLogro) => _req('POST', `/api/logros/${idUsuarioLogro}/reclamar`),
+    },
 };

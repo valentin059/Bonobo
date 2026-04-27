@@ -2,14 +2,16 @@ from .models import (
     Base, 
     Usuario, 
     Pelicula, 
-    Vista, 
+    Vista,
     MeGusta, 
     Watchlist, 
     EntradaDiario, 
     PeliculaFavorita, 
-    Seguidor,           # <-- Este es el que te está fallando
+    Seguidor,
     ComentarioResena, 
     LikeResena, 
     Lista, 
-    ListaPelicula
+    ListaPelicula,
+    Logro,          
+    UsuarioLogro,
 )

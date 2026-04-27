@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BONOBO — Mis Logros</title>
+    <link rel="stylesheet" href="../css/main.css" />
+</head>
+<body>
+
+    <header id="nav-placeholder"></header>
+
+    <main class="contenedor pagina">
+
+        <!-- ── CABECERA: nivel, XP y progreso ──────────────────────────── -->
+        <section class="logros-cabecera" id="logrosCabecera">
+            <div class="logros-nivel-box">
+                <div class="logros-nivel-label">NIVEL</div>
+                <div class="logros-nivel-num" id="lblNivel">—</div>
+            </div>
+
+            <div class="logros-progreso">
+                <div class="logros-progreso-header">
+                    <span class="logros-xp-total" id="lblXpTotal">0 XP</span>
+                    <span class="logros-xp-siguiente" id="lblXpSiguiente">— / — XP</span>
+                </div>
+                <div class="logros-barra">
+                    <div class="logros-barra-fill" id="barraFill" style="width:0%"></div>
+                </div>
+                <div class="logros-resumen" id="lblResumen">— de — logros desbloqueados</div>
+            </div>
+        </section>
+
+        <!-- ── FILTROS ──────────────────────────────────────────────────── -->
+        <div class="logros-filtros">
+            <button class="logros-filtro logros-filtro--activo" data-filtro="todos">Todos</button>
+            <button class="logros-filtro" data-filtro="desbloqueados">Desbloqueados</button>
+            <button class="logros-filtro" data-filtro="bloqueados">Bloqueados</button>
+            <button class="logros-filtro" data-filtro="reclamables">
+                Reclamables <span class="logros-filtro-badge" id="badgeReclamables">0</span>
+            </button>
+        </div>
+
+        <!-- ── GRID DE LOGROS ───────────────────────────────────────────── -->
+        <section class="seccion">
+            <div class="logros-grid" id="gridLogros"></div>
+        </section>
+
+    </main>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/nav.js"></script>
+    <script src="../js/logros-notif.js"></script>
+    <script src="../js/logros.js"></script>
+
+</body>
+</html>
