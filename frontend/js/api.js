@@ -1,6 +1,6 @@
 // capa centralizada de comunicación con el backend
 
-const API_BASE = 'https://bonobo-backend.onrender.com';
+const API_BASE = 'http://localhost:8000';
 
 // escapa texto de usuario antes de insertarlo con innerHTML
 function escapeHTML(str) {
