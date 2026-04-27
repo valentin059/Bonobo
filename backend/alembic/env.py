@@ -6,7 +6,7 @@ from sqlalchemy import pool
 from alembic import context
 
 from app.config import settings
-from app.models.models import Base  # 👈 IMPORTA TODO EL ARCHIVO
+from app.models.models import Base
 
 
 # this is the Alembic Config object, which provides
