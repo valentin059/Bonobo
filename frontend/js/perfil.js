@@ -16,9 +16,7 @@ function mostrarToast(mensaje, tipo = 'ok', duracion = 2800) {
 
 function cerrarModal(id) {
     document.getElementById(id).classList.add('modal-overlay--hidden');
-    document.getElementById('errorEditar')?.classList.remove('form-error--visible');
     document.getElementById('errorFavoritas')?.classList.remove('form-error--visible');
-    document.getElementById('errorPassword')?.classList.remove('form-error--visible');
 }
 
 // ── RENDER ────────────────────────────────────────────────────────────────────
@@ -42,9 +40,6 @@ function renderizarCabecera(usuario) {
     document.getElementById('statSeguidos').textContent      = usuario.seguidos;
     document.getElementById('statNivel').textContent         = usuario.nivel || 1;
     document.getElementById('statXP').textContent            = `${usuario.xp_total || 0} XP`;
-
-    document.getElementById('inputAvatar').value = usuario.avatar_url || '';
-    document.getElementById('inputBio').value    = usuario.bio || '';
 }
 
 function renderizarFavoritas(favoritas) {
@@ -55,11 +50,10 @@ function renderizarFavoritas(favoritas) {
     grid.innerHTML = Array.from({ length: 4 }, (_, i) => {
         const orden    = i + 1;
         const pelicula = porOrden[orden];
-        // todos los slots abren el editor al clicar
-        const clickAttr = `onclick="abrirEditFavoritas()"`;
         if (pelicula) {
             return `
-                <div class="favorita-slot" ${clickAttr} title="Editar favoritas">
+                <div class="favorita-slot" style="cursor:pointer"
+                     onclick="irAPelicula(${pelicula.tmdb_id})" title="${pelicula.titulo}">
                     ${pelicula.poster_url
                         ? `<img src="${pelicula.poster_url}" alt="${pelicula.titulo}">`
                         : `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--faint);font-size:10px;text-align:center;padding:4px">${pelicula.titulo}</div>`
@@ -67,7 +61,7 @@ function renderizarFavoritas(favoritas) {
                 </div>
             `;
         } else {
-            return `<div class="favorita-slot favorita-slot--vacio" ${clickAttr} title="Añadir favorita">+</div>`;
+            return `<div class="favorita-slot favorita-slot--vacio" style="cursor:default"></div>`;
         }
     }).join('');
 }
@@ -254,86 +248,16 @@ function irAPelicula(tmdbId) {
 
 
 
-// ── MODAL EDITAR PERFIL ───────────────────────────────────────────────────────
-
-function abrirModalEditar() {
-    document.getElementById('modalEditar').classList.remove('modal-overlay--hidden');
-}
-
-async function guardarPerfil() {
-    const avatar_url = document.getElementById('inputAvatar').value.trim() || null;
-    const bio        = document.getElementById('inputBio').value.trim() || null;
-    const errorEl   = document.getElementById('errorEditar');
-
-    try {
-        await api.usuarios.editarPerfil({ bio, avatar_url });
-
-        const usuarioGuardado = auth.getUsuario();
-        auth.guardarUsuario({ ...usuarioGuardado, bio, avatar_url });
-
-        document.getElementById('perfilBio').textContent = bio || '';
-        if (avatar_url) {
-            document.getElementById('perfilAvatar').innerHTML =
-                `<img class="perfil-avatar" src="${avatar_url}" alt="avatar">`;
-        }
-
-        cerrarModal('modalEditar');
-        mostrarToast('Perfil actualizado ✓');
-    } catch (err) {
-        errorEl.textContent = err.message || 'Error al guardar';
-        errorEl.className = 'form-error form-error--visible';
-    }
-}
-
-// ── MODAL CAMBIAR CONTRASEÑA ──────────────────────────────────────────────────
-
-function abrirModalPassword() {
-    document.getElementById('inputPasswordActual').value = '';
-    document.getElementById('inputPasswordNueva').value  = '';
-    document.getElementById('inputPasswordRepetir').value = '';
-    document.getElementById('errorPassword').className = 'form-error';
-    document.getElementById('modalPassword').classList.remove('modal-overlay--hidden');
-}
-
-async function guardarPassword() {
-    const actual   = document.getElementById('inputPasswordActual').value;
-    const nueva    = document.getElementById('inputPasswordNueva').value;
-    const repetir  = document.getElementById('inputPasswordRepetir').value;
-    const errorEl  = document.getElementById('errorPassword');
-
-    if (nueva.length < 8) {
-        errorEl.textContent = 'La nueva contraseña debe tener al menos 8 caracteres.';
-        errorEl.className = 'form-error form-error--visible';
-        return;
-    }
-    if (nueva !== repetir) {
-        errorEl.textContent = 'Las contraseñas no coinciden.';
-        errorEl.className = 'form-error form-error--visible';
-        return;
-    }
-
-    try {
-        await api.usuarios.cambiarPassword(actual, nueva);
-        cerrarModal('modalPassword');
-        mostrarToast('Contraseña actualizada ✓');
-    } catch (err) {
-        errorEl.textContent = err.message || 'Error al cambiar la contraseña.';
-        errorEl.className = 'form-error form-error--visible';
-    }
-}
-
 // ── EDITOR INLINE DE FAVORITAS ───────────────────────────────────────────────
 
 function abrirEditFavoritas() {
-    document.getElementById('favoritasGrid').classList.add('oculto');
-    document.getElementById('favEditInline').classList.remove('oculto');
+    document.getElementById('errorFavoritas').className = 'form-error';
     renderizarFavEditSlots();
+    document.getElementById('modalFavoritas').classList.remove('modal-overlay--hidden');
 }
 
 function cerrarEditFavoritas() {
-    document.getElementById('favEditInline').classList.add('oculto');
-    document.getElementById('favoritasGrid').classList.remove('oculto');
-    document.getElementById('errorFavoritas').className = 'form-error';
+    document.getElementById('modalFavoritas').classList.add('modal-overlay--hidden');
 }
 
 function renderizarFavEditSlots() {
@@ -431,6 +355,7 @@ async function guardarFavoritas() {
         for (let i = 0; i < 4; i++) favSlots[i] = porOrden[i + 1] || null;
         cerrarEditFavoritas();
         mostrarToast('Favoritas guardadas ✓');
+
     } catch (err) {
         errorEl.textContent = err.message || 'Error al guardar';
         errorEl.className = 'form-error form-error--visible';

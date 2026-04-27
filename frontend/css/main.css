@@ -118,7 +118,7 @@ img { display: block; max-width: 100%; }
 /* Logo */
 .nav-logo {
     font-family: var(--font-display);
-    font-size: 22px;
+    font-size: 28px;
     letter-spacing: 0.05em;
     color: var(--accent);
     flex-shrink: 0;
@@ -946,8 +946,8 @@ img { display: block; max-width: 100%; }
 .crew-fila:hover { background: var(--surface); padding-left: 8px; }
 
 .crew-foto {
-    width: 40px;
-    height: 40px;
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
     object-fit: cover;
     background: var(--surface2);
@@ -1011,8 +1011,8 @@ img { display: block; max-width: 100%; }
 .actor-card:last-child { border-bottom: none; }
 .actor-card:hover { background: var(--surface); padding-left: 8px; }
 .actor-foto {
-    width: 40px;
-    height: 40px;
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
     object-fit: cover;
     background: var(--surface2);

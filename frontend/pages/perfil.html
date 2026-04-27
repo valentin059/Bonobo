@@ -42,38 +42,17 @@
                     </div>
                 </div>
 
-                <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
-                    <button class="btn btn--ghost btn--sm" onclick="abrirModalEditar()">
-                        Editar perfil
-                    </button>
-                    <button class="btn btn--ghost btn--sm" onclick="abrirModalPassword()" style="font-size:11px;opacity:.7">
-                        Cambiar contraseña
-                    </button>
-                </div>
+                <a href="ajustes.html" class="btn btn--ghost btn--sm">Ajustes</a>
             </div>
 
             <!-- Películas favoritas (hasta 4 pósters) -->
             <div>
                 <p style="font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">
                     Películas favoritas
-                    <span style="color:var(--border2);margin-left:6px;font-size:10px">(clic para editar)</span>
+                    <span style="color:var(--accent);margin-left:6px;font-size:10px;cursor:pointer"
+                          onclick="abrirEditFavoritas()">(clic para editar)</span>
                 </p>
-                <!-- Vista normal de favoritas -->
                 <div class="favoritas-grid" id="favoritasGrid"></div>
-
-                <!-- Editor inline de favoritas (oculto por defecto) -->
-                <div id="favEditInline" class="oculto" style="max-width:500px">
-                    <div class="favoritas-edit-grid" id="favEditGrid"></div>
-                    <p class="form-error" id="errorFavoritas"></p>
-                    <div style="display:flex;gap:8px;margin-top:4px">
-                        <button class="btn btn--primary btn--sm" onclick="guardarFavoritas()">
-                            Guardar
-                        </button>
-                        <button class="btn btn--ghost btn--sm" onclick="cerrarEditFavoritas()">
-                            Cancelar
-                        </button>
-                    </div>
-                </div>
             </div>
 
         </div>
@@ -113,53 +92,17 @@
 
     </main>
 
-    <!-- ── MODAL: EDITAR PERFIL ─────────────────────────────────────────── -->
-    <div class="modal-overlay modal-overlay--hidden" id="modalEditar">
+    <!-- ── MODAL: EDITAR FAVORITAS ─────────────────────────────────────────── -->
+    <div class="modal-overlay modal-overlay--hidden" id="modalFavoritas">
         <div class="modal">
-            <button class="modal-close" onclick="cerrarModal('modalEditar')">✕</button>
-            <h2 class="modal-titulo">Editar perfil</h2>
-
-            <div class="form-grupo">
-                <label class="form-label">URL del avatar</label>
-                <input class="form-input" type="url" id="inputAvatar" placeholder="https://…" />
+            <button class="modal-close" onclick="cerrarEditFavoritas()">✕</button>
+            <h2 class="modal-titulo">Películas favoritas</h2>
+            <div class="favoritas-edit-grid" id="favEditGrid"></div>
+            <p class="form-error" id="errorFavoritas"></p>
+            <div style="display:flex;gap:8px;margin-top:16px">
+                <button class="btn btn--primary btn--sm" onclick="guardarFavoritas()">Guardar</button>
+                <button class="btn btn--ghost btn--sm" onclick="cerrarEditFavoritas()">Cancelar</button>
             </div>
-            <div class="form-grupo">
-                <label class="form-label">Biografía</label>
-                <input class="form-input" type="text" id="inputBio" placeholder="Cuéntanos algo…" maxlength="200" />
-            </div>
-
-            <p class="form-error" id="errorEditar"></p>
-
-            <button class="btn btn--primary" style="width:100%;margin-top:8px" onclick="guardarPerfil()">
-                Guardar cambios
-            </button>
-        </div>
-    </div>
-
-    <!-- ── MODAL: CAMBIAR CONTRASEÑA ──────────────────────────────────────── -->
-    <div class="modal-overlay modal-overlay--hidden" id="modalPassword">
-        <div class="modal">
-            <button class="modal-close" onclick="cerrarModal('modalPassword')">✕</button>
-            <h2 class="modal-titulo">Cambiar contraseña</h2>
-
-            <div class="form-grupo">
-                <label class="form-label">Contraseña actual</label>
-                <input class="form-input" type="password" id="inputPasswordActual" autocomplete="current-password" />
-            </div>
-            <div class="form-grupo">
-                <label class="form-label">Nueva contraseña</label>
-                <input class="form-input" type="password" id="inputPasswordNueva" autocomplete="new-password" />
-            </div>
-            <div class="form-grupo">
-                <label class="form-label">Repetir nueva contraseña</label>
-                <input class="form-input" type="password" id="inputPasswordRepetir" autocomplete="new-password" />
-            </div>
-
-            <p class="form-error" id="errorPassword"></p>
-
-            <button class="btn btn--primary" style="width:100%;margin-top:8px" onclick="guardarPassword()">
-                Guardar contraseña
-            </button>
         </div>
     </div>
 

@@ -73,17 +73,17 @@ class UserUpdate(BaseModel):
     bio: Optional[str] = Field(None, max_length=250)
     avatar_url: Optional[str] = None
 
-
-class PasswordChange(BaseModel):
-    password_actual: str
-    password_nueva: str = Field(..., min_length=8)
-
     @field_validator('avatar_url')
     @classmethod
     def validar_avatar_url(cls, v: Optional[str]) -> Optional[str]:
         if v and not v.startswith(('http://', 'https://')):
             raise ValueError('La URL del avatar debe empezar por http:// o https://')
         return v
+
+
+class PasswordChange(BaseModel):
+    password_actual: str
+    password_nueva: str = Field(..., min_length=8)
 
 
 class VistaConPelicula(BaseModel):
