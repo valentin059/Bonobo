@@ -39,7 +39,7 @@ function renderizarCabecera(usuario) {
     document.getElementById('statSeguidores').textContent    = usuario.seguidores;
     document.getElementById('statSeguidos').textContent      = usuario.seguidos;
     document.getElementById('statNivel').textContent         = usuario.nivel || 1;
-    document.getElementById('statXP').textContent            = `${usuario.xp_total || 0} XP`;
+    document.getElementById('statXP').textContent            = 'Nivel';
 }
 
 function renderizarFavoritas(favoritas) {
