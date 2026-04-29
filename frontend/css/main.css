@@ -2234,3 +2234,179 @@ img { display: block; max-width: 100%; }
 /* Aseguramos que los contenedores tengan posición relativa */
 .perfil-stat { position: relative; }
 .nav-link    { position: relative; }
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE — MOVIL Y TABLET
+   ══════════════════════════════════════════════════════════════ */
+
+/* Fix hero: el navbar fijo (56px) tapaba el contenido en monitores pequeños */
+.hero {
+    padding-top: var(--navbar-h);
+    min-height: calc(62vh + var(--navbar-h));
+}
+.hero--mini {
+    padding-top: calc(var(--navbar-h) + 20px);
+    min-height: auto;
+}
+
+/* Hamburger — solo visible en movil */
+.nav-hamburger {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--muted);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: color 0.15s, border-color 0.15s;
+}
+.nav-hamburger:hover { color: var(--text); border-color: var(--border2); }
+.nav-hamburger svg   { width: 18px; height: 18px; pointer-events: none; }
+
+/* Panel desplegable del menu movil */
+.nav-mobile-menu {
+    display: none;
+    flex-direction: column;
+    gap: 2px;
+    padding: 12px 16px 16px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 8px 24px rgba(0,0,0,.4);
+}
+.nav-mobile-menu--open { display: flex; }
+
+.nav-mobile-search {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+    padding: 10px 14px;
+    outline: none;
+    margin-bottom: 8px;
+    transition: border-color 0.2s;
+}
+.nav-mobile-search:focus  { border-color: var(--accent-border); }
+.nav-mobile-search::placeholder { color: var(--faint); }
+
+.nav-mobile-links { display: flex; flex-direction: column; gap: 2px; }
+
+.nav-mobile-link {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--muted);
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    transition: color 0.15s, background 0.15s;
+    background: none;
+    border: none;
+    text-align: left;
+    font-family: var(--font-body);
+    cursor: pointer;
+    width: 100%;
+}
+.nav-mobile-link:hover, .nav-mobile-link.nav-link--active {
+    color: var(--text);
+    background: var(--surface2);
+}
+.nav-mobile-link--salir { color: var(--error); }
+.nav-mobile-link--salir:hover { background: rgba(244,63,94,0.08); }
+
+/* Tablet (≤ 1024px) */
+@media (max-width: 1024px) {
+    .nav-search-wrap  { max-width: 240px; }
+    .pelicula-sidebar { width: 220px; }
+    .favoritas-grid   { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* Movil (≤ 768px) */
+@media (max-width: 768px) {
+    /* Navbar: ocultamos busqueda y links, mostramos hamburger */
+    .nav-search-wrap   { display: none; }
+    .nav-links         { display: none; }
+    .nav-hamburger     { display: flex; }
+    .nav-username-text { display: none; }
+    .nav-btn--logout   { display: none; }   /* salir va en el menu movil */
+    .nav-btn--registro { display: none; }   /* registrarse va en el menu movil */
+
+    /* Layout base */
+    .contenedor { padding: 0 14px; }
+    .pagina {
+        padding-top: calc(var(--navbar-h) + 16px);
+        padding-bottom: 40px;
+    }
+
+    /* Hero */
+    .hero { min-height: calc(75vh + var(--navbar-h)); }
+    .hero-desc { font-size: 14px; }
+
+    /* Pelicula: apilar poster + info + sidebar en columna */
+    .pelicula-hero__content {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 24px 16px 32px;
+        gap: 20px;
+    }
+    .pelicula-poster   { width: 140px; }
+    .pelicula-sinopsis { max-width: 100%; }
+    .pelicula-meta     { justify-content: center; }
+    .pelicula-generos  { justify-content: center; }
+    .pelicula-sidebar  { width: 100%; max-width: 380px; }
+
+    /* Tabs con scroll horizontal en movil */
+    .tabs { overflow-x: auto; white-space: nowrap; padding-bottom: 1px; -webkit-overflow-scrolling: touch; }
+    .tab  { flex-shrink: 0; }
+
+    /* Perfil */
+    .favoritas-grid  { grid-template-columns: repeat(2, 1fr); }
+    .perfil-top      { gap: 14px; }
+    .perfil-username { font-size: 26px; }
+    .perfil-stats    { flex-wrap: wrap; gap: 12px; }
+
+    /* Diario */
+    .diario-fecha     { width: 36px; }
+    .diario-fecha__dia { font-size: 22px; }
+
+    /* Detalles pelicula */
+    .detalles-lista { grid-template-columns: 90px 1fr; }
+
+    /* Formularios */
+    .form-caja { padding: 28px 20px; }
+
+    /* Logros */
+    .logros-cabecera {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+        padding: 20px 16px;
+        gap: 16px;
+    }
+    .logros-nivel-box { align-self: center; }
+    .logros-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+
+    /* Modal */
+    .modal        { padding: 24px 16px; }
+    .modal--wide  { max-width: 100%; }
+
+    /* Favoritas en modal de edicion */
+    .favoritas-edit-grid { grid-template-columns: repeat(2, 1fr); }
+
+    /* Seccion header */
+    .seccion-titulo { font-size: 18px; }
+}
+
+/* Movil pequeño (≤ 480px) */
+@media (max-width: 480px) {
+    .pelicula-poster { width: 120px; }
+    .perfil-avatar   { width: 64px; height: 64px; }
+    .perfil-username { font-size: 22px; }
+    .hero-cta        { flex-direction: column; align-items: center; }
+}

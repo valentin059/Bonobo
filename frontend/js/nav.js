@@ -16,15 +16,26 @@ function renderNav(base = '') {
                     ? `<img src="${avatarSafe}" alt="" class="nav-avatar">`
                     : `<div class="nav-avatar nav-avatar--placeholder"></div>`
                 }
-                ${usernameSafe}
+                <span class="nav-username-text">${usernameSafe}</span>
             </a>
-            <button class="nav-btn nav-btn--ghost" id="btnLogout">Salir</button>
+            <button class="nav-btn nav-btn--ghost nav-btn--logout" id="btnLogout">Salir</button>
         </div>
     ` : `
         <div class="nav-auth">
             <a href="${base}pages/login.html" class="nav-btn nav-btn--ghost">Entrar</a>
-            <a href="${base}pages/registro.html" class="nav-btn nav-btn--primary">Registrarse</a>
+            <a href="${base}pages/registro.html" class="nav-btn nav-btn--primary nav-btn--registro">Registrarse</a>
         </div>
+    `;
+
+    // links para el menu movil
+    const mobileLinksHTML = logueado ? `
+        <a href="${base}pages/diario.html"    class="nav-mobile-link">Diario</a>
+        <a href="${base}pages/watchlist.html" class="nav-mobile-link">Watchlist</a>
+        <a href="${base}pages/listas.html"    class="nav-mobile-link">Listas</a>
+        <a href="${base}pages/logros.html"    class="nav-mobile-link">Logros</a>
+        <button class="nav-mobile-link nav-mobile-link--salir" id="btnLogoutMobile">Salir</button>
+    ` : `
+        <a href="${base}pages/registro.html" class="nav-mobile-link">Registrarse</a>
     `;
 
     const navHTML = `
@@ -57,6 +68,22 @@ function renderNav(base = '') {
                 ` : ''}
 
                 ${authHTML}
+
+                <button class="nav-hamburger" id="navHamburger" aria-label="Menu">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="6" x2="21" y2="6"/>
+                        <line x1="3" y1="12" x2="21" y2="12"/>
+                        <line x1="3" y1="18" x2="21" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="nav-mobile-menu" id="navMobileMenu">
+                <input type="text" class="nav-mobile-search" id="navSearchMobile"
+                       placeholder="Buscar película o @usuario…" autocomplete="off" />
+                <div class="nav-mobile-links">
+                    ${mobileLinksHTML}
+                </div>
             </div>
         </nav>
     `;
@@ -164,10 +191,51 @@ function renderNav(base = '') {
         });
     }
 
+    const btnLogoutMobile = document.getElementById('btnLogoutMobile');
+    if (btnLogoutMobile) {
+        btnLogoutMobile.addEventListener('click', () => {
+            auth.logout();
+            window.location.href = `${base}index.html`;
+        });
+    }
+
+    // hamburger: abre/cierra el menu movil
+    const hamburger  = document.getElementById('navHamburger');
+    const mobileMenu = document.getElementById('navMobileMenu');
+    if (hamburger && mobileMenu) {
+        hamburger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            mobileMenu.classList.toggle('nav-mobile-menu--open');
+        });
+        document.addEventListener('click', (e) => {
+            if (!mobileMenu.contains(e.target) && !hamburger.contains(e.target)) {
+                mobileMenu.classList.remove('nav-mobile-menu--open');
+            }
+        });
+    }
+
+    // busqueda desde el menu movil (solo redirige, sin sugerencias)
+    const searchMobile = document.getElementById('navSearchMobile');
+    if (searchMobile) {
+        searchMobile.addEventListener('keydown', (e) => {
+            if (e.key !== 'Enter') return;
+            const q = searchMobile.value.trim();
+            if (!q) return;
+            if (mobileMenu) mobileMenu.classList.remove('nav-mobile-menu--open');
+            if (q.startsWith('@')) {
+                window.location.href = `${base}pages/buscar.html?q=${encodeURIComponent(q.slice(1).trim())}`;
+            } else {
+                sessionStorage.setItem('nav_search', q);
+                window.location.href = `${base}index.html`;
+            }
+        });
+    }
+
     // marca el link activo segun la URL
     const path = window.location.pathname;
-    document.querySelectorAll('.nav-link').forEach(link => {
-        if (path.includes(link.getAttribute('href').split('/').pop())) {
+    document.querySelectorAll('.nav-link, .nav-mobile-link').forEach(link => {
+        const href = link.getAttribute('href');
+        if (href && path.includes(href.split('/').pop())) {
             link.classList.add('nav-link--active');
         }
     });
