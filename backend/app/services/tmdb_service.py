@@ -7,7 +7,8 @@ from ..schemas.peliculas import (
     PeliculaPersona, PersonaDetalle,
 )
 
-# roles de equipo técnico que se muestran, por departamento
+# Roles del crew que mostramos en la ficha de la peli, agrupados por departamento.
+# Si TMDB devuelve un rol que no esta aqui, lo ignoramos.
 CREW_ROLES = {
     "Directing":         {"Director"},
     "Writing":           {"Screenplay", "Story", "Writer", "Novel", "Characters", "Original Story"},
@@ -32,19 +33,20 @@ headers = {
 }
 
 
-def build_poster_url(poster_path: str | None) -> str | None:
+def url_poster(poster_path: str | None) -> str | None:
     if not poster_path:
         return None
     return f"{TMDB_IMAGE_BASE_URL}{poster_path}"
 
 
-def build_backdrop_url(backdrop_path: str | None) -> str | None:
+def url_backdrop(backdrop_path: str | None) -> str | None:
     if not backdrop_path:
         return None
     return f"{TMDB_BACKDROP_BASE_URL}{backdrop_path}"
 
 
-def _parse_anio(release_date: str | None) -> int | None:
+def parsear_anio(release_date: str | None) -> int | None:
+    # release_date viene como "YYYY-MM-DD". Si no esta o no se puede parsear, None.
     if not release_date or len(release_date) < 4:
         return None
     try:
@@ -68,8 +70,8 @@ def buscar_peliculas(query: str, skip: int = 0, limit: int = 20) -> PaginadoPeli
         PeliculaResumen(
             tmdb_id=movie["id"],
             titulo=movie.get("title"),
-            poster_url=build_poster_url(movie.get("poster_path")),
-            anio_estreno=_parse_anio(movie.get("release_date")),
+            poster_url=url_poster(movie.get("poster_path")),
+            anio_estreno=parsear_anio(movie.get("release_date")),
             descripcion=movie.get("overview")
         )
         for movie in data.get("results", [])[:limit]
@@ -98,8 +100,8 @@ def obtener_cartelera(skip: int = 0, limit: int = 20) -> PaginadoCartelera:
         PeliculaCartelera(
             tmdb_id=movie["id"],
             titulo=movie.get("title"),
-            poster_url=build_poster_url(movie.get("poster_path")),
-            anio_estreno=_parse_anio(movie.get("release_date")),
+            poster_url=url_poster(movie.get("poster_path")),
+            anio_estreno=parsear_anio(movie.get("release_date")),
             descripcion=movie.get("overview"),
             puntuacion=movie.get("vote_average")
         )
@@ -116,6 +118,16 @@ def obtener_cartelera(skip: int = 0, limit: int = 20) -> PaginadoCartelera:
     )
 
 
+def _parsear_fecha_estreno(fecha_str: str | None):
+    # convierte "YYYY-MM-DD" a date, o None si no parsea
+    if not fecha_str:
+        return None
+    try:
+        return datetime.strptime(fecha_str, "%Y-%m-%d").date()
+    except ValueError:
+        return None
+
+
 def obtener_estrenos(skip: int = 0, limit: int = 20) -> PaginadoEstrenos:
     page = (skip // 20) + 1
     hoy = datetime.now().date()
@@ -129,26 +141,22 @@ def obtener_estrenos(skip: int = 0, limit: int = 20) -> PaginadoEstrenos:
         response.raise_for_status()
         data = response.json()
 
-    resultados = []
-    for movie in data.get("results", []):
-        if not movie.get("id"):
-            continue
-        fecha_str = movie.get("release_date")
-        if not fecha_str:
-            continue
-        try:
-            fecha_peli = datetime.strptime(fecha_str, "%Y-%m-%d").date()
-        except ValueError:
-            continue
-        if fecha_peli >= hoy:
-            resultados.append(PeliculaEstreno(
-                tmdb_id=movie["id"],
-                titulo=movie.get("title"),
-                poster_url=build_poster_url(movie.get("poster_path")),
-                anio_estreno=fecha_peli.year,
-                descripcion=movie.get("overview"),
-                fecha_exacta=fecha_str
-            ))
+    # filtramos las que tengan id, fecha valida y sean futuras (hoy o despues).
+    # comprehension en vez de un for-with-continues para que sea mas declarativo.
+    resultados = [
+        PeliculaEstreno(
+            tmdb_id=movie["id"],
+            titulo=movie.get("title"),
+            poster_url=url_poster(movie.get("poster_path")),
+            anio_estreno=_parsear_fecha_estreno(movie.get("release_date")).year,
+            descripcion=movie.get("overview"),
+            fecha_exacta=movie.get("release_date")
+        )
+        for movie in data.get("results", [])
+        if movie.get("id")
+        and _parsear_fecha_estreno(movie.get("release_date")) is not None
+        and _parsear_fecha_estreno(movie.get("release_date")) >= hoy
+    ]
 
     resultados.sort(key=lambda x: x.fecha_exacta or "")
 
@@ -184,40 +192,40 @@ def obtener_detalle_pelicula(tmdb_id: int) -> PeliculaDetalle:
         PersonaCast(
             nombre=p.get("name"),
             personaje=p.get("character"),
-            foto=build_poster_url(p.get("profile_path")),
+            foto=url_poster(p.get("profile_path")),
             person_id=p.get("id")
         )
         for p in cast_raw
     ]
 
-    # filtramos por CREW_ROLES y deduplicamos por persona+cargo
+    # crew filtrado por CREW_ROLES y deduplicado por (id, job).
+    # un solo if compuesto, sin continues en el bucle interno.
     vistos = set()
     crew = []
     for dept, roles_permitidos in CREW_ROLES.items():
         for p in crew_raw:
-            if p.get("department") != dept:
-                continue
-            if p.get("job") not in roles_permitidos:
-                continue
             clave = (p.get("id"), p.get("job"))
-            if clave in vistos:
-                continue
-            vistos.add(clave)
-            crew.append(PersonaCrew(
-                nombre=p.get("name"),
-                rol=p.get("job"),
-                departamento=dept,
-                foto=build_poster_url(p.get("profile_path")),
-                person_id=p.get("id")
-            ))
+            if (
+                p.get("department") == dept
+                and p.get("job") in roles_permitidos
+                and clave not in vistos
+            ):
+                vistos.add(clave)
+                crew.append(PersonaCrew(
+                    nombre=p.get("name"),
+                    rol=p.get("job"),
+                    departamento=dept,
+                    foto=url_poster(p.get("profile_path")),
+                    person_id=p.get("id")
+                ))
 
     return PeliculaDetalle(
         tmdb_id=movie["id"],
         titulo=movie.get("title"),
         titulo_original=movie.get("original_title"),
-        poster_url=build_poster_url(movie.get("poster_path")),
-        backdrop_url=build_backdrop_url(movie.get("backdrop_path")),
-        anio_estreno=_parse_anio(movie.get("release_date")),
+        poster_url=url_poster(movie.get("poster_path")),
+        backdrop_url=url_backdrop(movie.get("backdrop_path")),
+        anio_estreno=parsear_anio(movie.get("release_date")),
         descripcion=movie.get("overview"),
         generos=[g["name"] for g in movie.get("genres", []) if g.get("name")],
         duracion=movie.get("runtime"),
@@ -251,31 +259,30 @@ def obtener_persona(person_id: int) -> PersonaDetalle:
     persona  = persona_res.json()
     creditos = creditos_res.json()
 
-    # Combina cast + crew deduplicando por tmdb_id (cast tiene prioridad)
-    pelis: dict[int, PeliculaPersona] = {}
-    for movie in creditos.get("cast", []):
-        tid = movie.get("id")
-        if not tid:
-            continue
-        pelis[tid] = PeliculaPersona(
-            tmdb_id=tid,
+    # combinamos cast y crew dedupeando por tmdb_id (cast manda).
+    # primero metemos cast en el dict, luego crew solo si no esta ya.
+    pelis: dict[int, PeliculaPersona] = {
+        movie["id"]: PeliculaPersona(
+            tmdb_id=movie["id"],
             titulo=movie.get("title"),
-            poster_url=build_poster_url(movie.get("poster_path")),
-            anio_estreno=_parse_anio(movie.get("release_date")),
+            poster_url=url_poster(movie.get("poster_path")),
+            anio_estreno=parsear_anio(movie.get("release_date")),
             personaje=movie.get("character") or None,
         )
+        for movie in creditos.get("cast", [])
+        if movie.get("id")
+    }
 
     for movie in creditos.get("crew", []):
         tid = movie.get("id")
-        if not tid or tid in pelis:
-            continue
-        pelis[tid] = PeliculaPersona(
-            tmdb_id=tid,
-            titulo=movie.get("title"),
-            poster_url=build_poster_url(movie.get("poster_path")),
-            anio_estreno=_parse_anio(movie.get("release_date")),
-            rol=movie.get("job") or None,
-        )
+        if tid and tid not in pelis:
+            pelis[tid] = PeliculaPersona(
+                tmdb_id=tid,
+                titulo=movie.get("title"),
+                poster_url=url_poster(movie.get("poster_path")),
+                anio_estreno=parsear_anio(movie.get("release_date")),
+                rol=movie.get("job") or None,
+            )
 
     filmografia = sorted(
         [p for p in pelis.values() if p.anio_estreno],
@@ -286,12 +293,10 @@ def obtener_persona(person_id: int) -> PersonaDetalle:
     return PersonaDetalle(
         person_id=persona["id"],
         nombre=persona.get("name", ""),
-        foto_url=build_poster_url(persona.get("profile_path")),
+        foto_url=url_poster(persona.get("profile_path")),
         biografia=persona.get("biography") or None,
         conocido_por=persona.get("known_for_department") or None,
         fecha_nacimiento=persona.get("birthday") or None,
         lugar_nacimiento=persona.get("place_of_birth") or None,
         filmografia=filmografia,
     )
-
-

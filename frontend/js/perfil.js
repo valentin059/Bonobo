@@ -1,8 +1,8 @@
-// js/perfil.js — Lógica de la página de perfil propio
+// perfil.js — pagina de mi perfil
 
 let usuarioId = null;
 let movieMap  = {};
-// slots de favoritas: array de 4 posiciones, cada una { tmdb_id, titulo, poster_url } o null
+// 4 huecos de favoritas, cada uno { tmdb_id, titulo, poster_url } o null
 let favSlots  = [null, null, null, null];
 // timers de debounce para los buscadores de favoritas
 let favTimers = [null, null, null, null];
@@ -19,14 +19,13 @@ function cerrarModal(id) {
     document.getElementById('errorFavoritas')?.classList.remove('form-error--visible');
 }
 
-// ── RENDER ────────────────────────────────────────────────────────────────────
 
 function renderizarCabecera(usuario) {
     document.title = `BONOBO — ${usuario.username}`;
 
     const avatarEl = document.getElementById('perfilAvatar');
     if (usuario.avatar_url) {
-        avatarEl.innerHTML = `<img class="perfil-avatar" src="${usuario.avatar_url}" alt="${usuario.username}">`;
+        avatarEl.innerHTML = `<img class="perfil-avatar" src="${escapeHTML(usuario.avatar_url)}" alt="${escapeHTML(usuario.username)}">`;
         avatarEl.className = '';
     } else {
         avatarEl.textContent = usuario.username[0].toUpperCase();
@@ -51,12 +50,14 @@ function renderizarFavoritas(favoritas) {
         const orden    = i + 1;
         const pelicula = porOrden[orden];
         if (pelicula) {
+            const tituloSafe = escapeHTML(pelicula.titulo);
+            const posterSafe = escapeHTML(pelicula.poster_url || '');
             return `
                 <div class="favorita-slot" style="cursor:pointer"
-                     onclick="irAPelicula(${pelicula.tmdb_id})" title="${pelicula.titulo}">
+                     onclick="irAPelicula(${pelicula.tmdb_id})" title="${tituloSafe}">
                     ${pelicula.poster_url
-                        ? `<img src="${pelicula.poster_url}" alt="${pelicula.titulo}">`
-                        : `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--faint);font-size:10px;text-align:center;padding:4px">${pelicula.titulo}</div>`
+                        ? `<img src="${posterSafe}" alt="${tituloSafe}">`
+                        : `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--faint);font-size:10px;text-align:center;padding:4px">${tituloSafe}</div>`
                     }
                 </div>
             `;
@@ -86,11 +87,13 @@ function renderizarVistas(vistas, totalVistas) {
     grid.innerHTML = vistas.map(v => {
         const p = v.pelicula;
         movieMap[v.id_pelicula] = p;
+        const tituloSafe = escapeHTML(p.titulo || '—');
+        const posterSafe = escapeHTML(p.poster_url || '');
         return `
             <div class="pelicula-card" onclick="irAPelicula(${p.tmdb_id})">
                 <div class="pelicula-card__poster">
                     ${p.poster_url
-                        ? `<img class="pelicula-card__img" src="${p.poster_url}" alt="${p.titulo}" loading="lazy">`
+                        ? `<img class="pelicula-card__img" src="${posterSafe}" alt="${tituloSafe}" loading="lazy">`
                         : `<div class="pelicula-card__no-img">SIN IMAGEN</div>`
                     }
                     <div class="pelicula-card__overlay">
@@ -101,7 +104,7 @@ function renderizarVistas(vistas, totalVistas) {
                     </div>
                 </div>
                 <div class="pelicula-card__info">
-                    <div class="pelicula-card__titulo">${p.titulo || '—'}</div>
+                    <div class="pelicula-card__titulo">${tituloSafe}</div>
                     <div class="pelicula-card__anio">${p.anio_estreno || ''}</div>
                 </div>
             </div>
@@ -125,6 +128,8 @@ function renderizarDiario(entradas) {
         const dia   = fecha.getDate();
         const mes   = fecha.toLocaleString('es', { month: 'short' }).toUpperCase();
         const pelicula = movieMap[entrada.id_pelicula];
+        const posterSafe = escapeHTML(pelicula?.poster_url || '');
+        const tituloSafe = escapeHTML(pelicula?.titulo || `Película #${entrada.id_pelicula}`);
 
         return `
             <div class="diario-entrada" id="perfil-entrada-${entrada.id}">
@@ -134,14 +139,14 @@ function renderizarDiario(entradas) {
                 </div>
                 ${pelicula?.poster_url
                     ? `<div class="diario-poster" style="cursor:pointer" onclick="irAPelicula(${pelicula.tmdb_id})">
-                           <img src="${pelicula.poster_url}" alt="${pelicula.titulo}">
+                           <img src="${posterSafe}" alt="${tituloSafe}">
                        </div>`
                     : `<div class="diario-poster"></div>`
                 }
                 <div class="diario-contenido diario-contenido--clickable"
                      onclick="abrirModalDiarioEntrada(${entrada.id})">
                     <div class="diario-titulo-peli">
-                        ${escapeHTML(pelicula?.titulo) || `Película #${entrada.id_pelicula}`}
+                        ${tituloSafe}
                         <span class="diario-puntuacion" id="perfil-punt-${entrada.id}">${entrada.puntuacion ? `★ ${entrada.puntuacion}` : ''}</span>
                     </div>
                     <p class="diario-resena">${
@@ -155,7 +160,7 @@ function renderizarDiario(entradas) {
     }).join('');
 }
 
-// ── Modal editar entrada desde perfil ────────────────────────────────────────
+// Modal de editar entrada del diario desde el perfil
 
 const diarioCache$ = {};
 let perfilEditPuntuacion = null;
@@ -218,6 +223,7 @@ async function guardarEdicionDiario() {
         cerrarModalDiarioEntrada();
         mostrarToast('Entrada actualizada ✓');
     } catch (err) {
+        console.warn('[perfil] error al guardar entrada', err);
         mostrarToast(err.message || 'Error al guardar', 'error');
     }
 }
@@ -228,18 +234,23 @@ function renderizarListas(listas) {
         lista.innerHTML = '<p class="text-faint" style="font-size:13px">Sin listas todavía. <a href="listas.html" style="color:var(--accent)">Crea una</a></p>';
         return;
     }
-    lista.innerHTML = listas.slice(0, 4).map(l => `
+    // OJO: nombre y descripcion de la lista los pone el user, hay que escaparlos
+    lista.innerHTML = listas.slice(0, 4).map(l => {
+        const nombreSafe = escapeHTML(l.nombre);
+        const descSafe   = escapeHTML(l.descripcion || '');
+        return `
         <div class="lista-card" onclick="location.href='listas.html?id=${l.id}'">
             <div class="lista-card__info">
-                <div class="lista-card__nombre">${l.nombre}</div>
-                ${l.descripcion ? `<div class="lista-card__desc">${l.descripcion}</div>` : ''}
+                <div class="lista-card__nombre">${nombreSafe}</div>
+                ${l.descripcion ? `<div class="lista-card__desc">${descSafe}</div>` : ''}
             </div>
             <span class="lista-badge lista-badge--${l.es_publica ? 'publica' : 'privada'}">
                 ${l.es_publica ? 'Pública' : 'Privada'}
             </span>
             <div class="lista-card__count">${l.total_peliculas ?? 0} pel.</div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 }
 
 function irAPelicula(tmdbId) {
@@ -248,7 +259,7 @@ function irAPelicula(tmdbId) {
 
 
 
-// ── EDITOR INLINE DE FAVORITAS ───────────────────────────────────────────────
+// Editor inline de favoritas
 
 function abrirEditFavoritas() {
     document.getElementById('errorFavoritas').className = 'form-error';
@@ -262,14 +273,17 @@ function cerrarEditFavoritas() {
 
 function renderizarFavEditSlots() {
     const grid = document.getElementById('favEditGrid');
-    grid.innerHTML = favSlots.map((peli, i) => `
+    grid.innerHTML = favSlots.map((peli, i) => {
+        const tituloSafe = peli ? escapeHTML(peli.titulo || '') : '';
+        const posterSafe = peli ? escapeHTML(peli.poster_url || '') : '';
+        return `
         <div class="fav-edit-slot">
             <div class="fav-edit-slot__poster" id="fav-poster-${i}">
                 ${peli
                     ? (peli.poster_url
-                        ? `<img src="${peli.poster_url}" alt="${peli.titulo}">
+                        ? `<img src="${posterSafe}" alt="${tituloSafe}">
                            <button class="fav-edit-slot__clear" onclick="limpiarSlot(${i})">✕</button>`
-                        : `<div class="fav-edit-slot__vacio" style="font-size:10px;padding:4px;text-align:center">${peli.titulo}</div>
+                        : `<div class="fav-edit-slot__vacio" style="font-size:10px;padding:4px;text-align:center">${tituloSafe}</div>
                            <button class="fav-edit-slot__clear" onclick="limpiarSlot(${i})">✕</button>`)
                     : `<div class="fav-edit-slot__vacio">+</div>`
                 }
@@ -284,7 +298,8 @@ function renderizarFavEditSlots() {
                 <div class="fav-resultados" id="fav-res-${i}"></div>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 }
 
 function limpiarSlot(idx) {
@@ -328,7 +343,10 @@ function buscarFav(idx, query) {
                 ));
             });
             resEl.style.display = 'block';
-        } catch { resEl.style.display = 'none'; }
+        } catch (err) {
+            console.warn('[perfil] error buscando favoritas', err);
+            resEl.style.display = 'none';
+        }
     }, 350);
 }
 
@@ -341,15 +359,15 @@ function seleccionarFav(idx, tmdbId, titulo, posterUrl) {
 
 async function guardarFavoritas() {
     const errorEl = document.getElementById('errorFavoritas');
-    // tmdb_ids de los slots con película (ignoramos nulls, compactamos el array)
+    // tmdb_ids de los slots con peli (compactando los nulls)
     const tmdbIds = favSlots.filter(s => s !== null).map(s => s.tmdb_id);
 
     try {
         await api.usuarios.configurarFavoritas(tmdbIds);
-        // recargar las favoritas en el perfil
+        // recargamos las favoritas que han quedado
         const favoritas = await api.usuarios.favoritas(usuarioId);
         renderizarFavoritas(favoritas);
-        // sincronizar favSlots con el resultado guardado
+        // sincronizamos favSlots con lo guardado
         const porOrden = {};
         favoritas.forEach(f => { porOrden[f.orden] = f.pelicula; });
         for (let i = 0; i < 4; i++) favSlots[i] = porOrden[i + 1] || null;
@@ -357,28 +375,33 @@ async function guardarFavoritas() {
         mostrarToast('Favoritas guardadas ✓');
 
     } catch (err) {
+        console.warn('[perfil] error guardando favoritas', err);
         errorEl.textContent = err.message || 'Error al guardar';
         errorEl.className = 'form-error form-error--visible';
     }
 }
 
-// ── MODALES SEGUIDORES / SEGUIDOS ─────────────────────────────────────────────
+// Modales de seguidores y seguidos
 
 function renderUsuariosModal(usuarios) {
     if (!usuarios || usuarios.length === 0) {
         return '<p class="text-faint" style="font-size:13px;padding:8px 0">Ningún usuario.</p>';
     }
-    return usuarios.map(u => `
+    return usuarios.map(u => {
+        const userSafe   = escapeHTML(u.username);
+        const avatarSafe = escapeHTML(u.avatar_url || '');
+        return `
         <a href="usuario.html?id=${u.id}" class="usuario-fila">
             <div class="usuario-fila__avatar ${u.avatar_url ? '' : 'usuario-fila__avatar--placeholder'}">
                 ${u.avatar_url
-                    ? `<img src="${u.avatar_url}" alt="${u.username}" class="usuario-fila__avatar">`
-                    : u.username[0].toUpperCase()
+                    ? `<img src="${avatarSafe}" alt="${userSafe}" class="usuario-fila__avatar">`
+                    : escapeHTML(u.username[0].toUpperCase())
                 }
             </div>
-            <span class="usuario-fila__username">${u.username}</span>
+            <span class="usuario-fila__username">${userSafe}</span>
         </a>
-    `).join('');
+    `;
+    }).join('');
 }
 
 async function abrirModalSeguidores() {
@@ -388,7 +411,8 @@ async function abrirModalSeguidores() {
     try {
         const data = await api.social.seguidores(usuarioId);
         lista.innerHTML = renderUsuariosModal(data);
-    } catch {
+    } catch (err) {
+        console.warn('[perfil] error cargando seguidores', err);
         lista.innerHTML = '<p class="text-faint" style="font-size:13px">Error al cargar.</p>';
     }
 }
@@ -400,12 +424,12 @@ async function abrirModalSeguidos() {
     try {
         const data = await api.social.seguidos(usuarioId);
         lista.innerHTML = renderUsuariosModal(data);
-    } catch {
+    } catch (err) {
+        console.warn('[perfil] error cargando seguidos', err);
         lista.innerHTML = '<p class="text-faint" style="font-size:13px">Error al cargar.</p>';
     }
 }
 
-// ── INIT ──────────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', async () => {
     renderNav('../');
@@ -421,7 +445,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         usuarioId = usuario.id;
         renderizarCabecera(usuario);
 
-        // carga en paralelo todo lo que no tiene dependencias
+        // todo lo que no depende de nada lo cargamos a la vez
         const [vistas, diario, favoritas, listas] = await Promise.all([
             api.usuarios.vistas(usuarioId, 0, 20),
             api.usuarios.diario(usuarioId, 0, 5),
@@ -435,7 +459,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderizarFavoritas(favoritas);
         renderizarListas(listas);
 
-        // inicializar favSlots con las favoritas actuales para el modal de edición
+        // dejamos favSlots con el estado actual para el modal de edicion
         const porOrden = {};
         favoritas.forEach(f => { porOrden[f.orden] = f.pelicula; });
         for (let i = 0; i < 4; i++) {
@@ -443,6 +467,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
     } catch (err) {
+        console.warn('[perfil] error cargando perfil', err);
         mostrarToast('Error al cargar el perfil', 'error');
     }
 });

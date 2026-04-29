@@ -12,7 +12,7 @@
 
     <main class="contenedor pagina">
 
-        <!-- ── CABECERA DEL PERFIL PÚBLICO ─────────────────────────────── -->
+        <!--  CABECERA DEL PERFIL PÚBLICO  -->
         <div class="perfil-cabecera" id="perfilCabecera">
 
             <div class="perfil-top">
@@ -54,7 +54,7 @@
 
         </div>
 
-        <!-- ── DIARIO RECIENTE ───────────────────────────────────────────── -->
+        <!--  DIARIO RECIENTE  -->
         <section class="seccion" id="seccionDiario">
             <div class="seccion-header">
                 <h2 class="seccion-titulo">Diario reciente</h2>
@@ -64,7 +64,7 @@
             <div class="diario-lista" id="listaDiario"></div>
         </section>
 
-        <!-- ── PELÍCULAS VISTAS ──────────────────────────────────────────── -->
+        <!--  PELÍCULAS VISTAS  -->
         <section class="seccion">
             <div class="seccion-header">
                 <h2 class="seccion-titulo">Películas vistas</h2>
@@ -75,7 +75,7 @@
                  style="overflow:hidden;max-height:140px"></div>
         </section>
 
-        <!-- ── LISTAS PÚBLICAS ───────────────────────────────────────────── -->
+        <!--  LISTAS PÚBLICAS  -->
         <section class="seccion" id="seccionListas">
             <div class="seccion-header">
                 <h2 class="seccion-titulo">Listas</h2>
@@ -86,7 +86,7 @@
 
     </main>
 
-    <!-- ── MODAL: SEGUIDORES ─────────────────────────────────────────────── -->
+    <!--  MODAL: SEGUIDORES  -->
     <div class="modal-overlay modal-overlay--hidden" id="modalSeguidores">
         <div class="modal">
             <button class="modal-close" onclick="cerrarModal('modalSeguidores')">✕</button>
@@ -95,7 +95,7 @@
         </div>
     </div>
 
-    <!-- ── MODAL: SEGUIDOS ───────────────────────────────────────────────── -->
+    <!--  MODAL: SEGUIDOS  -->
     <div class="modal-overlay modal-overlay--hidden" id="modalSeguidos">
         <div class="modal">
             <button class="modal-close" onclick="cerrarModal('modalSeguidos')">✕</button>
@@ -104,7 +104,7 @@
         </div>
     </div>
 
-    <!-- ── MODAL: VER ENTRADA DIARIO (solo lectura) ────────────────────────── -->
+    <!--  MODAL: VER ENTRADA DIARIO (solo lectura)  -->
     <div class="modal-overlay modal-overlay--hidden" id="modalVerEntrada">
         <div class="modal">
             <button class="modal-close" onclick="cerrarModalVerEntrada()">✕</button>
@@ -143,7 +143,7 @@
             document.getElementById(id).classList.add('modal-overlay--hidden');
         }
 
-        // ── Seguir / Dejar de seguir ──────────────────────────────────────
+        //  Seguir / Dejar de seguir 
 
         function actualizarBtnSeguir() {
             const btn = document.getElementById('btnSeguir');
@@ -177,7 +177,7 @@
             }
         }
 
-        // ── Modales seguidores/seguidos ───────────────────────────────────
+        //  Modales seguidores/seguidos 
 
         function renderUsuariosModal(usuarios) {
             if (!usuarios || usuarios.length === 0) {
@@ -220,7 +220,7 @@
             }
         }
 
-        // ── Renderizado ───────────────────────────────────────────────────
+        //  Renderizado 
 
         function renderizarFavoritas(favoritas) {
             const porOrden = {};
@@ -355,7 +355,7 @@
             `).join('');
         }
 
-        // ── Init ──────────────────────────────────────────────────────────
+        //  Init 
 
         document.addEventListener('DOMContentLoaded', async () => {
             renderNav('../');

@@ -6,7 +6,7 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap');
 
-/* ── VARIABLES GLOBALES ─────────────────────────────────────────────────────
+/*  VARIABLES GLOBALES 
    Todos los colores y medidas del sistema en un solo lugar.
    Cambiar un valor aquí lo aplica en toda la app. */
 :root {
@@ -52,7 +52,7 @@
     --font-body:    'Inter', sans-serif;
 }
 
-/* ── RESET ──────────────────────────────────────────────────────────────────
+/*  RESET 
    Elimina márgenes y paddings por defecto del navegador. */
 *, *::before, *::after {
     box-sizing: border-box;
@@ -77,7 +77,7 @@ a { text-decoration: none; color: inherit; }
 button { font-family: var(--font-body); cursor: pointer; border: none; background: none; }
 img { display: block; max-width: 100%; }
 
-/* ── LAYOUT PRINCIPAL ───────────────────────────────────────────────────────
+/*  LAYOUT PRINCIPAL 
    El contenido se centra con un ancho máximo, igual que Letterboxd. */
 .contenedor {
     max-width: 1100px;
@@ -916,7 +916,7 @@ img { display: block; max-width: 100%; }
 /* Contenido de cada pestaña */
 .tab-panel { /* visible por defecto */ }
 
-/* ── Equipo técnico ────────────────────────────────────────── */
+/*  Equipo técnico  */
 
 /* Agrupa las personas de un mismo departamento */
 .crew-grupo {
@@ -966,7 +966,7 @@ img { display: block; max-width: 100%; }
 .crew-nombre { font-size: 13px; font-weight: 500; color: var(--text); }
 .crew-rol    { font-size: 11px; color: var(--faint); margin-top: 1px; }
 
-/* ── Detalles ─────────────────────────────────────────────── */
+/*  Detalles  */
 
 /* Lista de pares clave-valor para los detalles de la película */
 .detalles-lista {
@@ -1390,7 +1390,7 @@ img { display: block; max-width: 100%; }
    NIVEL 2 — SOCIAL, RESEÑAS, LISTAS
    ══════════════════════════════════════════════════════════════ */
 
-/* ── Botón seguir / dejar de seguir ─────────────────────────── */
+/*  Botón seguir / dejar de seguir  */
 .btn--seguir {
     background: var(--accent);
     color: #000;
@@ -1408,7 +1408,7 @@ img { display: block; max-width: 100%; }
     border-color: var(--error);
 }
 
-/* ── Reseñas (comunidad y amigos) ───────────────────────────── */
+/*  Reseñas (comunidad y amigos)  */
 .resenas-subtitulo {
     font-size: 11px;
     font-weight: 600;
@@ -1556,7 +1556,7 @@ img { display: block; max-width: 100%; }
     font-style: italic;
 }
 
-/* ── Sección de comentarios ─────────────────────────────────── */
+/*  Sección de comentarios  */
 .comentarios-seccion {
     margin-top: 12px;
     border-top: 1px solid var(--border);
@@ -1632,7 +1632,7 @@ img { display: block; max-width: 100%; }
 .comentario-form input:focus { border-color: var(--accent-border); }
 .comentario-form input::placeholder { color: var(--faint); }
 
-/* ── Listas ──────────────────────────────────────────────────── */
+/*  Listas  */
 .lista-card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -1693,7 +1693,7 @@ img { display: block; max-width: 100%; }
 
 .listas-lista { display: flex; flex-direction: column; gap: 8px; }
 
-/* ── Detalle de lista ────────────────────────────────────────── */
+/*  Detalle de lista  */
 .lista-detalle-header {
     display: flex;
     align-items: flex-start;
@@ -1720,7 +1720,7 @@ img { display: block; max-width: 100%; }
     align-items: center;
 }
 
-/* ── Modal ancho (para favoritas y búsqueda en listas) ───────── */
+/*  Modal ancho (para favoritas y búsqueda en listas)  */
 .modal--wide { max-width: 680px; }
 
 /* Slots de favoritas en el modal de edición */
@@ -1832,14 +1832,14 @@ img { display: block; max-width: 100%; }
 /* Wrapper para posicionar los resultados relativo al slot */
 .fav-search-wrap { position: relative; }
 
-/* ── Modal de usuarios (seguidores/seguidos) ─────────────────── */
+/*  Modal de usuarios (seguidores/seguidos)  */
 .modal-usuarios-lista {
     max-height: 360px;
     overflow-y: auto;
     margin-top: 8px;
 }
 
-/* ── Entrada del diario con acciones de editar ───────────────── */
+/*  Entrada del diario con acciones de editar  */
 .diario-acciones {
     display: flex;
     gap: 8px;
@@ -1859,7 +1859,7 @@ img { display: block; max-width: 100%; }
 }
 .diario-accion-btn:hover { color: var(--muted); background: var(--surface2); }
 
-/* ── Overlay póster ampliado ─────────────────────────────────── */
+/*  Overlay póster ampliado  */
 .poster-overlay {
     position: fixed;
     inset: 0;
@@ -1878,7 +1878,7 @@ img { display: block; max-width: 100%; }
     box-shadow: 0 8px 40px rgba(0,0,0,.6);
 }
 
-/* ── Puntuación en entrada de diario ─────────────────────────── */
+/*  Puntuación en entrada de diario  */
 .diario-puntuacion {
     display: inline-block;
     margin-left: 8px;
@@ -1888,7 +1888,7 @@ img { display: block; max-width: 100%; }
     vertical-align: middle;
 }
 
-/* ── Botón lista ya añadida en modal ─────────────────────────── */
+/*  Botón lista ya añadida en modal  */
 .lista-modal-btn--añadida {
     background: rgba(232, 160, 32, 0.12);
     border: 1px solid var(--accent);
@@ -1901,7 +1901,7 @@ img { display: block; max-width: 100%; }
    NIVEL 3 — LOGROS (pantalla al estilo Steam/PlayStation)
    ══════════════════════════════════════════════════════════════ */
 
-/* ── Cabecera: nivel + barra de progreso ─────────────────────── */
+/*  Cabecera: nivel + barra de progreso  */
 .logros-cabecera {
     display: flex;
     align-items: center;
@@ -1980,7 +1980,7 @@ img { display: block; max-width: 100%; }
     letter-spacing: 0.06em;
 }
 
-/* ── Filtros ─────────────────────────────────────────────────── */
+/*  Filtros  */
 .logros-filtros {
     display: flex;
     gap: 8px;
@@ -2027,14 +2027,14 @@ img { display: block; max-width: 100%; }
     color: #000;
 }
 
-/* ── Grid de tarjetas ────────────────────────────────────────── */
+/*  Grid de tarjetas  */
 .logros-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
     gap: 16px;
 }
 
-/* ── Tarjeta individual ──────────────────────────────────────── */
+/*  Tarjeta individual  */
 .logro-card {
     position: relative;
     display: flex;

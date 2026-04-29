@@ -1,11 +1,10 @@
-// js/pelicula.js — Lógica de la página de detalle de una película
-// Lee el tmdb_id de la URL (?id=XXXX), carga los datos y gestiona las acciones del usuario.
+// pelicula.js — pagina de detalle de una peli
+// Lee el tmdb_id de la URL (?id=XXXX) y monta toda la pantalla.
 
-// Estado actual del usuario con esta película (se actualiza con cada acción)
+// estado actual del usuario respecto a la peli (se va actualizando)
 let estado = { vista: false, puntuacion: null, me_gusta: false, en_watchlist: false };
-let tmdbId = null;   // id de la película actual, necesario para las llamadas a la API
+let tmdbId = null;
 
-// ── UTILIDADES ────────────────────────────────────────────────────────────────
 
 function mostrarToast(mensaje, tipo = 'ok', duracion = 2800) {
     const toast = document.getElementById('toast');
@@ -14,16 +13,14 @@ function mostrarToast(mensaje, tipo = 'ok', duracion = 2800) {
     setTimeout(() => { toast.className = 'toast'; }, duracion);
 }
 
-// ── RENDER ────────────────────────────────────────────────────────────────────
 
-// Actualiza los botones de acción para que reflejen el estado actual del usuario.
+// pone los botones (vista, like, watchlist) segun el estado actual
 function actualizarBotonesAccion() {
     const btnVista     = document.getElementById('btnVista');
     const btnLike      = document.getElementById('btnLike');
     const btnWatchlist = document.getElementById('btnWatchlist');
     const lblVista     = document.getElementById('lblVista');
 
-    // Botón Vista: verde si está marcada, neutral si no
     if (estado.vista) {
         btnVista.classList.add('accion-btn--watched');
         lblVista.textContent = 'Vista ✓';
@@ -32,14 +29,12 @@ function actualizarBotonesAccion() {
         lblVista.textContent = 'Vista';
     }
 
-    // Botón Me gusta: rojo si activo
     if (estado.me_gusta) {
         btnLike.classList.add('accion-btn--liked');
     } else {
         btnLike.classList.remove('accion-btn--liked');
     }
 
-    // Botón Watchlist: azul si activo
     if (estado.en_watchlist) {
         btnWatchlist.classList.add('accion-btn--watchlist');
     } else {
@@ -47,7 +42,7 @@ function actualizarBotonesAccion() {
     }
 }
 
-// Genera los botones de puntuación del 1 al 10 y marca el activo.
+// botones del 1 al 10 con el activo marcado
 function renderizarPuntuacion() {
     const selector = document.getElementById('selectorPuntuacion');
     if (!selector) return;
@@ -59,25 +54,25 @@ function renderizarPuntuacion() {
     }).join('');
 }
 
-// Rellena la página con los datos de la película obtenidos de la API.
+// pinta la peli con los datos que devuelve la api
 function renderizarPelicula(pelicula) {
     document.title = `BONOBO — ${pelicula.titulo || 'Película'}`;
 
-    // Fondo del hero: usamos el backdrop 16:9 de TMDB si existe (nítido),
-    // y como fallback el póster muy difuminado.
+    // Fondo: si hay backdrop 16:9 lo usamos, sino el poster difuminado
     const heroBg    = document.getElementById('heroBg');
     const heroWrap  = document.getElementById('peliculaHero');
     if (pelicula.backdrop_url) {
         heroBg.style.backgroundImage = `url('${pelicula.backdrop_url}')`;
-        heroWrap.classList.add('has-backdrop');   // activa el CSS sin blur
+        heroWrap.classList.add('has-backdrop');
     } else if (pelicula.poster_url) {
         heroBg.style.backgroundImage = `url('${pelicula.poster_url}')`;
     }
 
-    // Póster principal
+    // Poster
     const posterWrap = document.getElementById('posterWrap');
     if (pelicula.poster_url) {
-        posterWrap.innerHTML = `<img src="${pelicula.poster_url}" alt="${pelicula.titulo}" style="cursor:zoom-in">`;
+        const tituloSafe = escapeHTML(pelicula.titulo || '');
+        posterWrap.innerHTML = `<img src="${escapeHTML(pelicula.poster_url)}" alt="${tituloSafe}" style="cursor:zoom-in">`;
         posterWrap.querySelector('img').addEventListener('click', () => {
             document.getElementById('posterOverlayImg').src = pelicula.poster_url;
             document.getElementById('posterOverlay').classList.remove('poster-overlay--hidden');
@@ -86,10 +81,9 @@ function renderizarPelicula(pelicula) {
         posterWrap.innerHTML = `<div class="pelicula-card__no-img" style="aspect-ratio:2/3">SIN IMAGEN</div>`;
     }
 
-    // Título
     document.getElementById('titulo').textContent = pelicula.titulo || '—';
 
-    // Director — buscamos el cargo "Director" en el crew y lo mostramos bajo el título
+    // director: lo buscamos en el crew
     const director = (pelicula.crew || []).find(p => p.rol === 'Director');
     const directorEl = document.getElementById('director');
     if (director) {
@@ -98,42 +92,46 @@ function renderizarPelicula(pelicula) {
         directorEl.textContent = '';
     }
 
-    // Meta: año, duración, puntuación TMDB
+    // meta: año, duracion, puntuacion TMDB
     const metas = [];
     if (pelicula.anio_estreno) metas.push(`<span>${pelicula.anio_estreno}</span>`);
     if (pelicula.duracion)     metas.push(`<span>${pelicula.duracion} min</span>`);
     if (pelicula.puntuacion)   metas.push(`<span>★ ${pelicula.puntuacion.toFixed(1)} TMDB</span>`);
     document.getElementById('meta').innerHTML = metas.join('<span>·</span>');
 
-    // Géneros como pastillas
+    // generos como pastillas (escapados por si TMDB devuelve algo raro)
     document.getElementById('generos').innerHTML = (pelicula.generos || [])
-        .map(g => `<span class="genero-tag">${g}</span>`)
+        .map(g => `<span class="genero-tag">${escapeHTML(g)}</span>`)
         .join('');
 
-    // Sinopsis
+    // sinopsis con textContent, ya escapa por si solo
     document.getElementById('sinopsis').textContent = pelicula.descripcion || '';
 
-    // ── Reparto ──────────────────────────────────────────────────────────────
+    // reparto
     const gridReparto = document.getElementById('gridReparto');
     if (pelicula.reparto && pelicula.reparto.length > 0) {
-        gridReparto.innerHTML = pelicula.reparto.map(actor => `
+        gridReparto.innerHTML = pelicula.reparto.map(actor => {
+            const nombreSafe = escapeHTML(actor.nombre || '—');
+            const personajeSafe = escapeHTML(actor.personaje || '');
+            const fotoSafe = escapeHTML(actor.foto || '');
+            return `
             <div class="actor-card" ${actor.person_id ? `onclick="irAPersona(${actor.person_id})"` : ''}>
                 ${actor.foto
-                    ? `<img class="actor-foto" src="${actor.foto}" alt="${actor.nombre}" loading="lazy">`
+                    ? `<img class="actor-foto" src="${fotoSafe}" alt="${nombreSafe}" loading="lazy">`
                     : `<div class="actor-foto" style="display:flex;align-items:center;justify-content:center;color:var(--faint);font-family:var(--font-display);font-size:14px">?</div>`
                 }
                 <div class="actor-info">
-                    <div class="actor-nombre">${actor.nombre || '—'}</div>
-                    <div class="actor-personaje">${actor.personaje || ''}</div>
+                    <div class="actor-nombre">${nombreSafe}</div>
+                    <div class="actor-personaje">${personajeSafe}</div>
                 </div>
             </div>
-        `).join('');
+        `;
+        }).join('');
     } else {
         gridReparto.innerHTML = `<p class="text-faint" style="font-size:13px">Sin datos de reparto.</p>`;
     }
 
-    // ── Equipo técnico ────────────────────────────────────────────────────────
-    // Traducción de departamentos TMDB al español
+    // equipo tecnico (crew). Traduccion de departamentos al español.
     const DEPT_ES = {
         'Directing':         'Dirección',
         'Writing':           'Guion',
@@ -149,7 +147,7 @@ function renderizarPelicula(pelicula) {
 
     const gridEquipo = document.getElementById('gridEquipo');
     if (pelicula.crew && pelicula.crew.length > 0) {
-        // Agrupamos por departamento manteniendo el orden de DEPARTAMENTOS_CREW
+        // agrupamos por departamento
         const grupos = {};
         pelicula.crew.forEach(p => {
             const dept = p.departamento || 'Otros';
@@ -160,29 +158,33 @@ function renderizarPelicula(pelicula) {
         gridEquipo.innerHTML = Object.entries(grupos).map(([dept, personas]) => `
             <div class="crew-grupo">
                 <div class="crew-grupo__titulo">${DEPT_ES[dept] || dept}</div>
-                ${personas.map(p => `
+                ${personas.map(p => {
+                    const nombreSafe = escapeHTML(p.nombre || '—');
+                    const rolSafe = escapeHTML(p.rol || '');
+                    const fotoSafe = escapeHTML(p.foto || '');
+                    return `
                     <div class="crew-fila" ${p.person_id ? `onclick="irAPersona(${p.person_id})"` : ''}>
                         ${p.foto
-                            ? `<img class="crew-foto" src="${p.foto}" alt="${p.nombre}" loading="lazy">`
-                            : `<div class="crew-foto crew-foto--placeholder">${(p.nombre || '?')[0]}</div>`
+                            ? `<img class="crew-foto" src="${fotoSafe}" alt="${nombreSafe}" loading="lazy">`
+                            : `<div class="crew-foto crew-foto--placeholder">${escapeHTML((p.nombre || '?')[0])}</div>`
                         }
                         <div class="crew-info">
-                            <div class="crew-nombre">${p.nombre || '—'}</div>
-                            <div class="crew-rol">${p.rol || ''}</div>
+                            <div class="crew-nombre">${nombreSafe}</div>
+                            <div class="crew-rol">${rolSafe}</div>
                         </div>
                     </div>
-                `).join('')}
+                `;
+                }).join('')}
             </div>
         `).join('');
     } else {
         gridEquipo.innerHTML = `<p class="text-faint" style="font-size:13px">Sin datos de equipo técnico.</p>`;
     }
 
-    // ── Detalles ──────────────────────────────────────────────────────────────
+    // detalles (titulo original, idioma, paises...)
     const listaDetalles = document.getElementById('listaDetalles');
     const filas = [];
 
-    // Función auxiliar para formatear monedas en millones/miles de millones
     function formatearDinero(n) {
         if (!n) return null;
         if (n >= 1_000_000_000) return `$${(n / 1_000_000_000).toFixed(2)}B`;
@@ -207,7 +209,7 @@ function renderizarPelicula(pelicula) {
 
     if (filas.length > 0) {
         listaDetalles.innerHTML = filas.map(([k, v]) =>
-            `<dt>${k}</dt><dd>${v}</dd>`
+            `<dt>${escapeHTML(k)}</dt><dd>${escapeHTML(v)}</dd>`
         ).join('');
     } else {
         listaDetalles.innerHTML = `<p class="text-faint" style="font-size:13px;grid-column:1/-1">Sin detalles disponibles.</p>`;
@@ -215,31 +217,29 @@ function renderizarPelicula(pelicula) {
 
 }
 
-// ── ACCIONES ──────────────────────────────────────────────────────────────────
 
-// Alterna entre "vista" y "no vista".
+// Acciones (vista, like, watchlist, puntuacion)
+
 async function toggleVista() {
     try {
         if (estado.vista) {
             await api.acciones.desmarcarVista(tmdbId);
             estado.vista = false;
-            // Si se desmarca como vista, también pierde puntuación y me gusta en la interfaz
-            // (el backend ya gestiona la lógica de restricciones)
             mostrarToast('Película desmarcada como vista');
         } else {
             await api.acciones.marcarVista(tmdbId);
             estado.vista = true;
-            // Si estaba en watchlist, el backend la elimina automáticamente
+            // si estaba en watchlist, el back la quita sola
             if (estado.en_watchlist) estado.en_watchlist = false;
             mostrarToast('Película marcada como vista ✓');
         }
         actualizarBotonesAccion();
     } catch (err) {
+        console.warn('[pelicula] toggleVista', err);
         mostrarToast(err.message || 'Error al actualizar', 'error');
     }
 }
 
-// Alterna entre "me gusta" y "no me gusta".
 async function toggleMeGusta() {
     try {
         if (estado.me_gusta) {
@@ -253,11 +253,11 @@ async function toggleMeGusta() {
         }
         actualizarBotonesAccion();
     } catch (err) {
+        console.warn('[pelicula] toggleMeGusta', err);
         mostrarToast(err.message || 'Error al actualizar', 'error');
     }
 }
 
-// Alterna entre "en watchlist" y "fuera de watchlist".
 async function toggleWatchlist() {
     try {
         if (estado.en_watchlist) {
@@ -271,22 +271,22 @@ async function toggleWatchlist() {
         }
         actualizarBotonesAccion();
     } catch (err) {
+        console.warn('[pelicula] toggleWatchlist', err);
         mostrarToast(err.message || 'Error al actualizar', 'error');
     }
 }
 
-// Guarda o actualiza la puntuación. Si ya tenía la misma, la elimina (toggle).
+// si pulsas la misma puntuacion -> la quita (toggle)
 async function setPuntuacion(valor) {
     try {
         if (estado.puntuacion === valor) {
-            // Si pulsa la misma puntuación que ya tiene → la elimina
             await api.acciones.eliminarPuntuacion(tmdbId);
             estado.puntuacion = null;
             mostrarToast('Puntuación eliminada');
         } else {
             await api.acciones.puntuar(tmdbId, valor);
             estado.puntuacion = valor;
-            // Puntuar marca la película como vista automáticamente
+            // puntuar marca como vista (lo hace el backend)
             if (!estado.vista) {
                 estado.vista = true;
                 if (estado.en_watchlist) estado.en_watchlist = false;
@@ -296,6 +296,7 @@ async function setPuntuacion(valor) {
         actualizarBotonesAccion();
         renderizarPuntuacion();
     } catch (err) {
+        console.warn('[pelicula] setPuntuacion', err);
         mostrarToast(err.message || 'Error al puntuar', 'error');
     }
 }
@@ -304,7 +305,8 @@ function irAPersona(personId) {
     window.location.href = `persona.html?id=${personId}`;
 }
 
-// ── MODAL DIARIO ──────────────────────────────────────────────────────────────
+
+// Modal del diario
 
 let puntuacionDiario = null;
 
@@ -335,7 +337,6 @@ function setPuntuacionDiario(val) {
     });
 }
 
-// Guarda una nueva entrada en el diario del usuario.
 async function guardarDiario() {
     const fecha  = document.getElementById('fechaVisionado').value;
     const resena = document.getElementById('resena').value.trim();
@@ -364,17 +365,16 @@ async function guardarDiario() {
         cerrarModalDiario();
         mostrarToast('Entrada guardada en el diario ✓');
     } catch (err) {
+        console.warn('[pelicula] guardarDiario', err);
         mostrarToast(err.message || 'Error al guardar en el diario', 'error');
     }
 }
 
-// ── INIT ──────────────────────────────────────────────────────────────────────
 
-// ── PESTAÑAS ──────────────────────────────────────────────────────────────────
+// Pestañas (reparto, equipo, detalles, reseñas)
 
 let resenasCargadas = false;
 
-// Cambia la pestaña activa y muestra el panel correspondiente.
 function activarTab(nombre) {
     document.querySelectorAll('.tab').forEach(btn => {
         btn.classList.toggle('tab--activo', btn.dataset.tab === nombre);
@@ -390,7 +390,8 @@ function activarTab(nombre) {
     }
 }
 
-// ── MODAL LISTAS ──────────────────────────────────────────────────────────────
+
+// Modal "añadir a lista"
 
 let listasUsuarioCargadas = false;
 
@@ -423,21 +424,34 @@ async function cargarModalListas() {
             return;
         }
 
+        // OJO con el nombre de la lista: lo escribe el usuario.
+        // Lo metemos en data-attr y leemos desde el handler para evitar XSS.
         contenedor.innerHTML = listas.map(l => {
             const añadida = yaEn.includes(l.id);
+            const nombreSafe = escapeHTML(l.nombre);
             return `
                 <button class="btn btn--sm lista-modal-btn ${añadida ? 'lista-modal-btn--añadida' : 'btn--surface'}"
                         style="width:100%;justify-content:flex-start;font-weight:400"
                         id="lista-btn-${l.id}"
-                        ${añadida ? 'disabled' : `onclick="añadirALista(${l.id}, '${l.nombre.replace(/'/g, "\\'")}')"`}>
-                    ${l.nombre}
+                        data-id-lista="${l.id}"
+                        data-nombre="${nombreSafe}"
+                        ${añadida ? 'disabled' : ''}>
+                    ${nombreSafe}
                     <span style="margin-left:auto;font-size:11px">
                         ${añadida ? 'Añadida ✓' : (l.es_publica ? 'Pública' : 'Privada')}
                     </span>
                 </button>
             `;
         }).join('');
-    } catch {
+
+        // listener delegado para los botones, sin onclick inline con strings interpolados
+        contenedor.querySelectorAll('.lista-modal-btn:not([disabled])').forEach(btn => {
+            btn.addEventListener('click', () => {
+                añadirALista(parseInt(btn.dataset.idLista), btn.dataset.nombre);
+            });
+        });
+    } catch (err) {
+        console.warn('[pelicula] cargarModalListas', err);
         contenedor.innerHTML = '<p class="text-faint" style="font-size:13px">Error al cargar listas.</p>';
     }
 }
@@ -454,14 +468,16 @@ async function añadirALista(idLista, nombreLista) {
             btn.querySelector('span').textContent = 'Añadida ✓';
         }
     } catch (err) {
+        console.warn('[pelicula] añadirALista', err);
         mostrarToast(err.message || 'Error al añadir', 'error');
     }
 }
 
-// ── RESEÑAS ───────────────────────────────────────────────────────────────────
+
+// Reseñas (amigos + comunidad)
 
 async function cargarResenas() {
-    // reseñas de amigos (solo si hay sesión)
+    // de amigos solo si hay sesion
     if (auth.estaLogueado()) {
         try {
             const amigos = await api.resenas.amigos(tmdbId);
@@ -470,14 +486,17 @@ async function cargarResenas() {
                 document.getElementById('seccionAmigos').classList.remove('oculto');
                 document.getElementById('subtituloComunidad').textContent = 'Comunidad';
             }
-        } catch { /* silencioso — puede no haber amigos */ }
+        } catch (err) {
+            console.warn('[pelicula] resenas amigos', err);
+        }
     }
 
-    // reseñas de la comunidad
+    // comunidad
     try {
         const comunidad = await api.resenas.comunidad(tmdbId);
         renderResenasComunidad(comunidad);
-    } catch {
+    } catch (err) {
+        console.warn('[pelicula] resenas comunidad', err);
         document.getElementById('listaComunidad').innerHTML =
             '<p class="text-faint" style="font-size:13px">No se pudieron cargar las reseñas.</p>';
     }
@@ -485,10 +504,12 @@ async function cargarResenas() {
 
 function avatarHTML(avatar_url, username, size = 32) {
     const style = `width:${size}px;height:${size}px`;
+    const userSafe = escapeHTML(username || '?');
     if (avatar_url) {
-        return `<div class="resena-card__avatar" style="${style}"><img src="${avatar_url}" alt="${username}"></div>`;
+        const avatarSafe = escapeHTML(avatar_url);
+        return `<div class="resena-card__avatar" style="${style}"><img src="${avatarSafe}" alt="${userSafe}"></div>`;
     }
-    return `<div class="resena-card__avatar" style="${style}">${(username || '?')[0].toUpperCase()}</div>`;
+    return `<div class="resena-card__avatar" style="${style}">${userSafe[0].toUpperCase()}</div>`;
 }
 
 function renderResenaAmigos(amigos) {
@@ -498,15 +519,16 @@ function renderResenaAmigos(amigos) {
         return;
     }
     lista.innerHTML = amigos.map(a => {
+        const userSafe = escapeHTML(a.username);
         const avgEl = a.avatar_url
-            ? `<img src="${a.avatar_url}" alt="${escapeHTML(a.username)}">`
+            ? `<img src="${escapeHTML(a.avatar_url)}" alt="${userSafe}">`
             : escapeHTML(a.username[0].toUpperCase());
         return `
             <div class="amigo-resena">
                 <div class="amigo-resena__avatar">${avgEl}</div>
                 <div class="amigo-resena__info">
                     <div class="amigo-resena__username"
-                         onclick="location.href='usuario.html?id=${a.id_usuario}'">${escapeHTML(a.username)}</div>
+                         onclick="location.href='usuario.html?id=${a.id_usuario}'">${userSafe}</div>
                     <div class="amigo-resena__stats">
                         ${a.puntuacion ? `<span>★ ${a.puntuacion}/10</span>` : ''}
                         <span>${a.total_entradas} ${a.total_entradas === 1 ? 'visionado' : 'visionados'}</span>
@@ -539,8 +561,8 @@ function abrirModalResena(id) {
     });
     const avatarEl = document.getElementById('resenaModalAvatar');
     avatarEl.innerHTML = r.avatar_url
-        ? `<img src="${r.avatar_url}" alt="${r.username}">`
-        : r.username[0].toUpperCase();
+        ? `<img src="${escapeHTML(r.avatar_url)}" alt="${escapeHTML(r.username)}">`
+        : escapeHTML(r.username[0].toUpperCase());
     document.getElementById('resenaModalUsername').textContent   = r.username;
     document.getElementById('resenaModalFecha').textContent      = fecha;
     document.getElementById('resenaModalPuntuacion').textContent = r.puntuacion ? `★ ${r.puntuacion}` : '';
@@ -559,6 +581,7 @@ function crearResenaCardHTML(r) {
     });
     const likedClass = r.yo_di_like ? 'resena-accion-btn--liked' : '';
     const tieneTexto = !!r.resena;
+    const userSafe = escapeHTML(r.username);
 
     return `
         <div class="resena-card" id="resena-${r.id}">
@@ -566,7 +589,7 @@ function crearResenaCardHTML(r) {
                 ${avatarHTML(r.avatar_url, r.username)}
                 <div class="resena-card__meta">
                     <div class="resena-card__username"
-                         onclick="event.stopPropagation();location.href='usuario.html?id=${r.id_usuario}'">${escapeHTML(r.username)}</div>
+                         onclick="event.stopPropagation();location.href='usuario.html?id=${r.id_usuario}'">${userSafe}</div>
                     <div class="resena-card__fecha">${fecha}</div>
                 </div>
                 ${r.puntuacion ? `<div class="resena-card__puntuacion">★ ${r.puntuacion}</div>` : ''}
@@ -592,7 +615,6 @@ function crearResenaCardHTML(r) {
     `;
 }
 
-// Toggle like en una reseña
 async function toggleLike(idEntrada, btn) {
     if (!auth.estaLogueado()) return;
     const liked = btn.classList.contains('resena-accion-btn--liked');
@@ -610,11 +632,11 @@ async function toggleLike(idEntrada, btn) {
             countEl.textContent = parseInt(countEl.textContent) + 1;
         }
     } catch (err) {
+        console.warn('[pelicula] toggleLike', err);
         mostrarToast(err.message || 'Error al procesar like', 'error');
     }
 }
 
-// Muestra/oculta los comentarios de una reseña
 async function toggleComentarios(idEntrada, btn) {
     const seccion = document.getElementById(`comentarios-${idEntrada}`);
     if (!seccion.classList.contains('oculto')) {
@@ -634,24 +656,29 @@ async function cargarComentarios(idEntrada, contenedor) {
 
         const listHTML = comentarios.length === 0
             ? '<p class="text-faint" style="font-size:12px;padding:4px 0">Sin comentarios aún.</p>'
-            : comentarios.map(c => `
+            : comentarios.map(c => {
+                const userSafe = escapeHTML(c.username);
+                const textoSafe = escapeHTML(c.texto);
+                const avatarSafe = escapeHTML(c.avatar_url || '');
+                return `
                 <div class="comentario-item" id="comentario-${c.id}">
                     <div class="comentario-item__avatar">
                         ${c.avatar_url
-                            ? `<img src="${c.avatar_url}" alt="${escapeHTML(c.username)}">`
+                            ? `<img src="${avatarSafe}" alt="${userSafe}">`
                             : escapeHTML(c.username[0].toUpperCase())
                         }
                     </div>
                     <div class="comentario-item__body">
-                        <span class="comentario-item__username">${escapeHTML(c.username)}</span>
-                        <span class="comentario-item__texto">${escapeHTML(c.texto)}</span>
+                        <span class="comentario-item__username">${userSafe}</span>
+                        <span class="comentario-item__texto">${textoSafe}</span>
                         ${miId === c.id_usuario
                             ? `<button class="comentario-item__borrar"
                                        onclick="borrarComentario(${c.id}, ${idEntrada})">✕</button>`
                             : ''}
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
 
         const formHTML = auth.estaLogueado() ? `
             <div class="comentario-form" id="form-comentario-${idEntrada}">
@@ -664,7 +691,8 @@ async function cargarComentarios(idEntrada, contenedor) {
         ` : '';
 
         contenedor.innerHTML = `<div id="lista-comentarios-${idEntrada}">${listHTML}</div>${formHTML}`;
-    } catch {
+    } catch (err) {
+        console.warn('[pelicula] cargarComentarios', err);
         contenedor.innerHTML = '<p class="text-faint" style="font-size:12px">Error al cargar comentarios.</p>';
     }
 }
@@ -682,24 +710,28 @@ async function enviarComentario(idEntrada) {
         const item  = document.createElement('div');
         item.className = 'comentario-item';
         item.id = `comentario-${nuevo.id}`;
+        const userSafe = escapeHTML(nuevo.username);
+        const textoSafe = escapeHTML(nuevo.texto);
+        const avatarSafe = escapeHTML(nuevo.avatar_url || '');
         item.innerHTML = `
             <div class="comentario-item__avatar">
                 ${nuevo.avatar_url
-                    ? `<img src="${nuevo.avatar_url}" alt="${escapeHTML(nuevo.username)}">`
+                    ? `<img src="${avatarSafe}" alt="${userSafe}">`
                     : escapeHTML(nuevo.username[0].toUpperCase())
                 }
             </div>
             <div class="comentario-item__body">
-                <span class="comentario-item__username">${escapeHTML(nuevo.username)}</span>
-                <span class="comentario-item__texto">${escapeHTML(nuevo.texto)}</span>
+                <span class="comentario-item__username">${userSafe}</span>
+                <span class="comentario-item__texto">${textoSafe}</span>
                 <button class="comentario-item__borrar"
                         onclick="borrarComentario(${nuevo.id}, ${idEntrada})">✕</button>
             </div>
         `;
-        // reemplaza el mensaje de "sin comentarios" si era el primero
+        // si era el mensaje de "sin comentarios" lo limpiamos
         if (lista.querySelector('.text-faint')) lista.innerHTML = '';
         lista.appendChild(item);
     } catch (err) {
+        console.warn('[pelicula] enviarComentario', err);
         mostrarToast(err.message || 'Error al comentar', 'error');
     }
 }
@@ -710,6 +742,7 @@ async function borrarComentario(idComentario, idEntrada) {
         const el = document.getElementById(`comentario-${idComentario}`);
         if (el) el.remove();
     } catch (err) {
+        console.warn('[pelicula] borrarComentario', err);
         mostrarToast(err.message || 'Error al borrar', 'error');
     }
 }
@@ -717,33 +750,30 @@ async function borrarComentario(idComentario, idEntrada) {
 document.addEventListener('DOMContentLoaded', async () => {
     renderNav('../');
 
-    // Registramos el listener de las pestañas
     document.getElementById('tabBar').addEventListener('click', e => {
         const tab = e.target.closest('.tab');
         if (tab) activarTab(tab.dataset.tab);
     });
 
-    // Leemos el id de la película de los parámetros de la URL (?id=XXXX)
+    // sacamos el id de la peli de la URL (?id=XXXX)
     const params = new URLSearchParams(window.location.search);
     tmdbId = parseInt(params.get('id'));
 
     if (!tmdbId) {
-        // Si no hay id válido, volvemos a inicio
+        // sin id valido nos vamos a inicio
         window.location.href = '../index.html';
         return;
     }
 
     try {
-        // Pedimos el detalle de la película (incluye estado del usuario si está logueado)
         const pelicula = await api.peliculas.detalle(tmdbId);
         renderizarPelicula(pelicula);
 
         if (auth.estaLogueado()) {
-            // Mostramos el panel de acciones y ocultamos el de visitante
             document.getElementById('accionesPanel').classList.remove('oculto');
             document.getElementById('panelVisitante').classList.add('oculto');
 
-            // Si el backend nos devolvió el estado del usuario con la película, lo cargamos
+            // si el back ya nos manda el estado del user, lo guardamos
             if (pelicula.estado_usuario) {
                 estado = pelicula.estado_usuario;
             }
@@ -751,12 +781,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             actualizarBotonesAccion();
             renderizarPuntuacion();
         } else {
-            // Visitante: mostramos el botón de "entrar para registrarla"
             document.getElementById('accionesPanel').classList.add('oculto');
             document.getElementById('panelVisitante').classList.remove('oculto');
         }
 
     } catch (err) {
+        console.warn('[pelicula] error cargando detalle', err);
         mostrarToast('No se pudo cargar la película', 'error');
     }
 });

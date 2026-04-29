@@ -55,6 +55,10 @@ def obtener_persona(person_id: int):
                                 detail="Persona no encontrada.")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                             detail="No se pudo obtener la información.")
+    except httpx.HTTPError:
+        # tambien por si falla por timeout o conexion
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                            detail="No se pudo obtener la información.")
 
 
 @router.get("/{tmdb_id}", response_model=schemas.PeliculaDetalle)
@@ -156,13 +160,10 @@ def get_resenas_amigos(tmdb_id: int,
         usuario = row.Usuario
         entradas = entradas_por_usuario.get(vista.id_usuario, [])
 
-        ultima_resena = None
-        ultima_entrada_id = None
-        for entrada in entradas:
-            if entrada.resena:
-                ultima_resena = entrada.resena[:200]
-                ultima_entrada_id = entrada.id
-                break
+        # cogemos la primera entrada que tenga reseña (sin break, con next)
+        primera_con_resena = next((e for e in entradas if e.resena), None)
+        ultima_resena = primera_con_resena.resena[:200] if primera_con_resena else None
+        ultima_entrada_id = primera_con_resena.id if primera_con_resena else None
 
         result.append(schemas.ResenaAmigo(
             id_usuario=vista.id_usuario,
@@ -217,7 +218,8 @@ def get_resenas_generales(tmdb_id: int,
             comments_sub
         )
         .join(models.Usuario, models.EntradaDiario.id_usuario == models.Usuario.id)
-        .outerjoin(models.Vista, and_(   # outerjoin porque puede no tener puntuación en Vista
+        # outerjoin porque puede no haber Vista con puntuacion para ese user
+        .outerjoin(models.Vista, and_(
             models.Vista.id_usuario == models.EntradaDiario.id_usuario,
             models.Vista.id_pelicula == pelicula.id
         ))
@@ -230,7 +232,7 @@ def get_resenas_generales(tmdb_id: int,
         .limit(limit)
     ).all()
 
-    # cargamos todos los likes del usuario en una sola query para no iterar uno a uno
+    # cargamos los likes del user actual de un tiron en vez de uno por reseña
     mis_likes = set()
     if current_user and rows:
         entrada_ids = [row.EntradaDiario.id for row in rows]

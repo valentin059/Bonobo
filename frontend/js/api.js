@@ -1,8 +1,10 @@
-// capa centralizada de comunicación con el backend
+// Capa central para hablar con el backend.
+// Detecta entorno solo: en localhost vamos al backend local, fuera al de produccion.
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:8000'
+    : 'https://bonobo-backend.onrender.com';
 
-const API_BASE = 'http://localhost:8000';
-
-// escapa texto de usuario antes de insertarlo con innerHTML
+// Escapa texto del usuario antes de meterlo con innerHTML (anti-XSS).
 function escapeHTML(str) {
     if (str == null) return '';
     return String(str)
@@ -13,9 +15,7 @@ function escapeHTML(str) {
         .replace(/'/g, '&#39;');
 }
 
-// ── Loading bar ───────────────────────────────────────────────────────────────
-// Barra fina en la parte superior que aparece mientras hay peticiones en curso.
-
+// Loading bar fina arriba mientras hay peticiones en curso.
 let _pendingRequests = 0;
 
 function _showLoading() {
@@ -48,7 +48,6 @@ function _hideLoading() {
     }, 150);
 }
 
-// ── Cabeceras ─────────────────────────────────────────────────────────────────
 
 function _headers(esJSON = true) {
     const token = localStorage.getItem('bonobo_token');
@@ -58,10 +57,8 @@ function _headers(esJSON = true) {
     return h;
 }
 
-// ── Petición central con retry exponencial ────────────────────────────────────
-// Reintenta hasta 3 veces (con espera 300ms, 600ms, 1200ms) solo en errores de red.
-// Los errores HTTP (4xx, 5xx) se lanzan directamente sin reintentar.
-
+// Reintenta hasta 3 veces (300ms, 600ms, 1200ms) solo si la red ha fallado.
+// Los 4xx/5xx no se reintentan, se propagan tal cual.
 async function _req(method, endpoint, body = null, _retry = 0) {
     _showLoading();
     try {
@@ -71,8 +68,9 @@ async function _req(method, endpoint, body = null, _retry = 0) {
         let res;
         try {
             res = await fetch(`${API_BASE}${endpoint}`, opts);
-        } catch (_networkErr) {
-            // error de red (sin respuesta del servidor)
+        } catch (networkErr) {
+            // sin respuesta del servidor (red caida, dns, etc)
+            console.warn('[api] error de red', method, endpoint, networkErr);
             if (_retry < 2) {
                 await new Promise(r => setTimeout(r, 300 * (2 ** _retry)));
                 return _req(method, endpoint, body, _retry + 1);
@@ -85,7 +83,7 @@ async function _req(method, endpoint, body = null, _retry = 0) {
         const data = await res.json().catch(() => ({ detail: `Error ${res.status}` }));
 
         if (res.status === 401 && localStorage.getItem('bonobo_token')) {
-            // token caducado — cerramos sesión y redirigimos a login
+            // token caducado, fuera sesion y a login
             localStorage.removeItem('bonobo_token');
             localStorage.removeItem('bonobo_user');
             const inPages = window.location.pathname.includes('/pages/');
@@ -106,7 +104,7 @@ const api = {
     auth: {
         registro: (body) => _req('POST', '/api/auth/registro', body),
 
-        // el login usa form-urlencoded porque así lo espera FastAPI OAuth2
+        // login va con form-urlencoded porque OAuth2 de FastAPI lo pide asi
         login: async (email, password) => {
             _showLoading();
             try {
@@ -135,7 +133,6 @@ const api = {
             _req('GET', `/api/peliculas/cartelera?skip=${skip}&limit=${limit}`),
         estrenos:  (skip = 0, limit = 20) =>
             _req('GET', `/api/peliculas/estrenos?skip=${skip}&limit=${limit}`),
-        // incluye estado_usuario si hay token
         detalle:   (tmdbId)   => _req('GET', `/api/peliculas/${tmdbId}`),
         persona:   (personId) => _req('GET', `/api/peliculas/persona/${personId}`),
     },

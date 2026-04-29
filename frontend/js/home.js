@@ -1,10 +1,7 @@
-// js/home.js — Lógica de la página principal (index.html)
-// Controla el hero, la carga de cartelera y estrenos, y la búsqueda de películas.
+// home.js — pagina principal (index.html)
+// Hero, cartelera, estrenos y busqueda.
 
-// ── UTILIDADES ────────────────────────────────────────────────────────────────
 
-// Muestra una notificación toast temporal en la parte inferior de la pantalla.
-// tipo: 'ok' (verde) o 'error' (rojo). duración en milisegundos.
 function mostrarToast(mensaje, tipo = 'ok', duracion = 2800) {
     const toast = document.getElementById('toast');
     toast.textContent = mensaje;
@@ -12,14 +9,17 @@ function mostrarToast(mensaje, tipo = 'ok', duracion = 2800) {
     setTimeout(() => { toast.className = 'toast'; }, duracion);
 }
 
-// Genera el HTML de una tarjeta de película para el grid.
-// pelicula: objeto con { tmdb_id, titulo, poster_url, anio_estreno, puntuacion? }
+// Crea la tarjeta de una peli para el grid.
+// pelicula = { tmdb_id, titulo, poster_url, anio_estreno, puntuacion? }
 function crearTarjetaPelicula(pelicula) {
+    const tituloSafe = escapeHTML(pelicula.titulo || 'Sin título');
+    const posterSafe = escapeHTML(pelicula.poster_url || '');
+
     const imgHTML = pelicula.poster_url
-        ? `<img class="pelicula-card__img" src="${pelicula.poster_url}" alt="${pelicula.titulo}" loading="lazy">`
+        ? `<img class="pelicula-card__img" src="${posterSafe}" alt="${tituloSafe}" loading="lazy">`
         : `<div class="pelicula-card__no-img">SIN IMAGEN</div>`;
 
-    // Puntuación de TMDB (solo aparece si existe)
+    // puntuacion de TMDB (solo si la hay)
     const puntHTML = pelicula.puntuacion
         ? `<div class="pelicula-card__puntuacion">★ ${pelicula.puntuacion.toFixed(1)}</div>`
         : '';
@@ -33,20 +33,18 @@ function crearTarjetaPelicula(pelicula) {
                 </div>
             </div>
             <div class="pelicula-card__info">
-                <div class="pelicula-card__titulo">${pelicula.titulo || 'Sin título'}</div>
+                <div class="pelicula-card__titulo">${tituloSafe}</div>
                 <div class="pelicula-card__anio">${pelicula.anio_estreno || ''}</div>
             </div>
         </div>
     `;
 }
 
-// Redirige a la página de detalle de una película.
 function irAPelicula(tmdbId) {
     window.location.href = `pages/pelicula.html?id=${tmdbId}`;
 }
 
-// Renderiza un array de películas en un contenedor.
-// Si el array está vacío, muestra un estado vacío.
+// pinta un array de pelis en un contenedor. si esta vacio muestra estado vacio.
 function renderizarGrid(peliculas, contenedorId) {
     const contenedor = document.getElementById(contenedorId);
     if (!contenedor) return;
@@ -59,7 +57,7 @@ function renderizarGrid(peliculas, contenedorId) {
     contenedor.innerHTML = peliculas.map(crearTarjetaPelicula).join('');
 }
 
-// Muestra esqueletos de carga (placeholders animados) mientras llega la API.
+// esqueletos animados mientras llega la respuesta de la API
 function mostrarEsqueletos(contenedorId, cantidad = 10) {
     const contenedor = document.getElementById(contenedorId);
     if (!contenedor) return;
@@ -74,41 +72,36 @@ function mostrarEsqueletos(contenedorId, cantidad = 10) {
     `).join('');
 }
 
-// ── HERO ──────────────────────────────────────────────────────────────────────
-
-// Rellena el mosaico de fondo del hero con pósters de cartelera.
-// Solo se llama si el usuario NO está logueado.
+// Mosaico de fondo del hero con posters. Solo si NO hay sesion.
 async function cargarHeroBg() {
     try {
         const data = await api.peliculas.cartelera(0, 20);
         const heroBg = document.getElementById('heroBg');
         if (!heroBg) return;
 
-        // Usamos los pósters disponibles para rellenar la cuadrícula de fondo.
-        // Si no hay suficientes para cubrir el hero, los repetimos en bucle.
+        // si no hay suficientes posters, los repetimos hasta llenar
         const peliculas = data.results.filter(p => p.poster_url);
         if (peliculas.length === 0) return;
 
-        const CELDAS = 80;   // suficiente para cualquier pantalla (hasta ~1920px de ancho)
+        const CELDAS = 80;   // suficiente para cubrir hasta ~1920px
         heroBg.innerHTML = Array.from({ length: CELDAS }, (_, i) => {
             const p = peliculas[i % peliculas.length];
-            return `<div class="hero-bg-poster" style="background-image:url('${p.poster_url}')"></div>`;
+            return `<div class="hero-bg-poster" style="background-image:url('${escapeHTML(p.poster_url)}')"></div>`;
         }).join('');
-    } catch {
-        // Si falla, el hero simplemente muestra el degradado sin fondo
+    } catch (err) {
+        // si falla queda el degradado a pelo, no es critico
+        console.warn('[home] no se pudo cargar hero bg', err);
     }
 }
 
-// ── BÚSQUEDA ──────────────────────────────────────────────────────────────────
 
-// Busca películas en TMDB y muestra los resultados sustituyendo la cartelera/estrenos.
+// busca pelis y sustituye cartelera/estrenos por los resultados
 async function buscarPeliculas(query) {
     const secBusqueda = document.getElementById('seccionBusqueda');
     const secCartelera = document.getElementById('seccionCartelera');
     const secEstrenos  = document.getElementById('seccionEstrenos');
     const label = document.getElementById('labelBusqueda');
 
-    // Mostramos búsqueda, ocultamos las otras secciones
     secBusqueda.classList.remove('oculto');
     secCartelera.classList.add('oculto');
     secEstrenos.classList.add('oculto');
@@ -120,18 +113,19 @@ async function buscarPeliculas(query) {
         const data = await api.peliculas.buscar(query);
         renderizarGrid(data.results, 'gridBusqueda');
     } catch (err) {
+        console.warn('[home] error al buscar', err);
         mostrarToast('Error al buscar películas', 'error');
     }
 }
 
-// ── CARTELERA Y ESTRENOS ──────────────────────────────────────────────────────
 
 async function cargarCartelera() {
     mostrarEsqueletos('gridCartelera', 10);
     try {
         const data = await api.peliculas.cartelera(0, 20);
         renderizarGrid(data.results, 'gridCartelera');
-    } catch {
+    } catch (err) {
+        console.warn('[home] error cartelera', err);
         mostrarToast('No se pudo cargar la cartelera', 'error');
     }
 }
@@ -141,16 +135,15 @@ async function cargarEstrenos() {
     try {
         const data = await api.peliculas.estrenos(0, 10);
         renderizarGrid(data.results, 'gridEstrenos');
-    } catch {
+    } catch (err) {
+        console.warn('[home] error estrenos', err);
         mostrarToast('No se pudieron cargar los estrenos', 'error');
     }
 }
 
-// ── INIT ──────────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', async () => {
 
-    // Renderizamos el navbar (desde la raíz, sin prefijo de ruta)
     renderNav('');
     actualizarBadgesLogros();
 
@@ -159,29 +152,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     const contenido = document.getElementById('contenidoPrincipal');
 
     if (estaLogueado) {
-        // Usuario logueado: ocultamos el hero y mostramos el contenido directamente
+        // logueado: oculta hero y muestra el contenido directo
         hero.classList.add('oculto');
         contenido.style.paddingTop = 'calc(var(--navbar-h) + 32px)';
     } else {
-        // Visitante: mostramos el hero con mosaico de pósters
-        // El contenido de cartelera aparece debajo del hero para atraer al usuario
+        // visitante: hero con mosaico de posters
         cargarHeroBg();
     }
 
-    // Comprobamos si viene una búsqueda desde el nav (sessionStorage)
+    // si vienen de buscar en el nav -> ejecutamos la busqueda
     const navSearch = sessionStorage.getItem('nav_search');
     if (navSearch) {
-        sessionStorage.removeItem('nav_search');   // limpiamos para que no persista
+        sessionStorage.removeItem('nav_search');
 
-        // Si el usuario no está logueado, colapsamos el hero a una tira mínima
-        // para que los resultados de búsqueda sean lo primero que se vea
+        // si es visitante achicamos el hero para que se vean los resultados
         if (!estaLogueado) {
             hero.classList.add('hero--mini');
         }
 
         buscarPeliculas(navSearch);
     } else {
-        // Cargamos cartelera y estrenos en paralelo para ser más rápidos
+        // cargamos cartelera y estrenos en paralelo
         cargarCartelera();
         cargarEstrenos();
     }

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from .. import database, models, schemas, oauth2
-from ..services.logros import verificar_logros, otorgar_logros
+from ..services.logros import comprobar_y_dar_logros
 
 
 router = APIRouter(
@@ -39,8 +39,7 @@ def seguir_usuario(id: int,
 
     db.add(models.Seguidor(id_seguidor=current_user.id, id_seguido=id))
     db.commit()
-    logros = verificar_logros(db, current_user.id)
-    otorgar_logros(db, current_user.id, logros)
+    comprobar_y_dar_logros(db, current_user.id)
 
     return {"detail": f"Ahora sigues a {objetivo.username}."}
 
@@ -75,7 +74,7 @@ def get_seguidores(id: int,
     if not db.execute(select(models.Usuario).where(models.Usuario.id == id)).scalar_one_or_none():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado.")
 
-    # join para obtener los usuarios que siguen a {id}
+    # join para sacar los users que siguen a {id}
     seguidores = db.execute(
         select(models.Usuario)
         .join(models.Seguidor, models.Seguidor.id_seguidor == models.Usuario.id)
@@ -96,7 +95,6 @@ def get_seguidos(id: int,
     if not db.execute(select(models.Usuario).where(models.Usuario.id == id)).scalar_one_or_none():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado.")
 
-    # join para obtener los usuarios a los que sigue {id}
     seguidos = db.execute(
         select(models.Usuario)
         .join(models.Seguidor, models.Seguidor.id_seguido == models.Usuario.id)

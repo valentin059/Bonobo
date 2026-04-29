@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select
 from .. import database, models, schemas, oauth2
 from ..services import get_or_create_pelicula
-from ..services.logros import verificar_logros, otorgar_logros
+from ..services.logros import comprobar_y_dar_logros
 
 router = APIRouter(
     prefix="/api/peliculas",
@@ -11,8 +11,9 @@ router = APIRouter(
 )
 
 
-# quita la película de la watchlist si estaba; se llama al marcar como vista o puntuar
-def eliminar_de_watchlist(id_usuario: int, id_pelicula: int, db: Session):
+# helper: si la peli estaba en watchlist, la quitamos al marcarla como vista o puntuarla.
+# si no estaba, no hace nada.
+def quitar_de_watchlist(id_usuario: int, id_pelicula: int, db: Session):
     wl = db.execute(select(models.Watchlist).where(
         models.Watchlist.id_usuario == id_usuario,
         models.Watchlist.id_pelicula == id_pelicula
@@ -41,14 +42,14 @@ def marcar_vista(tmdb_id: int, db: Session = Depends(database.get_db),
     db.add(nueva_vista)
     db.commit()
 
-    eliminar_de_watchlist(current_user.id, pelicula.id, db)
-    logros = verificar_logros(db, current_user.id)
-    otorgar_logros(db, current_user.id, logros)
+    quitar_de_watchlist(current_user.id, pelicula.id, db)
+    comprobar_y_dar_logros(db, current_user.id)
 
     return {"detail": "Película marcada como vista"}
 
 
-# no se puede desmarcar si tiene puntuación, diario o me gusta asociados
+# si tiene puntuacion, diario o me gusta NO se puede desmarcar (devolvemos 409).
+# tendria que borrar todo eso primero.
 @router.delete("/{tmdb_id}/vista", status_code=status.HTTP_204_NO_CONTENT)
 def desmarcar_vista(tmdb_id: int, db: Session = Depends(database.get_db),
                     current_user: models.Usuario = Depends(oauth2.get_current_user)):
@@ -86,7 +87,7 @@ def desmarcar_vista(tmdb_id: int, db: Session = Depends(database.get_db),
     db.commit()
 
 
-# si no la tenía vista, la marca automáticamente
+# si la peli no estaba vista, la marca tambien (o sea: puntuar implica vista)
 @router.put("/{tmdb_id}/puntuacion")
 def puntuar(tmdb_id: int, puntuacion_data: schemas.PuntuacionCreate,
             db: Session = Depends(database.get_db),
@@ -112,7 +113,7 @@ def puntuar(tmdb_id: int, puntuacion_data: schemas.PuntuacionCreate,
         db.add(vista)
         db.commit()
         db.refresh(vista)
-        eliminar_de_watchlist(current_user.id, pelicula.id, db)
+        quitar_de_watchlist(current_user.id, pelicula.id, db)
 
     return {"detail": "Puntuación guardada", "puntuacion": vista.puntuacion}
 
@@ -142,7 +143,7 @@ def eliminar_puntuacion(tmdb_id: int, db: Session = Depends(database.get_db),
     return {"detail": "Puntuación eliminada"}
 
 
-# marca como vista si no lo estaba
+# crear entrada de diario tambien marca como vista si no lo estaba
 @router.post("/{tmdb_id}/diario", status_code=status.HTTP_201_CREATED, response_model=schemas.EntradaDiarioOut)
 def crear_entrada_diario(tmdb_id: int, entrada_data: schemas.EntradaDiarioCreate,
                          db: Session = Depends(database.get_db),
@@ -159,7 +160,7 @@ def crear_entrada_diario(tmdb_id: int, entrada_data: schemas.EntradaDiarioCreate
         vista = models.Vista(id_usuario=current_user.id, id_pelicula=pelicula.id)
         db.add(vista)
         db.commit()
-        eliminar_de_watchlist(current_user.id, pelicula.id, db)
+        quitar_de_watchlist(current_user.id, pelicula.id, db)
 
     nueva_entrada = models.EntradaDiario(
         id_usuario=current_user.id,
@@ -171,9 +172,7 @@ def crear_entrada_diario(tmdb_id: int, entrada_data: schemas.EntradaDiarioCreate
     db.add(nueva_entrada)
     db.commit()
 
-    logros = verificar_logros(db, current_user.id)  
-
-    otorgar_logros(db, current_user.id, logros)      
+    comprobar_y_dar_logros(db, current_user.id)
     db.refresh(nueva_entrada)
 
     return nueva_entrada
@@ -196,8 +195,7 @@ def dar_me_gusta(tmdb_id: int, db: Session = Depends(database.get_db),
     me_gusta = models.MeGusta(id_usuario=current_user.id, id_pelicula=pelicula.id)
     db.add(me_gusta)
     db.commit()
-    logros = verificar_logros(db, current_user.id)
-    otorgar_logros(db, current_user.id, logros)
+    comprobar_y_dar_logros(db, current_user.id)
     return {"detail": "Me gusta añadido"}
 
 
@@ -243,10 +241,9 @@ def añadir_watchlist(tmdb_id: int, db: Session = Depends(database.get_db),
     watchlist = models.Watchlist(id_usuario=current_user.id, id_pelicula=pelicula.id)
     db.add(watchlist)
     db.commit()
-    logros = verificar_logros(db, current_user.id)
-    otorgar_logros(db, current_user.id, logros)
+    comprobar_y_dar_logros(db, current_user.id)
     return {"detail": "Película añadida a la watchlist"}
-    
+
 
 @router.delete("/{tmdb_id}/watchlist")
 def quitar_watchlist(tmdb_id: int, db: Session = Depends(database.get_db),

@@ -1,4 +1,4 @@
-// js/ajustes.js — Página de ajustes de cuenta
+// ajustes.js — pagina de ajustes (perfil + cambio de contraseña)
 
 function mostrarToast(mensaje, tipo = 'ok', duracion = 2800) {
     const toast = document.getElementById('toast');
@@ -7,28 +7,28 @@ function mostrarToast(mensaje, tipo = 'ok', duracion = 2800) {
     setTimeout(() => { toast.className = 'toast'; }, duracion);
 }
 
-// ── PERFIL ────────────────────────────────────────────────────────────────────
 
 async function guardarPerfil() {
     const avatar_url = document.getElementById('inputAvatar').value.trim() || null;
     const bio        = document.getElementById('inputBio').value.trim() || null;
-    const errorEl   = document.getElementById('errorPerfil');
+    const errorEl    = document.getElementById('errorPerfil');
 
     try {
         await api.usuarios.editarPerfil({ bio, avatar_url });
 
+        // sincronizamos lo guardado en localStorage
         const usuarioGuardado = auth.getUsuario();
         auth.guardarUsuario({ ...usuarioGuardado, bio, avatar_url });
 
         errorEl.className = 'form-error';
         mostrarToast('Perfil actualizado ✓');
     } catch (err) {
+        console.warn('[ajustes] error guardando perfil', err);
         errorEl.textContent = err.message || 'Error al guardar.';
         errorEl.className = 'form-error form-error--visible';
     }
 }
 
-// ── CONTRASEÑA ────────────────────────────────────────────────────────────────
 
 async function guardarPassword() {
     const actual  = document.getElementById('inputPasswordActual').value;
@@ -55,12 +55,12 @@ async function guardarPassword() {
         errorEl.className = 'form-error';
         mostrarToast('Contraseña actualizada ✓');
     } catch (err) {
+        console.warn('[ajustes] error cambiando password', err);
         errorEl.textContent = err.message || 'Error al cambiar la contraseña.';
         errorEl.className = 'form-error form-error--visible';
     }
 }
 
-// ── INIT ──────────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', async () => {
     renderNav('../');
@@ -75,7 +75,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const usuario = await api.usuarios.mePerfil();
         document.getElementById('inputAvatar').value = usuario.avatar_url || '';
         document.getElementById('inputBio').value    = usuario.bio || '';
-    } catch {
+    } catch (err) {
+        console.warn('[ajustes] error cargando datos', err);
         mostrarToast('Error al cargar los datos', 'error');
     }
 });

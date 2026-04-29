@@ -12,7 +12,7 @@
 
     <main class="contenedor pagina">
 
-        <!-- ── VISTA: ÍNDICE DE LISTAS ────────────────────────────────────── -->
+        <!--  VISTA: ÍNDICE DE LISTAS  -->
         <div id="vistaIndice">
 
             <div class="seccion-header" style="margin-bottom:32px">
@@ -29,7 +29,7 @@
 
         </div>
 
-        <!-- ── VISTA: DETALLE DE UNA LISTA ───────────────────────────────── -->
+        <!--  VISTA: DETALLE DE UNA LISTA  -->
         <div id="vistaDetalle" class="oculto">
 
             <button class="btn btn--ghost btn--sm" style="margin-bottom:24px"
@@ -73,7 +73,7 @@
 
     </main>
 
-    <!-- ── MODAL: CREAR LISTA ─────────────────────────────────────────────── -->
+    <!--  MODAL: CREAR LISTA  -->
     <div class="modal-overlay modal-overlay--hidden" id="modalCrear">
         <div class="modal">
             <button class="modal-close" onclick="cerrarModal('modalCrear')">✕</button>
@@ -106,7 +106,7 @@
         </div>
     </div>
 
-    <!-- ── MODAL: EDITAR LISTA ────────────────────────────────────────────── -->
+    <!--  MODAL: EDITAR LISTA  -->
     <div class="modal-overlay modal-overlay--hidden" id="modalEditar">
         <div class="modal">
             <button class="modal-close" onclick="cerrarModal('modalEditar')">✕</button>
@@ -165,7 +165,7 @@
             location.href = `pelicula.html?id=${tmdbId}`;
         }
 
-        // ── Índice de listas ──────────────────────────────────────────────
+        //  Índice de listas 
 
         async function cargarListas(idUsuario) {
             const contenedor = document.getElementById('listaListas');
@@ -226,7 +226,7 @@
             );
         }
 
-        // ── Detalle de lista ──────────────────────────────────────────────
+        //  Detalle de lista 
 
         async function abrirLista(idLista, pushHistory = true) {
             document.getElementById('vistaIndice').classList.add('oculto');
@@ -324,7 +324,7 @@
             listaActual = null;
         }
 
-        // ── Añadir película a la lista ─────────────────────────────────────
+        //  Añadir película a la lista 
 
         function buscarParaAñadir(query) {
             clearTimeout(buscarTimer);
@@ -372,7 +372,7 @@
             }
         }
 
-        // ── Crear lista ────────────────────────────────────────────────────
+        //  Crear lista 
 
         function abrirModalCrear() {
             document.getElementById('crearNombre').value = '';
@@ -405,7 +405,7 @@
             }
         }
 
-        // ── Editar lista ───────────────────────────────────────────────────
+        //  Editar lista 
 
         function abrirModalEditar(idLista, nombre, desc, esPublica) {
             document.getElementById('editIdLista').value = idLista;
@@ -445,7 +445,7 @@
             }
         }
 
-        // ── Borrar lista ───────────────────────────────────────────────────
+        //  Borrar lista 
 
         async function confirmarBorrar(idLista) {
             if (!confirm('¿Borrar esta lista? No se puede deshacer.')) return;
@@ -459,7 +459,7 @@
             }
         }
 
-        // ── Init ──────────────────────────────────────────────────────────
+        //  Init 
 
         document.addEventListener('DOMContentLoaded', async () => {
             renderNav('../');

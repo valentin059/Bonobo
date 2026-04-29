@@ -1,18 +1,22 @@
-// navbar compartido — se inyecta en todas las páginas
-// base: '' desde index.html, '../' desde pages/
+// Navbar comun a todas las paginas. Se inyecta en el placeholder.
+// El parametro base es '' desde index.html y '../' desde pages/.
 
 function renderNav(base = '') {
     const usuario = auth.getUsuario();
     const logueado = auth.estaLogueado();
 
+    // todo lo que viene del user lo escapamos antes de meterlo en HTML
+    const usernameSafe = escapeHTML(usuario?.username || 'Perfil');
+    const avatarSafe   = escapeHTML(usuario?.avatar_url || '');
+
     const authHTML = logueado ? `
         <div class="nav-user-info">
             <a href="${base}pages/perfil.html" class="nav-username">
                 ${usuario?.avatar_url
-                    ? `<img src="${usuario.avatar_url}" alt="" class="nav-avatar">`
+                    ? `<img src="${avatarSafe}" alt="" class="nav-avatar">`
                     : `<div class="nav-avatar nav-avatar--placeholder"></div>`
                 }
-                ${usuario?.username || 'Perfil'}
+                ${usernameSafe}
             </a>
             <button class="nav-btn nav-btn--ghost" id="btnLogout">Salir</button>
         </div>
@@ -71,7 +75,7 @@ function renderNav(base = '') {
             dropdown.innerHTML = '';
         };
 
-        // Sugerencias en tiempo real
+        // sugerencias mientras escribe (debounce 300ms)
         searchInput.addEventListener('input', () => {
             clearTimeout(navTimer);
             const q = searchInput.value.trim();
@@ -101,24 +105,35 @@ function renderNav(base = '') {
 
                     if (!items.length) { cerrarDropdown(); return; }
 
-                    dropdown.innerHTML = items.map(it => `
-                        <div class="nav-dropdown-item" onclick="location.href='${it.href}'">
+                    // OJO: it.titulo y it.sub vienen del usuario (bios, etc).
+                    // Hay que escapar SI o SI o se cuela un script en una bio.
+                    dropdown.innerHTML = items.map(it => {
+                        const tituloSafe = escapeHTML(it.titulo);
+                        const subSafe    = escapeHTML(it.sub);
+                        const imgSafe    = escapeHTML(it.img);
+                        const hrefSafe   = escapeHTML(it.href);
+                        return `
+                        <div class="nav-dropdown-item" onclick="location.href='${hrefSafe}'">
                             ${it.img
-                                ? `<img src="${it.img}" alt="" ${it.esAvatar ? 'style="height:28px;border-radius:50%"' : ''}>`
+                                ? `<img src="${imgSafe}" alt="" ${it.esAvatar ? 'style="height:28px;border-radius:50%"' : ''}>`
                                 : `<div style="width:28px;height:42px;background:var(--surface3);border-radius:2px;flex-shrink:0"></div>`
                             }
                             <div class="nav-dropdown-item__info">
-                                <div class="nav-dropdown-item__title">${it.titulo}</div>
-                                ${it.sub ? `<div class="nav-dropdown-item__sub">${it.sub}</div>` : ''}
+                                <div class="nav-dropdown-item__title">${tituloSafe}</div>
+                                ${it.sub ? `<div class="nav-dropdown-item__sub">${subSafe}</div>` : ''}
                             </div>
                         </div>
-                    `).join('');
+                    `;
+                    }).join('');
                     dropdown.style.display = 'block';
-                } catch { cerrarDropdown(); }
+                } catch (err) {
+                    console.warn('[nav] error en sugerencias', err);
+                    cerrarDropdown();
+                }
             }, 300);
         });
 
-        // Enter → página de resultados completa
+        // Enter -> pagina de resultados completa
         searchInput.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') { cerrarDropdown(); return; }
             if (e.key !== 'Enter') return;
@@ -133,7 +148,7 @@ function renderNav(base = '') {
             }
         });
 
-        // Cerrar al hacer clic fuera
+        // clic fuera -> cerramos
         document.addEventListener('click', (e) => {
             if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
                 cerrarDropdown();
@@ -149,7 +164,7 @@ function renderNav(base = '') {
         });
     }
 
-    // marca el link activo según la URL actual
+    // marca el link activo segun la URL
     const path = window.location.pathname;
     document.querySelectorAll('.nav-link').forEach(link => {
         if (path.includes(link.getAttribute('href').split('/').pop())) {

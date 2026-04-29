@@ -6,11 +6,13 @@ from .peliculas import PeliculaCache, EntradaDiarioOut
 
 class UserCreate(BaseModel):
     email: EmailStr
-    username: str = Field(..., min_length=3)
-    password: str = Field(..., min_length=8)
+    # solo letras, numeros y _ (sin espacios, @, ni caracteres raros)
+    # max 50 porque la columna VARCHAR de la BD es de ese tamaño
+    username: str = Field(..., min_length=3, max_length=50, pattern=r'^[a-zA-Z0-9_]+$')
+    password: str = Field(..., min_length=8, max_length=128)
 
 
-# nunca incluimos el password_hash en la respuesta
+# en la salida nunca metemos el password_hash, solo lo basico
 class UserOut(BaseModel):
     id: int
     email: EmailStr
@@ -43,7 +45,7 @@ class LogroOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# Resumen mínimo de un usuario para mostrar en listas (seguidores, buscador...)
+# datos minimos de un usuario, para listas (seguidores, buscador, ranking...)
 class UsuarioResumen(BaseModel):
     id: int
     username: str
@@ -53,7 +55,7 @@ class UsuarioResumen(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# Perfil completo de un usuario para la página de perfil
+# perfil completo, lo usa la pagina de perfil
 class UserProfile(BaseModel):
     id: int
     username: str
@@ -76,6 +78,7 @@ class UserUpdate(BaseModel):
     @field_validator('avatar_url')
     @classmethod
     def validar_avatar_url(cls, v: Optional[str]) -> Optional[str]:
+        # como minimo que sea http(s), no me vale "javascript:..." ni rutas raras
         if v and not v.startswith(('http://', 'https://')):
             raise ValueError('La URL del avatar debe empezar por http:// o https://')
         return v
@@ -83,7 +86,7 @@ class UserUpdate(BaseModel):
 
 class PasswordChange(BaseModel):
     password_actual: str
-    password_nueva: str = Field(..., min_length=8)
+    password_nueva: str = Field(..., min_length=8, max_length=128)
 
 
 class VistaConPelicula(BaseModel):

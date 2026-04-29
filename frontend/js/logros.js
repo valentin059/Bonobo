@@ -1,31 +1,28 @@
-// js/logros.js — Lógica de la página de logros (nivel 3)
+// logros.js — pagina de logros (nivel 3)
 
-// ───────────────────────────────────────────────────────────────
-// DICCIONARIO DE ICONOS
-// Asignamos un emoji representativo a cada logro según su código.
-// Si el backend añade un logro nuevo con un código no previsto,
-// se muestra el icono por defecto 🏆.
-// ───────────────────────────────────────────────────────────────
+
+// Diccionario de iconos por codigo de logro.
+// Si el back añade un logro nuevo cuyo codigo no este aqui se ve el de por defecto.
 const ICONOS_LOGROS = {
-    // Vistas
+    // vistas
     PRIMERA_FUNCION:   '🎬',
     CINEFILO:          '🎞️',
     CINEFILO_PROGRESO: '📽️',
     MAESTRO_CINEFILO:  '🏆',
-    // Reseñas
+    // reseñas
     CRITICO_PROCESO:   '✍️',
     PERIODISTA:        '📰',
     PLUMA_DE_ORO:      '🖋️',
-    // Perfil
+    // perfil
     CON_CRITERIO:      '⭐',
     PLANIFICADOR:      '📋',
-    // Especiales
+    // especiales
     MARATONISTA:       '🏃',
     DOBLE_FUNCION:     '🎭',
     TRASNOCHADOR:      '🌙',
     NOSTALGICO:        '📺',
     HATER_PROFESIONAL: '💀',
-    // Sociales
+    // sociales
     SOCIABLE:          '🤝',
     CONVERSADOR:       '💬',
     CONEXION_MUTUA:    '🔗',
@@ -33,15 +30,12 @@ const ICONOS_LOGROS = {
 };
 
 const ICONO_POR_DEFECTO = '🏆';
-const XP_POR_NIVEL = 100;   // cada 100 XP sube de nivel
+const XP_POR_NIVEL = 100;   // formula: nivel = (xp_total // 100) + 1
 
-// Estado global de la página
-let todosLogros = [];      // lista completa que devuelve /api/logros/todos
-let filtroActivo = 'todos'; // 'todos' | 'desbloqueados' | 'bloqueados' | 'reclamables'
+let todosLogros = [];
+let filtroActivo = 'todos';   // 'todos' | 'desbloqueados' | 'bloqueados' | 'reclamables'
 
-// ───────────────────────────────────────────────────────────────
-// UTILIDADES
-// ───────────────────────────────────────────────────────────────
+
 function mostrarToast(msg, tipo = 'ok') {
     const t = document.getElementById('toast');
     if (!t) return;
@@ -50,28 +44,27 @@ function mostrarToast(msg, tipo = 'ok') {
     setTimeout(() => { t.className = 'toast'; }, 2800);
 }
 
-// Formatea fecha ISO a "22 abr" (día + mes corto)
+// fecha ISO -> "22 abr"
 function formatearFecha(iso) {
     if (!iso) return '';
     try {
         const f = new Date(iso);
         const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
         return `${f.getDate()} ${meses[f.getMonth()]}`;
-    } catch {
+    } catch (err) {
+        console.warn('[logros] fecha rara', iso, err);
         return '';
     }
 }
 
-// ───────────────────────────────────────────────────────────────
-// RENDER DE LA CABECERA (nivel, XP, barra de progreso)
-// ───────────────────────────────────────────────────────────────
-function renderizarCabecera(perfil, logros) {
-    const xpTotal   = perfil.xp_total || 0;
-    const nivel     = perfil.nivel    || 1;
 
-    // XP relativa al nivel actual: si tienes 250 XP y cada nivel son 100,
-    // estás en el nivel 2 con 50 XP de progreso hacia el nivel 3.
-    const xpEnNivel       = xpTotal % XP_POR_NIVEL;
+// Cabecera con nivel, XP y barra de progreso.
+// Misma formula que el back: si tienes 250 XP estas a nivel 3 con 50/100 hacia el 4.
+function renderizarCabecera(perfil, logros) {
+    const xpTotal = perfil.xp_total || 0;
+    const nivel   = perfil.nivel    || 1;
+
+    const xpEnNivel        = xpTotal % XP_POR_NIVEL;
     const xpSiguienteNivel = XP_POR_NIVEL;
     const porcentaje       = (xpEnNivel / xpSiguienteNivel) * 100;
 
@@ -80,35 +73,32 @@ function renderizarCabecera(perfil, logros) {
     document.getElementById('lblXpSiguiente').textContent =
         `${xpEnNivel} / ${xpSiguienteNivel} XP para nivel ${nivel + 1}`;
 
-    // Animación de la barra: primero a 0, luego al valor real (efecto de llenado)
+    // animacion de la barra: arranca en 0% y se llena al valor real
     const barra = document.getElementById('barraFill');
     barra.style.width = '0%';
     setTimeout(() => { barra.style.width = `${porcentaje}%`; }, 100);
 
-    // Resumen: X de Y logros desbloqueados
     const desbloqueados = logros.filter(l => l.desbloqueado).length;
     document.getElementById('lblResumen').textContent =
         `${desbloqueados} de ${logros.length} logros desbloqueados`;
 }
 
-// ───────────────────────────────────────────────────────────────
-// RENDER DE UNA TARJETA DE LOGRO
-// ───────────────────────────────────────────────────────────────
+
+// Tarjeta de un logro
 function renderizarTarjeta(logro) {
     const icono = ICONOS_LOGROS[logro.codigo] || ICONO_POR_DEFECTO;
     const desbloqueado = logro.desbloqueado;
     const yaReclamado  = logro.xp_reclamado === true;
     const pendienteReclamar = desbloqueado && !yaReclamado;
 
-    // Clase de la tarjeta según estado
     const claseCard = desbloqueado
         ? 'logro-card logro-card--desbloqueado'
         : 'logro-card logro-card--bloqueado';
 
-    // Contenido del pie según estado:
-    //  - Bloqueado:         badge gris con XP pendiente
-    //  - Desbloqueado + no reclamado: botón "Reclamar XP"
-    //  - Desbloqueado + reclamado:    etiqueta gris "XP reclamados"
+    // pie de la tarjeta segun estado:
+    //   bloqueado -> badge gris con XP
+    //   desbloqueado pero no reclamado -> boton "Reclamar"
+    //   desbloqueado y reclamado -> "XP reclamados"
     let pieHTML = '';
     if (!desbloqueado) {
         pieHTML = `<span class="logro-xp-badge">+${logro.xp} XP</span>`;
@@ -123,12 +113,10 @@ function renderizarTarjeta(logro) {
         pieHTML = `<span class="logro-xp-reclamado">+${logro.xp} XP reclamados</span>`;
     }
 
-    // Cinta "NUEVO" solo si está pendiente de reclamar
     const cintaNuevo = pendienteReclamar
         ? `<div class="logro-cinta-nuevo">NUEVO</div>`
         : '';
 
-    // Fecha de desbloqueo si existe
     const fecha = desbloqueado && logro.desbloqueado_el
         ? `<div class="logro-fecha">${formatearFecha(logro.desbloqueado_el)}</div>`
         : '';
@@ -145,27 +133,20 @@ function renderizarTarjeta(logro) {
     `;
 }
 
-// ───────────────────────────────────────────────────────────────
-// RENDER DEL GRID COMPLETO según el filtro activo
-// ───────────────────────────────────────────────────────────────
+
+// Pinta el grid segun el filtro activo.
+// Hacemos un mapa de filtros para no usar switch/case con breaks.
+const FILTROS = {
+    todos:          () => true,
+    desbloqueados:  l => l.desbloqueado,
+    bloqueados:     l => !l.desbloqueado,
+    reclamables:    l => l.desbloqueado && l.xp_reclamado === false,
+};
+
 function renderizarGrid() {
     const grid = document.getElementById('gridLogros');
-
-    // Aplicar filtro
-    let lista;
-    switch (filtroActivo) {
-        case 'desbloqueados':
-            lista = todosLogros.filter(l => l.desbloqueado);
-            break;
-        case 'bloqueados':
-            lista = todosLogros.filter(l => !l.desbloqueado);
-            break;
-        case 'reclamables':
-            lista = todosLogros.filter(l => l.desbloqueado && l.xp_reclamado === false);
-            break;
-        default:
-            lista = todosLogros;
-    }
+    const fnFiltro = FILTROS[filtroActivo] || FILTROS.todos;
+    const lista = todosLogros.filter(fnFiltro);
 
     if (lista.length === 0) {
         grid.innerHTML = `
@@ -184,26 +165,21 @@ function renderizarGrid() {
     grid.innerHTML = lista.map(renderizarTarjeta).join('');
 }
 
-// ───────────────────────────────────────────────────────────────
-// ACTUALIZAR EL CONTADOR DEL BOTÓN "RECLAMABLES"
-// ───────────────────────────────────────────────────────────────
+
 function actualizarBadgeReclamables() {
     const n = todosLogros.filter(l => l.desbloqueado && l.xp_reclamado === false).length;
     document.getElementById('badgeReclamables').textContent = n;
 }
 
-// ───────────────────────────────────────────────────────────────
-// RECLAMAR XP DE UN LOGRO
-// El endpoint del backend necesita el id_usuario_logro, pero /api/logros/todos
-// no lo devuelve. Por eso antes de reclamar pedimos mis-logros para mapear
-// código -> id_usuario_logro.
-// ───────────────────────────────────────────────────────────────
+
+// Reclamar XP de un logro.
+// El backend pide el id_usuario_logro pero /api/logros/todos no lo devuelve,
+// asi que pedimos mis-logros para mapear codigo -> id_usuario_logro.
 async function reclamarXP(codigo, boton) {
     try {
         boton.disabled = true;
         boton.textContent = 'Reclamando...';
 
-        // Buscamos el id_usuario_logro para este código
         const misLogros = await api.logros.misLogros();
         const registro  = misLogros.find(ul => ul.codigo === codigo);
 
@@ -217,22 +193,21 @@ async function reclamarXP(codigo, boton) {
 
         mostrarToast(resultado.detail || `+${registro.xp} XP reclamados`, 'ok');
 
-        // Recargamos todo para que se actualice la barra de XP y el nivel
+        // recargamos para que se actualice barra y nivel
         await cargarTodo();
 
     } catch (err) {
+        console.warn('[logros] reclamarXP', err);
         mostrarToast(err.message || 'Error al reclamar XP', 'error');
         boton.disabled = false;
         boton.textContent = `Reclamar +? XP`;
     }
 }
 
-// ───────────────────────────────────────────────────────────────
-// CARGA INICIAL / RECARGA COMPLETA
-// ───────────────────────────────────────────────────────────────
+
 async function cargarTodo() {
     try {
-        // Pedimos en paralelo el perfil (para XP y nivel) y los logros
+        // perfil para XP/nivel y todos los logros del catalogo
         const [perfil, logros] = await Promise.all([
             api.usuarios.mePerfil(),
             api.logros.todos(),
@@ -246,6 +221,7 @@ async function cargarTodo() {
         actualizarBadgesLogros();
 
     } catch (err) {
+        console.warn('[logros] cargarTodo', err);
         mostrarToast(err.message || 'Error al cargar los logros', 'error');
         document.getElementById('gridLogros').innerHTML = `
             <div class="estado-vacio" style="grid-column:1/-1">
@@ -256,20 +232,16 @@ async function cargarTodo() {
     }
 }
 
-// ───────────────────────────────────────────────────────────────
-// INICIALIZACIÓN
-// ───────────────────────────────────────────────────────────────
+
 document.addEventListener('DOMContentLoaded', () => {
     renderNav('../');
     actualizarBadgesLogros();
 
-    // Si no está logueado, a login
     if (!auth.estaLogueado()) {
         window.location.href = 'login.html';
         return;
     }
 
-    // Listeners de los filtros
     document.querySelectorAll('.logros-filtro').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.logros-filtro').forEach(b =>
@@ -281,6 +253,5 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Carga inicial
     cargarTodo();
 });

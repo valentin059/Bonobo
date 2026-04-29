@@ -4,7 +4,16 @@ from .routers import auth, peliculas, acciones, usuarios, social, diario, listas
 
 app = FastAPI(title="Bonobo API")
 
-origins = ["*"]
+# orígenes permitidos: prod (vercel) + dev local en distintos puertos
+# OJO: si se añade un dominio nuevo hay que meterlo aquí, sino el navegador
+# tira error de CORS. Antes esto era ["*"] pero con allow_credentials=True
+# los navegadores rechazan esa combinacion.
+origins = [
+    "https://bonobo-ten.vercel.app",
+    "http://localhost:3000",
+    "http://localhost:5500",
+    "http://127.0.0.1:5500",
+]
 
 app.add_middleware(
     CORSMiddleware,
@@ -24,6 +33,8 @@ app.include_router(diario.router_comentarios)
 app.include_router(listas.router)
 app.include_router(logros.router)
 
+
 @app.get("/")
 def root():
+    # endpoint tonto para comprobar que la api responde
     return {"message": "Bonobo API funcionando"}

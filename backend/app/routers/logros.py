@@ -9,8 +9,7 @@ router = APIRouter(
 )
 
 
-# GET /api/logros/mis-logros
-# Devuelve los logros del usuario con si ya reclamó la XP o no
+# devuelve los logros que tiene el user, con flag de si ya reclamó la XP
 @router.get("/mis-logros")
 def get_mis_logros(db: Session = Depends(database.get_db),
                    current_user: models.Usuario = Depends(oauth2.get_current_user)):
@@ -36,8 +35,7 @@ def get_mis_logros(db: Session = Depends(database.get_db),
     ]
 
 
-# GET /api/logros/todos
-# Devuelve todos los logros disponibles indicando cuáles tiene el usuario
+# devuelve TODOS los logros del catalogo y marca cuales tiene el user
 @router.get("/todos")
 def get_todos_logros(db: Session = Depends(database.get_db),
                      current_user: models.Usuario = Depends(oauth2.get_current_user)):
@@ -46,7 +44,7 @@ def get_todos_logros(db: Session = Depends(database.get_db),
         select(models.Logro).order_by(models.Logro.id)
     ).scalars().all()
 
-    # logros que ya tiene el usuario
+    # mapa id_logro -> UsuarioLogro para los que ya tiene el user
     desbloqueados = {
         ul.id_logro: ul
         for ul in db.execute(
@@ -70,8 +68,8 @@ def get_todos_logros(db: Session = Depends(database.get_db),
     ]
 
 
-# POST /api/logros/{id_usuario_logro}/reclamar
-# Reclama la XP de un logro desbloqueado
+# reclama la XP de un logro desbloqueado y recalcula el nivel.
+# formula del nivel: (xp_total // 100) + 1
 @router.post("/{id_usuario_logro}/reclamar")
 def reclamar_xp(id_usuario_logro: int,
                 db: Session = Depends(database.get_db),
@@ -96,12 +94,11 @@ def reclamar_xp(id_usuario_logro: int,
         select(models.Logro).where(models.Logro.id == usuario_logro.id_logro)
     ).scalar_one()
 
-    # marcar como reclamado
     usuario_logro.xp_reclamado = True
 
-    # sumar XP y recalcular nivel
+    # sumamos XP y recalculamos nivel con la formula del documento maestro
     current_user.xp_total += logro.xp
-    current_user.nivel = max(1, current_user.xp_total // 100 + 1)
+    current_user.nivel = (current_user.xp_total // 100) + 1
 
     db.commit()
 

@@ -2,12 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from .. import database, models, schemas, oauth2
-from typing import Optional
-from ..services.logros import verificar_logros, otorgar_logros
+from ..services.logros import comprobar_y_dar_logros
 
-# dos routers porque las rutas de comentarios tienen prefijos distintos:
-# router_diario      -> /api/diario/{id}/*
-# router_comentarios -> /api/comentarios/{id}
+# tenemos dos routers porque las rutas de comentarios viven en otro prefijo:
+#   router_diario      -> /api/diario/{id}/...
+#   router_comentarios -> /api/comentarios/{id}
 router_diario = APIRouter(
     prefix="/api/diario",
     tags=["Diario"]
@@ -36,6 +35,7 @@ def editar_entrada_diario(id_entrada: int, entrada_data: schemas.EntradaDiarioUp
 
     if entrada_data.fecha_visionado:
         entrada.fecha_visionado = entrada_data.fecha_visionado
+    # usamos model_fields_set para distinguir "no me lo mandaron" de "me mandaron null"
     if 'resena' in entrada_data.model_fields_set:
         entrada.resena = entrada_data.resena
     if 'puntuacion' in entrada_data.model_fields_set:
@@ -43,7 +43,6 @@ def editar_entrada_diario(id_entrada: int, entrada_data: schemas.EntradaDiarioUp
 
     db.commit()
     db.refresh(entrada)
-
 
     return entrada
 
@@ -71,12 +70,11 @@ def crear_comentario(id_entrada: int,
     )
     db.add(comentario)
     db.commit()
-    logros = verificar_logros(db, current_user.id)
-    otorgar_logros(db, current_user.id, logros)
+    comprobar_y_dar_logros(db, current_user.id)
     db.refresh(comentario)
-    
 
-    # construimos la respuesta manualmente para incluir username y avatar
+    # devolvemos el comentario montando la respuesta a mano para incluir
+    # username y avatar (asi el front no tiene que pedir el user aparte)
     return schemas.ComentarioOut(
         id=comentario.id,
         id_usuario=current_user.id,
@@ -100,7 +98,6 @@ def get_comentarios(id_entrada: int,
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail="Entrada de diario no encontrada.")
 
-    # join con Usuario para traer username y avatar en la misma query
     rows = db.execute(
         select(models.ComentarioResena, models.Usuario)
         .join(models.Usuario, models.ComentarioResena.id_usuario == models.Usuario.id)

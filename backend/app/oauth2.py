@@ -9,7 +9,9 @@ from .config import settings
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='api/auth/login')
 
-# auto_error=False: sin token devuelve None en lugar de lanzar 401
+# auto_error=False -> si no hay token devolvemos None en lugar de tirar 401.
+# Lo usamos en endpoints que son publicos pero que pueden enriquecer la
+# respuesta si hay sesion (por ejemplo el detalle de pelicula).
 oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl='api/auth/login', auto_error=False)
 
 SECRET_KEY = settings.secret_key
@@ -37,7 +39,7 @@ def verify_access_token(token: str, credentials_exception):
     return token_data
 
 
-# sin token → None (visitante); token presente pero inválido/caducado → 401
+# sin token -> None (visitante). Token presente pero invalido o caducado -> 401.
 def get_optional_user(token: str = Depends(oauth2_scheme_optional), db: Session = Depends(database.get_db)):
     if not token:
         return None
@@ -77,6 +79,8 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 
     token_data = verify_access_token(token, credentials_exception)
 
-    user = db.execute(select(models.Usuario).where(models.Usuario.id == token_data.id)).scalar_one_or_none()
+    user = db.execute(
+        select(models.Usuario).where(models.Usuario.id == token_data.id)
+    ).scalar_one_or_none()
 
     return user

@@ -4,7 +4,7 @@ from sqlalchemy import select, func, delete
 from .. import database, models, schemas, oauth2, utils
 from typing import Optional
 from ..services import get_or_create_pelicula
-from ..services.logros import verificar_logros, otorgar_logros
+from ..services.logros import comprobar_y_dar_logros
 
 router = APIRouter(
     prefix="/api/usuarios",
@@ -12,22 +12,30 @@ router = APIRouter(
 )
 
 
+# helper que devuelve total_vistas + seguidores + seguidos en UNA sola query.
+# antes lo haciamos con 3 selects separados y era una tonteria.
+def _stats_perfil(db: Session, user_id: int):
+    return db.execute(
+        select(
+            select(func.count()).select_from(models.Vista)
+                .where(models.Vista.id_usuario == user_id)
+                .scalar_subquery().label('total_vistas'),
+            select(func.count()).select_from(models.Seguidor)
+                .where(models.Seguidor.id_seguido == user_id)
+                .scalar_subquery().label('seguidores'),
+            select(func.count()).select_from(models.Seguidor)
+                .where(models.Seguidor.id_seguidor == user_id)
+                .scalar_subquery().label('seguidos'),
+        )
+    ).one()
+
+
 @router.get("/me", response_model=schemas.UserProfile)
 def get_mi_perfil(db: Session = Depends(database.get_db),
                   current_user: models.Usuario = Depends(oauth2.get_current_user)):
 
-    total_vistas = db.execute(
-        select(func.count(models.Vista.id)).where(models.Vista.id_usuario == current_user.id)
-    ).scalar()
+    stats = _stats_perfil(db, current_user.id)
 
-    seguidores = db.execute(
-        select(func.count(models.Seguidor.id)).where(models.Seguidor.id_seguido == current_user.id)
-    ).scalar()
-
-    seguidos = db.execute(
-        select(func.count(models.Seguidor.id)).where(models.Seguidor.id_seguidor == current_user.id)
-    ).scalar()
-    
     logros = db.execute(
         select(models.UsuarioLogro, models.Logro)
         .join(models.Logro, models.UsuarioLogro.id_logro == models.Logro.id)
@@ -52,17 +60,20 @@ def get_mi_perfil(db: Session = Depends(database.get_db),
         username=current_user.username,
         bio=current_user.bio,
         avatar_url=current_user.avatar_url,
-        total_vistas=total_vistas,
-        seguidores=seguidores,
-        seguidos=seguidos,
+        total_vistas=stats.total_vistas,
+        seguidores=stats.seguidores,
+        seguidos=stats.seguidos,
         yo_sigo=None,
-        xp_total=current_user.xp_total,   # 👈
-        nivel=current_user.nivel,          # 👈
+        xp_total=current_user.xp_total,
+        nivel=current_user.nivel,
         logros=logros_out,
     )
 
 
-# reemplaza todas las favoritas con la nueva lista (máx. 4 tmdb_ids)
+# reemplaza TODAS las favoritas por la lista nueva (max 4 tmdb_ids).
+# primero resolvemos las pelis (esto puede pegarle a TMDB), si peta no
+# tocamos las favoritas viejas. solo cuando ya tenemos todas las pelis
+# en mano hacemos el delete + insert en la misma transaccion.
 @router.put("/me/favoritas")
 def configurar_favoritas(tmdb_ids: list[int],
                          db: Session = Depends(database.get_db),
@@ -71,23 +82,25 @@ def configurar_favoritas(tmdb_ids: list[int],
     if len(tmdb_ids) > 4:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Máximo 4 películas favoritas")
 
-    db.execute(delete(models.PeliculaFavorita).where(models.PeliculaFavorita.id_usuario == current_user.id))
-    db.commit()
+    # paso 1: resolvemos todas las pelis ANTES de tocar la tabla de favoritas
+    peliculas = [get_or_create_pelicula(tid, db) for tid in tmdb_ids]
 
-    for orden, tmdb_id in enumerate(tmdb_ids, start=1):
-        pelicula = get_or_create_pelicula(tmdb_id, db)
-        favorita = models.PeliculaFavorita(
+    # paso 2: borramos las viejas y metemos las nuevas en una transaccion sola
+    db.execute(delete(models.PeliculaFavorita).where(
+        models.PeliculaFavorita.id_usuario == current_user.id
+    ))
+
+    for orden, pelicula in enumerate(peliculas, start=1):
+        db.add(models.PeliculaFavorita(
             id_usuario=current_user.id,
             id_pelicula=pelicula.id,
             orden=orden
-        )
-        db.add(favorita)
+        ))
 
     db.commit()
 
-    logros = verificar_logros(db, current_user.id)  # 👈
-    otorgar_logros(db, current_user.id, logros)  
-    
+    comprobar_y_dar_logros(db, current_user.id)
+
     return {"detail": "Favoritas actualizadas"}
 
 
@@ -123,7 +136,7 @@ def editar_perfil(usuario_data: schemas.UserUpdate,
 def buscar_usuarios(q: str, skip: int = 0, limit: int = 20,
                     db: Session = Depends(database.get_db)):
 
-    # ilike = LIKE case-insensitive
+    # ilike = LIKE pero sin mirar mayus/minus
     usuarios = db.execute(
         select(models.Usuario)
         .where(models.Usuario.username.ilike(f"%{q}%"))
@@ -134,7 +147,7 @@ def buscar_usuarios(q: str, skip: int = 0, limit: int = 20,
     return usuarios
 
 
-# incluye yo_sigo si hay sesión activa
+# si hay sesion devolvemos tambien yo_sigo (si el user actual sigue al perfil)
 @router.get("/{id}", response_model=schemas.UserProfile)
 def get_perfil(id: int,
                db: Session = Depends(database.get_db),
@@ -147,17 +160,7 @@ def get_perfil(id: int,
     if not usuario:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
 
-    total_vistas = db.execute(
-        select(func.count(models.Vista.id)).where(models.Vista.id_usuario == id)
-    ).scalar()
-
-    seguidores = db.execute(
-        select(func.count(models.Seguidor.id)).where(models.Seguidor.id_seguido == id)
-    ).scalar()
-
-    seguidos = db.execute(
-        select(func.count(models.Seguidor.id)).where(models.Seguidor.id_seguidor == id)
-    ).scalar()
+    stats = _stats_perfil(db, id)
 
     yo_sigo = None
     if current_user and current_user.id != id:
@@ -173,9 +176,9 @@ def get_perfil(id: int,
         username=usuario.username,
         bio=usuario.bio,
         avatar_url=usuario.avatar_url,
-        total_vistas=total_vistas,
-        seguidores=seguidores,
-        seguidos=seguidos,
+        total_vistas=stats.total_vistas,
+        seguidores=stats.seguidores,
+        seguidos=stats.seguidos,
         yo_sigo=yo_sigo,
     )
 
@@ -222,7 +225,7 @@ def get_watchlist(id: int, skip: int = 0, limit: int = 20,
     if not db.execute(select(models.Usuario).where(models.Usuario.id == id)).scalar_one_or_none():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
 
-    # join para traer los datos de la película en la misma query
+    # join para sacar los datos de la peli en la misma query (evita N+1)
     watchlist = db.execute(
         select(models.Watchlist, models.Pelicula)
         .join(models.Pelicula, models.Watchlist.id_pelicula == models.Pelicula.id)
@@ -277,6 +280,7 @@ def get_diario_pelicula(id: int, tmdb_id: int,
 
     entrada_ids = [e.id for e in entradas]
 
+    # contamos likes y comentarios de TODAS las entradas a la vez (en vez de un select por entrada)
     likes_counts = dict(db.execute(
         select(models.LikeResena.id_entrada_diario, func.count(models.LikeResena.id))
         .where(models.LikeResena.id_entrada_diario.in_(entrada_ids))
@@ -303,7 +307,7 @@ def get_diario_pelicula(id: int, tmdb_id: int,
     ]
 
 
-# si es el propio usuario ve también las privadas
+# si pides tus listas tu mismo te salen tambien las privadas
 @router.get("/{id}/listas", response_model=list[schemas.ListaOut])
 def get_listas_usuario(id: int,
                        db: Session = Depends(database.get_db),
@@ -358,7 +362,8 @@ def get_favoritas(id: int, db: Session = Depends(database.get_db)):
 
     return favoritas
 
-# GET /api/usuarios/me/ranking-amigos
+
+# ranking de los amigos del user actual ordenado por XP
 @router.get("/me/ranking-amigos", response_model=list[schemas.UsuarioResumen])
 def get_ranking_amigos(db: Session = Depends(database.get_db),
                        current_user: models.Usuario = Depends(oauth2.get_current_user)):

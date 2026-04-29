@@ -10,7 +10,10 @@ SQLALCHEMY_DATABASE_URL = (
     f"/{settings.database_name}"
 )
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
+# pool_pre_ping=True hace un SELECT 1 antes de cada checkout para evitar
+# que supabase nos pase una conexion ya cerrada (pasa cuando la app
+# esta inactiva un rato).
+engine = create_engine(SQLALCHEMY_DATABASE_URL, pool_pre_ping=True)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

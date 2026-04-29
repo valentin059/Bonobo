@@ -14,7 +14,10 @@ router = APIRouter(
 @router.post('/registro', status_code=status.HTTP_201_CREATED, response_model=schemas.UserOut)
 def crear_usuario(usuario: schemas.UserCreate, db: Session = Depends(database.get_db)):
 
-    usuario_existente = db.execute(select(models.Usuario).where(models.Usuario.email == usuario.email)).scalar_one_or_none()
+    # comprobamos que el email no este pillado
+    usuario_existente = db.execute(
+        select(models.Usuario).where(models.Usuario.email == usuario.email)
+    ).scalar_one_or_none()
     if usuario_existente:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail="Ese email ya está registrado")
@@ -37,15 +40,21 @@ def crear_usuario(usuario: schemas.UserCreate, db: Session = Depends(database.ge
 @router.post('/login', response_model=schemas.Token)
 def login(user_credentials: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(database.get_db)):
 
-    # OAuth2PasswordRequestForm usa "username" como campo, aquí contiene el email
-    user = db.execute(select(models.Usuario).where(models.Usuario.email == user_credentials.username)).scalar_one_or_none()
+    # OAuth2PasswordRequestForm pide un campo "username" pero nosotros
+    # metemos ahi el email. Es como funciona el form de FastAPI por defecto.
+    user = db.execute(
+        select(models.Usuario).where(models.Usuario.email == user_credentials.username)
+    ).scalar_one_or_none()
 
-    # mismo mensaje para email y contraseña incorrectos — no revelamos cuál falla
+    # devolvemos el mismo error en los dos casos para no chivar si
+    # el email existe o no (cuestion de seguridad basica)
     if not user:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Credenciales inválidas")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="Credenciales inválidas")
 
     if not utils.verify_password(user_credentials.password, user.password_hash):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Credenciales inválidas")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="Credenciales inválidas")
 
     access_token = oauth2.create_access_token(data={"user_id": user.id})
 

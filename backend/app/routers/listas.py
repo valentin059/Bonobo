@@ -11,14 +11,17 @@ router = APIRouter(
 )
 
 
-def _check_acceso_lista(lista: models.Lista, current_user: Optional[models.Usuario]) -> None:
+# si la lista es privada, solo el dueño la ve. tira 403 si intentas mirar
+# la lista de otro user.
+def comprobar_permisos_lista(lista: models.Lista, current_user: Optional[models.Usuario]) -> None:
     if not lista.es_publica:
         if not current_user or current_user.id != lista.id_usuario:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                                 detail="Esta lista es privada.")
 
 
-def _lista_out(lista: models.Lista, db: Session) -> schemas.ListaOut:
+# arma el schema ListaOut con el total de peliculas (lo necesitamos en POST y PUT)
+def armar_lista_out(lista: models.Lista, db: Session) -> schemas.ListaOut:
     total = db.execute(
         select(func.count(models.ListaPelicula.id)).where(
             models.ListaPelicula.id_lista == lista.id
@@ -49,7 +52,7 @@ def crear_lista(lista_data: schemas.ListaCreate,
     db.commit()
     db.refresh(lista)
 
-    return _lista_out(lista, db)
+    return armar_lista_out(lista, db)
 
 
 @router.get("/{id_lista}", response_model=schemas.ListaDetalle)
@@ -67,7 +70,7 @@ def get_lista(id_lista: int,
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail="Lista no encontrada.")
 
-    _check_acceso_lista(lista, current_user)
+    comprobar_permisos_lista(lista, current_user)
 
     dueno = db.execute(
         select(models.Usuario).where(models.Usuario.id == lista.id_usuario)
@@ -92,7 +95,7 @@ def get_lista(id_lista: int,
         for row in rows
     ]
 
-    # total independiente de la paginación
+    # total general independiente del skip/limit
     total = db.execute(
         select(func.count(models.ListaPelicula.id)).where(
             models.ListaPelicula.id_lista == id_lista
@@ -129,7 +132,7 @@ def editar_lista(id_lista: int,
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail="No puedes editar esta lista.")
 
-    # solo actualizamos los campos que se envíen
+    # solo tocamos lo que ha mandado el cliente
     if lista_data.nombre is not None:
         lista.nombre = lista_data.nombre
     if lista_data.descripcion is not None:
@@ -140,7 +143,7 @@ def editar_lista(id_lista: int,
     db.commit()
     db.refresh(lista)
 
-    return _lista_out(lista, db)
+    return armar_lista_out(lista, db)
 
 
 @router.delete("/{id_lista}", status_code=status.HTTP_204_NO_CONTENT)

@@ -1,4 +1,5 @@
-// gestión de token JWT y datos de sesión en localStorage
+// Manejo del token JWT y datos de sesion en localStorage.
+// Nota: localStorage es vulnerable a XSS, pero para el alcance del TFG es asumible.
 
 const auth = {
 
@@ -17,7 +18,7 @@ const auth = {
         return !!this.getToken();
     },
 
-    // guarda id, username y avatar para no tener que llamar a /me en cada página
+    // guardamos id, username y avatar para no llamar a /me en cada pagina
     guardarUsuario(usuario) {
         localStorage.setItem(this.USER_KEY, JSON.stringify(usuario));
     },
@@ -25,8 +26,12 @@ const auth = {
     getUsuario() {
         const raw = localStorage.getItem(this.USER_KEY);
         if (!raw) return null;
-        try { return JSON.parse(raw); }
-        catch { return null; }
+        try {
+            return JSON.parse(raw);
+        } catch (err) {
+            console.warn('[auth] usuario en localStorage corrupto', err);
+            return null;
+        }
     },
 
     async login(email, password) {
