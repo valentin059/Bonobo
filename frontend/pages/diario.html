@@ -135,6 +135,13 @@
                                 : '<span class="text-faint">Sin reseña</span>'
                         }</p>
                     </div>
+                    ${!modoAjeno ? `
+                        <button class="diario-borrar-btn"
+                                onclick="event.stopPropagation(); confirmarBorrarEntrada(${entrada.id})"
+                                title="Borrar entrada">
+                            🗑️
+                        </button>
+                    ` : ''}
                 </div>
             `;
         }
@@ -165,6 +172,40 @@
         }
 
         function cargarMas() { cargarEntradas(); }
+
+        // ── Borrar entrada del diario ─────────────────────────────────────
+
+        async function confirmarBorrarEntrada(idEntrada) {
+            // Pedir confirmación con el diálogo nativo del navegador
+            const ok = window.confirm(
+                '¿Seguro que quieres borrar esta entrada del diario?\n\n' +
+                'La película seguirá marcada como vista, solo se borrará esta entrada concreta.\n\n' +
+                'Esta acción no se puede deshacer.'
+            );
+
+            if (!ok) return;  // si pulsa cancelar, no hacemos nada
+
+            try {
+                await api.acciones.borrarDiario(idEntrada);
+
+                // Quitar la fila del DOM con animación
+                const fila = document.getElementById(`entrada-${idEntrada}`);
+                if (fila) {
+                    fila.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                    fila.style.opacity = '0';
+                    fila.style.transform = 'translateX(20px)';
+                    setTimeout(() => fila.remove(), 300);
+                }
+
+                // Limpiar la caché en memoria
+                delete entradas$[idEntrada];
+
+                mostrarToast('Entrada borrada ✓', 'ok');
+
+            } catch (err) {
+                mostrarToast(err.message || 'Error al borrar la entrada', 'error');
+            }
+        }
 
         // ── Modal editar entrada ──────────────────────────────────────────
 
@@ -268,6 +309,11 @@
 
         document.addEventListener('DOMContentLoaded', async () => {
             renderNav('../');
+
+            // Limita la fecha de edición a HOY (no se pueden poner fechas futuras)
+            const hoy = new Date().toISOString().split('T')[0];
+            const inputFecha = document.getElementById('editFecha');
+            if (inputFecha) inputFecha.setAttribute('max', hoy);
 
             const params  = new URLSearchParams(window.location.search);
             const idParam = parseInt(params.get('id'));

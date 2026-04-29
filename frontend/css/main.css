@@ -2232,3 +2232,40 @@ img { display: block; max-width: 100%; }
 /* Aseguramos que los contenedores tengan posición relativa */
 .perfil-stat { position: relative; }
 .nav-link    { position: relative; }
+/* ══════════════════════════════════════════════════════════════
+   BOTÓN BORRAR ENTRADA DEL DIARIO
+   ══════════════════════════════════════════════════════════════ */
+
+/* Botón papelera al final de cada entrada del diario */
+.diario-borrar-btn {
+    flex-shrink: 0;            /* nunca se encoge en el flexbox */
+    align-self: flex-start;    /* alineado arriba como las otras columnas */
+    margin-top: 4px;
+    width: 36px;
+    height: 36px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 50%;        /* circular */
+    color: var(--muted);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    line-height: 1;
+}
+
+/* Hover: pasa a rojo con un pequeño rebote */
+.diario-borrar-btn:hover {
+    background: rgba(244, 63, 94, 0.15);   /* rojo translúcido */
+    border-color: var(--error);
+    color: var(--error);
+    transform: scale(1.1);                 /* crece un poco */
+    box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.08);  /* halo suave */
+}
+
+/* Click: vuelve al tamaño normal momentáneamente */
+.diario-borrar-btn:active {
+    transform: scale(0.95);
+}

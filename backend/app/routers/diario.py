@@ -51,6 +51,32 @@ def editar_entrada_diario(id_entrada: int, entrada_data: schemas.EntradaDiarioUp
     return entrada
 
 
+# ─── BORRAR ENTRADA ───────────────────────────────────────────────────────
+
+# DELETE /api/diario/{id_entrada}
+# Elimina una entrada del diario propia. La película sigue marcada como vista.
+@router_diario.delete("/{id_entrada}", status_code=status.HTTP_204_NO_CONTENT)
+def borrar_entrada_diario(id_entrada: int,
+                          db: Session = Depends(database.get_db),
+                          current_user: models.Usuario = Depends(oauth2.get_current_user)):
+
+    entrada = db.execute(
+        select(models.EntradaDiario).where(models.EntradaDiario.id == id_entrada)
+    ).scalar_one_or_none()
+
+    if not entrada:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail="Entrada no encontrada.")
+
+    # Solo el dueño puede borrar su entrada
+    if entrada.id_usuario != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="No puedes borrar la entrada de otro usuario.")
+
+    db.delete(entrada)
+    db.commit()
+
+
 # ─── COMENTARIOS ──────────────────────────────────────────────────────────
 
 # POST /api/diario/{id_entrada}/comentarios

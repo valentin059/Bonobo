@@ -208,5 +208,14 @@
     <script src="../js/nav.js"></script>
     <script src="../js/pelicula.js"></script>
 
+    <!-- Limita la fecha de visionado a HOY (no se pueden registrar fechas futuras) -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const hoy = new Date().toISOString().split('T')[0];
+            const inputFecha = document.getElementById('fechaVisionado');
+            if (inputFecha) inputFecha.setAttribute('max', hoy);
+        });
+    </script>
+
 </body>
 </html>

@@ -155,6 +155,7 @@ const api = {
 
         crearDiario:        (tmdbId, body) => _req('POST', `/api/peliculas/${tmdbId}/diario`, body),
         editarDiario:       (idEntrada, body) => _req('PUT', `/api/diario/${idEntrada}`, body),
+        borrarDiario:       (idEntrada) => _req('DELETE', `/api/diario/${idEntrada}`),
     },
 
     usuarios: {
