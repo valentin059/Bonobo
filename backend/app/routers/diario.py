@@ -45,6 +45,24 @@ def editar_entrada_diario(id_entrada: int, entrada_data: schemas.EntradaDiarioUp
     db.refresh(entrada)
 
     return entrada
+# DELETE /api/diario/{id_entrada}
+@router_diario.delete("/{id_entrada}", status_code=status.HTTP_204_NO_CONTENT)
+def eliminar_entrada_diario(id_entrada: int,
+                            db: Session = Depends(database.get_db),
+                            current_user: models.Usuario = Depends(oauth2.get_current_user)):
+
+    entrada = db.execute(select(models.EntradaDiario).where(
+        models.EntradaDiario.id == id_entrada
+    )).scalar_one_or_none()
+
+    if not entrada:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Entrada no encontrada")
+
+    if entrada.id_usuario != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No puedes eliminar esta entrada")
+
+    db.delete(entrada)
+    db.commit()
 
 
 @router_diario.post("/{id_entrada}/comentarios",
@@ -188,3 +206,4 @@ def quitar_like(id_entrada: int,
     db.commit()
 
     return {"detail": "Like eliminado."}
+
