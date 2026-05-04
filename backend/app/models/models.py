@@ -190,3 +190,15 @@ class UsuarioLogro(Base):
     __table_args__ = (
         UniqueConstraint("id_usuario", "id_logro"),
     )
+
+class ListaColaborador(Base):
+    __tablename__ = "lista_colaboradores"
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    id_lista = Column(Integer, ForeignKey("listas.id", ondelete="CASCADE"), nullable=False, index=True)
+    id_usuario = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
+
+    __table_args__ = (
+        UniqueConstraint("id_lista", "id_usuario", name="unique_lista_colaborador"),
+    )

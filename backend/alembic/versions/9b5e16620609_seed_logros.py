@@ -44,18 +44,19 @@ LOGROS = [
 
 
 def upgrade() -> None:
-    op.execute(
-        sa.text("""
-            INSERT INTO logros (codigo, nombre, descripcion, xp) VALUES
-            """ + ",\n            ".join(
-            f"(:c{i}, :n{i}, :d{i}, :x{i})" for i in range(len(LOGROS))
-        )).bindparams(
-            **{f"c{i}": logro[0] for i, logro in enumerate(LOGROS)},
-            **{f"n{i}": logro[1] for i, logro in enumerate(LOGROS)},
-            **{f"d{i}": logro[2] for i, logro in enumerate(LOGROS)},
-            **{f"x{i}": logro[3] for i, logro in enumerate(LOGROS)},
+    for i, logro in enumerate(LOGROS):
+        op.execute(
+            sa.text("""
+                INSERT INTO logros (codigo, nombre, descripcion, xp) VALUES
+                (:codigo, :nombre, :descripcion, :xp)
+                ON CONFLICT (codigo) DO NOTHING
+            """).bindparams(
+                codigo=logro[0],
+                nombre=logro[1],
+                descripcion=logro[2],
+                xp=logro[3],
+            )
         )
-    )
 
 
 def downgrade() -> None:
