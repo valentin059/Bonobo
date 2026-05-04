@@ -4,6 +4,7 @@ from sqlalchemy import select, func, delete
 from .. import database, models, schemas, oauth2, utils
 from typing import Optional
 from ..services import get_or_create_pelicula
+from datetime import datetime, timezone
 from ..services.logros import comprobar_y_dar_logros
 
 router = APIRouter(
@@ -383,3 +384,103 @@ def get_ranking_amigos(db: Session = Depends(database.get_db),
     ).scalars().all()
 
     return usuarios
+
+# GET /api/usuarios/me/feed
+@router.get("/me/feed")
+def get_feed(db: Session = Depends(database.get_db),
+             current_user: models.Usuario = Depends(oauth2.get_current_user),
+             skip: int = 0, limit: int = 20):
+
+    # IDs de usuarios que sigo
+    seguidos_ids = db.execute(
+        select(models.Seguidor.id_seguido)
+        .where(models.Seguidor.id_seguidor == current_user.id)
+    ).scalars().all()
+
+    if not seguidos_ids:
+        return []
+    año_actual = datetime.now(timezone.utc).year # Para añadir hasta la fecha actual o anterior
+
+    eventos = []
+
+    # ─── VISTAS ───
+    vistas = db.execute(
+        select(models.Vista, models.Usuario, models.Pelicula)
+        .join(models.Usuario, models.Vista.id_usuario == models.Usuario.id)
+        .join(models.Pelicula, models.Vista.id_pelicula == models.Pelicula.id)
+        .where(models.Vista.id_usuario.in_(seguidos_ids),
+               func.extract('year', models.Vista.created_at) == año_actual   
+        )
+        .order_by(models.Vista.created_at.desc())
+        .limit(50)
+    ).all()
+
+    for v, u, p in vistas:
+        eventos.append({
+            "tipo": "vista",
+            "usuario_id": u.id,
+            "username": u.username,
+            "avatar_url": u.avatar_url,
+            "pelicula_tmdb_id": p.tmdb_id,
+            "pelicula_titulo": p.titulo,
+            "pelicula_poster": p.poster_url,
+            "puntuacion": v.puntuacion,
+            "created_at": v.created_at.isoformat(),
+        })
+
+    # ─── RESEÑAS ───
+    resenas = db.execute(
+        select(models.EntradaDiario, models.Usuario, models.Pelicula)
+        .join(models.Usuario, models.EntradaDiario.id_usuario == models.Usuario.id)
+        .join(models.Pelicula, models.EntradaDiario.id_pelicula == models.Pelicula.id)
+        .where(
+            models.EntradaDiario.id_usuario.in_(seguidos_ids),
+            models.EntradaDiario.resena.isnot(None),
+            func.extract('year', models.EntradaDiario.created_at) == año_actual
+        )
+        .order_by(models.EntradaDiario.created_at.desc())
+        .limit(50)
+    ).all()
+
+    for e, u, p in resenas:
+        eventos.append({
+            "tipo": "resena",
+            "usuario_id": u.id,
+            "username": u.username,
+            "avatar_url": u.avatar_url,
+            "pelicula_tmdb_id": p.tmdb_id,
+            "pelicula_titulo": p.titulo,
+            "pelicula_poster": p.poster_url,
+            "puntuacion": e.puntuacion,
+            "resena": e.resena[:200] if e.resena else None,
+            "entrada_id": e.id,
+            "created_at": e.created_at.isoformat(),
+        })
+
+    # ─── ME GUSTA ───
+    me_gustas = db.execute(
+        select(models.MeGusta, models.Usuario, models.Pelicula)
+        .join(models.Usuario, models.MeGusta.id_usuario == models.Usuario.id)
+        .join(models.Pelicula, models.MeGusta.id_pelicula == models.Pelicula.id)
+        .where(models.MeGusta.id_usuario.in_(seguidos_ids),
+               func.extract('year', models.MeGusta.created_at) == año_actual
+        )
+        .order_by(models.MeGusta.created_at.desc())
+        .limit(50)
+    ).all()
+
+    for mg, u, p in me_gustas:
+        eventos.append({
+            "tipo": "me_gusta",
+            "usuario_id": u.id,
+            "username": u.username,
+            "avatar_url": u.avatar_url,
+            "pelicula_tmdb_id": p.tmdb_id,
+            "pelicula_titulo": p.titulo,
+            "pelicula_poster": p.poster_url,
+            "created_at": mg.created_at.isoformat(),
+        })
+
+    # Ordenar todo por fecha y paginar
+    eventos.sort(key=lambda x: x["created_at"], reverse=True)
+    return eventos[skip: skip + limit]
