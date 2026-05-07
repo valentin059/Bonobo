@@ -4,7 +4,7 @@ from sqlalchemy import select, func, delete
 from .. import database, models, schemas, oauth2, utils
 from typing import Optional
 from ..services import get_or_create_pelicula
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from ..services.logros import comprobar_y_dar_logros
 
 router = APIRouter(
@@ -386,12 +386,12 @@ def get_ranking_amigos(db: Session = Depends(database.get_db),
     return usuarios
 
 # GET /api/usuarios/me/feed
-@router.get("/me/feed")
+@router.get("/me/feed", response_model=list[schemas.FeedItem])
 def get_feed(db: Session = Depends(database.get_db),
              current_user: models.Usuario = Depends(oauth2.get_current_user),
-             skip: int = 0, limit: int = 20):
+             skip: int = Query(default=0, ge=0),
+             limit: int = Query(default=20, ge=1, le=100)):
 
-    # IDs de usuarios que sigo
     seguidos_ids = db.execute(
         select(models.Seguidor.id_seguido)
         .where(models.Seguidor.id_seguidor == current_user.id)
@@ -399,8 +399,8 @@ def get_feed(db: Session = Depends(database.get_db),
 
     if not seguidos_ids:
         return []
-    año_actual = datetime.now(timezone.utc).year # Para añadir hasta la fecha actual o anterior
 
+    desde = datetime.now(timezone.utc) - timedelta(days=90)
     eventos = []
 
     # ─── VISTAS ───
@@ -408,8 +408,9 @@ def get_feed(db: Session = Depends(database.get_db),
         select(models.Vista, models.Usuario, models.Pelicula)
         .join(models.Usuario, models.Vista.id_usuario == models.Usuario.id)
         .join(models.Pelicula, models.Vista.id_pelicula == models.Pelicula.id)
-        .where(models.Vista.id_usuario.in_(seguidos_ids),
-               func.extract('year', models.Vista.created_at) == año_actual   
+        .where(
+            models.Vista.id_usuario.in_(seguidos_ids),
+            models.Vista.created_at >= desde,
         )
         .order_by(models.Vista.created_at.desc())
         .limit(50)
@@ -436,7 +437,7 @@ def get_feed(db: Session = Depends(database.get_db),
         .where(
             models.EntradaDiario.id_usuario.in_(seguidos_ids),
             models.EntradaDiario.resena.isnot(None),
-            func.extract('year', models.EntradaDiario.created_at) == año_actual
+            models.EntradaDiario.created_at >= desde,
         )
         .order_by(models.EntradaDiario.created_at.desc())
         .limit(50)
@@ -462,8 +463,9 @@ def get_feed(db: Session = Depends(database.get_db),
         select(models.MeGusta, models.Usuario, models.Pelicula)
         .join(models.Usuario, models.MeGusta.id_usuario == models.Usuario.id)
         .join(models.Pelicula, models.MeGusta.id_pelicula == models.Pelicula.id)
-        .where(models.MeGusta.id_usuario.in_(seguidos_ids),
-               func.extract('year', models.MeGusta.created_at) == año_actual
+        .where(
+            models.MeGusta.id_usuario.in_(seguidos_ids),
+            models.MeGusta.created_at >= desde,
         )
         .order_by(models.MeGusta.created_at.desc())
         .limit(50)
@@ -481,6 +483,5 @@ def get_feed(db: Session = Depends(database.get_db),
             "created_at": mg.created_at.isoformat(),
         })
 
-    # Ordenar todo por fecha y paginar
     eventos.sort(key=lambda x: x["created_at"], reverse=True)
     return eventos[skip: skip + limit]

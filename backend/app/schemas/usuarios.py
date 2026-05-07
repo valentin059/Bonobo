@@ -101,3 +101,17 @@ class FavoritaOut(BaseModel):
     orden: int
     pelicula: PeliculaCache
     model_config = ConfigDict(from_attributes=True)
+
+
+class FeedItem(BaseModel):
+    tipo: str
+    usuario_id: int
+    username: str
+    avatar_url: Optional[str] = None
+    pelicula_tmdb_id: int
+    pelicula_titulo: str
+    pelicula_poster: Optional[str] = None
+    puntuacion: Optional[int] = None
+    resena: Optional[str] = None
+    entrada_id: Optional[int] = None
+    created_at: str
