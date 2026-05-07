@@ -63,6 +63,40 @@ def crear_lista(lista_data: schemas.ListaCreate,
 
     return armar_lista_out(lista, db)
 
+# GET /api/listas/colaborando
+# Listas en las que el usuario es colaborador (no dueño)
+@router.get("/colaborando", response_model=list[schemas.ListaOut])
+def get_listas_colaborando(db: Session = Depends(database.get_db),
+                            current_user: models.Usuario = Depends(oauth2.get_current_user)):
+
+    rows = db.execute(
+        select(models.Lista)
+        .join(models.ListaColaborador, models.ListaColaborador.id_lista == models.Lista.id)
+        .where(models.ListaColaborador.id_usuario == current_user.id)
+        .order_by(models.Lista.created_at.desc())
+    ).scalars().all()
+
+    if not rows:
+        return []
+
+    lista_ids = [l.id for l in rows]
+    counts = dict(db.execute(
+        select(models.ListaPelicula.id_lista, func.count(models.ListaPelicula.id))
+        .where(models.ListaPelicula.id_lista.in_(lista_ids))
+        .group_by(models.ListaPelicula.id_lista)
+    ).all())
+
+    return [
+        schemas.ListaOut(
+            id=l.id,
+            nombre=l.nombre,
+            descripcion=l.descripcion,
+            es_publica=l.es_publica,
+            total_peliculas=counts.get(l.id, 0),
+            created_at=l.created_at
+        )
+        for l in rows
+    ]
 
 @router.get("/{id_lista}", response_model=schemas.ListaDetalle)
 def get_lista(id_lista: int,
@@ -386,3 +420,4 @@ def get_colaboradores(id_lista: int,
     ).scalars().all()
 
     return colaboradores
+
