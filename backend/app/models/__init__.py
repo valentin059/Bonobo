@@ -14,5 +14,5 @@ from .models import (
     ListaPelicula,
     Logro,          
     UsuarioLogro,
-    ListaColaborador
+    ListaColaborador,
 )

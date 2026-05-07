@@ -12,10 +12,19 @@ router = APIRouter(
 
 
 # si la lista es privada, solo el dueño la ve. tira 403 si intentas mirar
-# la lista de otro user.
-def comprobar_permisos_lista(lista: models.Lista, current_user: Optional[models.Usuario]) -> None:
+# la lista de otro user. Se añadió para crear lista compartidas
+def comprobar_permisos_lista(lista: models.Lista, current_user: Optional[models.Usuario], db: Session) -> None:
     if not lista.es_publica:
-        if not current_user or current_user.id != lista.id_usuario:
+        if not current_user:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                                detail="Esta lista es privada.")
+        if current_user.id == lista.id_usuario:
+            return
+        es_colaborador = db.execute(select(models.ListaColaborador).where(
+            models.ListaColaborador.id_lista == lista.id,
+            models.ListaColaborador.id_usuario == current_user.id
+        )).scalar_one_or_none()
+        if not es_colaborador:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                                 detail="Esta lista es privada.")
 
@@ -70,7 +79,7 @@ def get_lista(id_lista: int,
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail="Lista no encontrada.")
 
-    comprobar_permisos_lista(lista, current_user)
+    comprobar_permisos_lista(lista, current_user, db)
 
     dueno = db.execute(
         select(models.Usuario).where(models.Usuario.id == lista.id_usuario)
@@ -205,9 +214,15 @@ def añadir_pelicula_lista(id_lista: int,
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail="Lista no encontrada.")
 
-    if lista.id_usuario != current_user.id:
+    es_dueno = lista.id_usuario == current_user.id
+    es_colaborador = db.execute(select(models.ListaColaborador).where(
+        models.ListaColaborador.id_lista == id_lista,
+        models.ListaColaborador.id_usuario == current_user.id
+    )).scalar_one_or_none()
+
+    if not es_dueno and not es_colaborador:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-                            detail="No puedes modificar esta lista.")
+                        detail="No puedes modificar esta lista.")
 
     pelicula = get_or_create_pelicula(tmdb_id, db)
 
@@ -242,9 +257,15 @@ def quitar_pelicula_lista(id_lista: int,
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail="Lista no encontrada.")
 
-    if lista.id_usuario != current_user.id:
+    es_dueno = lista.id_usuario == current_user.id
+    es_colaborador = db.execute(select(models.ListaColaborador).where(
+        models.ListaColaborador.id_lista == id_lista,
+        models.ListaColaborador.id_usuario == current_user.id
+    )).scalar_one_or_none()
+
+    if not es_dueno and not es_colaborador:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-                            detail="No puedes modificar esta lista.")
+                        detail="No puedes modificar esta lista.")
 
     pelicula = db.execute(
         select(models.Pelicula).where(models.Pelicula.tmdb_id == tmdb_id)
@@ -269,3 +290,99 @@ def quitar_pelicula_lista(id_lista: int,
     db.commit()
 
     return {"detail": "Película eliminada de la lista."}
+
+
+# POST /api/listas/{id_lista}/colaboradores/{id_usuario}
+# Invitar a un colaborador (solo el dueño, y solo si hay seguimiento mutuo)
+@router.post("/{id_lista}/colaboradores/{id_usuario}", status_code=status.HTTP_201_CREATED)
+def añadir_colaborador(id_lista: int, id_usuario: int,
+                       db: Session = Depends(database.get_db),
+                       current_user: models.Usuario = Depends(oauth2.get_current_user)):
+
+    lista = db.execute(select(models.Lista).where(models.Lista.id == id_lista)).scalar_one_or_none()
+    if not lista:
+        raise HTTPException(status_code=404, detail="Lista no encontrada")
+    if lista.id_usuario != current_user.id:
+        raise HTTPException(status_code=403, detail="Solo el dueño puede invitar colaboradores")
+
+    # verificar seguimiento mutuo
+    yo_sigo = db.execute(select(models.Seguidor).where(
+        models.Seguidor.id_seguidor == current_user.id,
+        models.Seguidor.id_seguido == id_usuario
+    )).scalar_one_or_none()
+
+    me_sigue = db.execute(select(models.Seguidor).where(
+        models.Seguidor.id_seguidor == id_usuario,
+        models.Seguidor.id_seguido == current_user.id
+    )).scalar_one_or_none()
+
+    if not yo_sigo or not me_sigue:
+        raise HTTPException(status_code=400, detail="Solo puedes invitar a usuarios con seguimiento mutuo")
+
+    ya_existe = db.execute(select(models.ListaColaborador).where(
+        models.ListaColaborador.id_lista == id_lista,
+        models.ListaColaborador.id_usuario == id_usuario
+    )).scalar_one_or_none()
+
+    if ya_existe:
+        raise HTTPException(status_code=409, detail="Ya es colaborador de esta lista")
+
+    db.add(models.ListaColaborador(id_lista=id_lista, id_usuario=id_usuario))
+    db.commit()
+
+    return {"detail": "Colaborador añadido"}
+
+
+# DELETE /api/listas/{id_lista}/colaboradores/{id_usuario}
+# Eliminar colaborador (solo el dueño)
+@router.delete("/{id_lista}/colaboradores/{id_usuario}", status_code=status.HTTP_204_NO_CONTENT)
+def eliminar_colaborador(id_lista: int, id_usuario: int,
+                         db: Session = Depends(database.get_db),
+                         current_user: models.Usuario = Depends(oauth2.get_current_user)):
+
+    lista = db.execute(select(models.Lista).where(models.Lista.id == id_lista)).scalar_one_or_none()
+    if not lista:
+        raise HTTPException(status_code=404, detail="Lista no encontrada")
+    if lista.id_usuario != current_user.id:
+        raise HTTPException(status_code=403, detail="Solo el dueño puede eliminar colaboradores")
+
+    colaborador = db.execute(select(models.ListaColaborador).where(
+        models.ListaColaborador.id_lista == id_lista,
+        models.ListaColaborador.id_usuario == id_usuario
+    )).scalar_one_or_none()
+
+    if not colaborador:
+        raise HTTPException(status_code=404, detail="No es colaborador de esta lista")
+
+    db.delete(colaborador)
+    db.commit()
+
+
+# GET /api/listas/{id_lista}/colaboradores
+# Ver colaboradores de una lista
+@router.get("/{id_lista}/colaboradores", response_model=list[schemas.UsuarioResumen])
+def get_colaboradores(id_lista: int,
+                      db: Session = Depends(database.get_db),
+                      current_user: models.Usuario = Depends(oauth2.get_current_user)):
+
+    lista = db.execute(select(models.Lista).where(models.Lista.id == id_lista)).scalar_one_or_none()
+    if not lista:
+        raise HTTPException(status_code=404, detail="Lista no encontrada")
+
+    # solo el dueño o colaboradores pueden ver la lista de colaboradores
+    es_dueno = lista.id_usuario == current_user.id
+    es_colaborador = db.execute(select(models.ListaColaborador).where(
+        models.ListaColaborador.id_lista == id_lista,
+        models.ListaColaborador.id_usuario == current_user.id
+    )).scalar_one_or_none()
+
+    if not es_dueno and not es_colaborador:
+        raise HTTPException(status_code=403, detail="No tienes acceso a esta lista")
+
+    colaboradores = db.execute(
+        select(models.Usuario)
+        .join(models.ListaColaborador, models.ListaColaborador.id_usuario == models.Usuario.id)
+        .where(models.ListaColaborador.id_lista == id_lista)
+    ).scalars().all()
+
+    return colaboradores
