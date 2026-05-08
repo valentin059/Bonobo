@@ -19,7 +19,7 @@ function escapeHTML(str) {
 function _headers(esJSON = true) {
     const token = localStorage.getItem('bonobo_token');
     const h = {};
-    if (esJSON) h['Content-Type'] = 'application/json';
+    if (esJSON) h['Content-Type'] = 'application/json; charset=UTF-8'
     if (token) h['Authorization'] = `Bearer ${token}`;
     return h;
 }
