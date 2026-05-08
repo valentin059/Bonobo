@@ -90,15 +90,16 @@
                 // Cada elemento de watchlist: { id, pelicula: { tmdb_id, titulo, poster_url, anio_estreno } }
                 grid.innerHTML = watchlist.map(item => {
                     const p = item.pelicula;
+                    const titSafe = escapeHTML(p.titulo || '—');
+                    const posterSafe = escapeHTML(p.poster_url || '');
                     return `
                         <div class="pelicula-card" id="card-${p.tmdb_id}">
                             <div class="pelicula-card__poster" onclick="location.href='pelicula.html?id=${p.tmdb_id}'">
                                 ${p.poster_url
-                                    ? `<img class="pelicula-card__img" src="${p.poster_url}" alt="${p.titulo}" loading="lazy">`
+                                    ? `<img class="pelicula-card__img" src="${posterSafe}" alt="${titSafe}" loading="lazy">`
                                     : `<div class="pelicula-card__no-img">SIN IMAGEN</div>`
                                 }
                                 <div class="pelicula-card__overlay">
-                                    <!-- Botón para quitar de watchlist desde la propia tarjeta -->
                                     <button
                                         class="btn btn--ghost btn--sm" style="font-size:10px"
                                         onclick="event.stopPropagation(); quitarDeWatchlist(${p.tmdb_id}, document.getElementById('card-${p.tmdb_id}'))"
@@ -108,7 +109,7 @@
                                 </div>
                             </div>
                             <div class="pelicula-card__info">
-                                <div class="pelicula-card__titulo">${p.titulo || '—'}</div>
+                                <div class="pelicula-card__titulo">${titSafe}</div>
                                 <div class="pelicula-card__anio">${p.anio_estreno || ''}</div>
                             </div>
                         </div>

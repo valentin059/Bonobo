@@ -15,7 +15,7 @@
         <!-- VISTA: ÍNDICE DE LISTAS -->
         <div id="vistaIndice">
 
-            <div class="seccion-header" style="margin-bottom:32px">
+            <div class="seccion-header" style="margin-bottom:24px">
                 <h1 class="seccion-titulo" id="tituloIndice">Mis Listas</h1>
                 <div class="seccion-linea"></div>
                 <button class="btn btn--primary btn--sm" onclick="abrirModalCrear()">
@@ -23,9 +23,17 @@
                 </button>
             </div>
 
+            <!-- Pestañas: mis listas / listas en las que colaboro -->
+            <div class="tabs" id="tabsListas" style="margin-bottom:20px">
+                <button class="tab tab--activo" data-tab="mias">Mías</button>
+                <button class="tab" data-tab="colaborando">Colaborando</button>
+            </div>
+
             <div class="listas-lista" id="listaListas">
                 <p class="text-faint" style="font-size:13px">Cargando…</p>
             </div>
+
+            <div class="listas-lista oculto" id="listaColaborando"></div>
 
         </div>
 
@@ -65,6 +73,20 @@
                 <div id="resultadosAñadir" style="max-width:480px;margin-top:4px"></div>
             </div>
 
+            <!-- Colaboradores (visible en lista propia y para colaboradores) -->
+            <div id="seccionColaboradores" class="oculto" style="margin-bottom:32px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                    <div style="font-size:11px;font-weight:600;color:var(--faint);text-transform:uppercase;letter-spacing:.08em">
+                        Colaboradores
+                    </div>
+                    <button class="btn btn--ghost btn--sm oculto" id="btnAñadirColab"
+                            onclick="abrirModalColaborador()">
+                        + Añadir
+                    </button>
+                </div>
+                <div id="listaColaboradores"></div>
+            </div>
+
             <!-- Grid de películas de la lista -->
             <div class="peliculas-grid" id="gridDetalle"></div>
 
@@ -100,6 +122,25 @@
                     onclick="crearLista()">
                 Crear lista
             </button>
+        </div>
+    </div>
+
+    <!-- MODAL: AÑADIR COLABORADOR -->
+    <div class="modal-overlay modal-overlay--hidden" id="modalColaborador">
+        <div class="modal">
+            <button class="modal-close" onclick="cerrarModal('modalColaborador')">✕</button>
+            <h2 class="modal-titulo">Añadir colaborador</h2>
+            <p style="font-size:12px;color:var(--faint);margin-bottom:12px">
+                Solo puedes invitar a usuarios con los que tengas seguimiento mutuo.
+            </p>
+
+            <input class="form-input" type="text" id="inputBuscarColab"
+                   placeholder="Buscar por nombre de usuario…"
+                   oninput="buscarColaborador(this.value)"
+                   autocomplete="off" />
+            <div id="resultadosColab" style="margin-top:8px"></div>
+
+            <p class="form-error" id="errorColab"></p>
         </div>
     </div>
 
@@ -163,6 +204,21 @@
 
         //  Índice de listas
 
+        let colaborandoCargadas = false;
+
+        function activarTabListas(nombre) {
+            document.querySelectorAll('#tabsListas .tab').forEach(btn => {
+                btn.classList.toggle('tab--activo', btn.dataset.tab === nombre);
+            });
+            document.getElementById('listaListas').classList.toggle('oculto', nombre !== 'mias');
+            document.getElementById('listaColaborando').classList.toggle('oculto', nombre !== 'colaborando');
+
+            if (nombre === 'colaborando' && !colaborandoCargadas) {
+                colaborandoCargadas = true;
+                cargarColaborando();
+            }
+        }
+
         async function cargarListas(idUsuario) {
             const contenedor = document.getElementById('listaListas');
             try {
@@ -179,6 +235,26 @@
                 contenedor.innerHTML = listas.map(l => renderListaCard(l, true)).join('');
             } catch {
                 mostrarToast('Error al cargar las listas', 'error');
+            }
+        }
+
+        async function cargarColaborando() {
+            const contenedor = document.getElementById('listaColaborando');
+            contenedor.innerHTML = '<p class="text-faint" style="font-size:13px">Cargando…</p>';
+            try {
+                const listas = await api.listas.colaborando();
+                if (!listas || listas.length === 0) {
+                    contenedor.innerHTML = `
+                        <div class="estado-vacio">
+                            <p class="estado-vacio__titulo">No colaboras en ninguna lista</p>
+                            <p class="estado-vacio__desc">Cuando alguien te invite a colaborar verás sus listas aquí.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                contenedor.innerHTML = listas.map(l => renderListaCard(l, false)).join('');
+            } catch {
+                contenedor.innerHTML = '<p class="text-faint" style="font-size:13px">Error al cargar.</p>';
             }
         }
 
@@ -269,6 +345,13 @@
 
                 renderizarPeliculasLista(lista.peliculas);
 
+                // Colaboradores (solo si hay usuario logueado, ya que el endpoint los devuelve solo a dueño/colaboradores)
+                if (auth.estaLogueado()) {
+                    cargarColaboradoresLista(lista.id);
+                } else {
+                    document.getElementById('seccionColaboradores').classList.add('oculto');
+                }
+
             } catch {
                 mostrarToast('Error al cargar la lista', 'error');
                 volverAlIndice();
@@ -283,11 +366,14 @@
                 </div>`;
                 return;
             }
-            grid.innerHTML = peliculas.map(p => `
+            grid.innerHTML = peliculas.map(p => {
+                const titSafe = escapeHTML(p.titulo || '—');
+                const posterSafe = escapeHTML(p.poster_url || '');
+                return `
                 <div class="pelicula-card">
                     <div class="pelicula-card__poster" onclick="irAPelicula(${p.tmdb_id})" style="cursor:pointer">
                         ${p.poster_url
-                            ? `<img class="pelicula-card__img" src="${p.poster_url}" alt="${p.titulo}" loading="lazy">`
+                            ? `<img class="pelicula-card__img" src="${posterSafe}" alt="${titSafe}" loading="lazy">`
                             : `<div class="pelicula-card__no-img">SIN IMAGEN</div>`
                         }
                         ${esListaPropia ? `
@@ -298,11 +384,12 @@
                         </div>` : ''}
                     </div>
                     <div class="pelicula-card__info">
-                        <div class="pelicula-card__titulo">${p.titulo || '—'}</div>
+                        <div class="pelicula-card__titulo">${titSafe}</div>
                         <div class="pelicula-card__anio">${p.anio_estreno || ''}</div>
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         function volverAlIndice() {
@@ -310,6 +397,7 @@
             document.getElementById('vistaIndice').classList.remove('oculto');
             document.getElementById('inputBuscarPeli').value = '';
             document.getElementById('resultadosAñadir').innerHTML = '';
+            document.getElementById('seccionColaboradores').classList.add('oculto');
             history.pushState({}, '', 'listas.html');
             listaActual = null;
         }
@@ -326,13 +414,17 @@
                     const data = await api.peliculas.buscar(query, 0, 6);
                     const resultados = data.results || [];
                     if (!resultados.length) { res.innerHTML = ''; return; }
-                    res.innerHTML = resultados.map(p => `
+                    res.innerHTML = resultados.map(p => {
+                        const titSafe = escapeHTML(p.titulo || '');
+                        const posterSafe = escapeHTML(p.poster_url || '');
+                        return `
                         <div class="fav-result-item" style="max-width:480px"
                              onclick="añadirAPelicula(${p.tmdb_id})">
-                            ${p.poster_url ? `<img src="${p.poster_url}" alt="">` : ''}
-                            <span>${p.titulo}${p.anio_estreno ? ` (${p.anio_estreno})` : ''}</span>
+                            ${p.poster_url ? `<img src="${posterSafe}" alt="">` : ''}
+                            <span>${titSafe}${p.anio_estreno ? ` (${p.anio_estreno})` : ''}</span>
                         </div>
-                    `).join('');
+                        `;
+                    }).join('');
                 } catch { res.innerHTML = ''; }
             }, 350);
         }
@@ -449,10 +541,128 @@
             }
         }
 
+        //  Colaboradores
+
+        let colabBuscarTimer = null;
+
+        async function cargarColaboradoresLista(idLista) {
+            const seccion = document.getElementById('seccionColaboradores');
+            const cont = document.getElementById('listaColaboradores');
+            const btnAñadir = document.getElementById('btnAñadirColab');
+
+            try {
+                const colaboradores = await api.listas.colaboradores(idLista);
+                seccion.classList.remove('oculto');
+                btnAñadir.classList.toggle('oculto', !esListaPropia);
+
+                if (!colaboradores || colaboradores.length === 0) {
+                    cont.innerHTML = '<p class="text-faint" style="font-size:13px">Aún no hay colaboradores.</p>';
+                    return;
+                }
+
+                cont.innerHTML = colaboradores.map(c => {
+                    const nameSafe = escapeHTML(c.username);
+                    const avSafe = escapeHTML(c.avatar_url || '');
+                    const avatarHTML = c.avatar_url
+                        ? `<img src="${avSafe}" alt="${nameSafe}" style="width:32px;height:32px;border-radius:50%;object-fit:cover">`
+                        : `<div style="width:32px;height:32px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:13px;color:var(--faint)">${nameSafe[0].toUpperCase()}</div>`;
+                    const accion = esListaPropia
+                        ? `<button class="btn btn--ghost btn--sm" style="color:var(--error)"
+                                  onclick="quitarColaborador(${c.id})">Quitar</button>`
+                        : '';
+                    return `
+                        <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)">
+                            <a href="usuario.html?id=${c.id}" style="display:flex;align-items:center;gap:10px;flex:1;text-decoration:none;color:inherit">
+                                ${avatarHTML}
+                                <span style="font-size:14px;font-weight:500">${nameSafe}</span>
+                            </a>
+                            ${accion}
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                // si no tenemos acceso (lista pública pero no soy ni dueño ni colaborador), ocultamos la sección
+                seccion.classList.add('oculto');
+            }
+        }
+
+        function abrirModalColaborador() {
+            document.getElementById('inputBuscarColab').value = '';
+            document.getElementById('resultadosColab').innerHTML = '';
+            document.getElementById('errorColab').className = 'form-error';
+            document.getElementById('modalColaborador').classList.remove('modal-overlay--hidden');
+        }
+
+        function buscarColaborador(query) {
+            clearTimeout(colabBuscarTimer);
+            const res = document.getElementById('resultadosColab');
+            const q = query.trim();
+            if (!q) { res.innerHTML = ''; return; }
+
+            colabBuscarTimer = setTimeout(async () => {
+                try {
+                    const usuarios = await api.usuarios.buscar(q, 0, 8);
+                    if (!usuarios.length) {
+                        res.innerHTML = '<p class="text-faint" style="font-size:13px;padding:8px 0">Sin resultados.</p>';
+                        return;
+                    }
+                    res.innerHTML = usuarios.map(u => {
+                        const nameSafe = escapeHTML(u.username);
+                        const avSafe = escapeHTML(u.avatar_url || '');
+                        const av = u.avatar_url
+                            ? `<img src="${avSafe}" alt="${nameSafe}" style="width:28px;height:28px;border-radius:50%;object-fit:cover">`
+                            : `<div style="width:28px;height:28px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--faint)">${nameSafe[0].toUpperCase()}</div>`;
+                        return `
+                            <div onclick="añadirColaborador(${u.id})"
+                                 style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:var(--radius-sm);cursor:pointer"
+                                 onmouseover="this.style.background='var(--surface2)'"
+                                 onmouseout="this.style.background=''">
+                                ${av}
+                                <span style="font-size:13px">${nameSafe}</span>
+                            </div>
+                        `;
+                    }).join('');
+                } catch {
+                    res.innerHTML = '';
+                }
+            }, 300);
+        }
+
+        async function añadirColaborador(idUsuario) {
+            if (!listaActual) return;
+            const errEl = document.getElementById('errorColab');
+            try {
+                await api.listas.añadirColaborador(listaActual.id, idUsuario);
+                cerrarModal('modalColaborador');
+                mostrarToast('Colaborador añadido ✓');
+                await cargarColaboradoresLista(listaActual.id);
+            } catch (err) {
+                errEl.textContent = err.message || 'No se pudo añadir';
+                errEl.className = 'form-error form-error--visible';
+            }
+        }
+
+        async function quitarColaborador(idUsuario) {
+            if (!listaActual) return;
+            if (!confirm('¿Quitar a este colaborador de la lista?')) return;
+            try {
+                await api.listas.quitarColaborador(listaActual.id, idUsuario);
+                mostrarToast('Colaborador eliminado');
+                await cargarColaboradoresLista(listaActual.id);
+            } catch (err) {
+                mostrarToast(err.message || 'Error', 'error');
+            }
+        }
+
         //  Init
 
         document.addEventListener('DOMContentLoaded', async () => {
             renderNav('../');
+
+            document.getElementById('tabsListas').addEventListener('click', e => {
+                const tab = e.target.closest('.tab');
+                if (tab) activarTabListas(tab.dataset.tab);
+            });
 
             const params = new URLSearchParams(window.location.search);
             const idParam = params.get('id');

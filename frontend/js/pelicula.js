@@ -374,6 +374,7 @@ async function guardarDiario() {
 // Pestañas (reparto, equipo, detalles, reseñas)
 
 let resenasCargadas = false;
+let visionadosCargados = false;
 
 function activarTab(nombre) {
     document.querySelectorAll('.tab').forEach(btn => {
@@ -383,10 +384,55 @@ function activarTab(nombre) {
     document.getElementById('panelEquipo').classList.toggle('oculto', nombre !== 'equipo');
     document.getElementById('panelDetalles').classList.toggle('oculto', nombre !== 'detalles');
     document.getElementById('panelResenas').classList.toggle('oculto', nombre !== 'resenas');
+    document.getElementById('panelVisionados').classList.toggle('oculto', nombre !== 'visionados');
 
     if (nombre === 'resenas' && !resenasCargadas) {
         resenasCargadas = true;
         cargarResenas();
+    }
+    if (nombre === 'visionados' && !visionadosCargados) {
+        visionadosCargados = true;
+        cargarMisVisionados();
+    }
+}
+
+async function cargarMisVisionados() {
+    const lista = document.getElementById('listaVisionados');
+    try {
+        const usuario = await api.usuarios.mePerfil();
+        const entradas = await api.usuarios.diarioPelicula(usuario.id, tmdbId);
+
+        if (!entradas || entradas.length === 0) {
+            lista.innerHTML = `<p class="text-faint" style="font-size:13px">
+                Aún no has añadido ninguna entrada de diario para esta película.
+            </p>`;
+            return;
+        }
+
+        lista.innerHTML = entradas.map(e => {
+            const fecha = new Date(e.fecha_visionado).toLocaleDateString('es', {
+                day: 'numeric', month: 'long', year: 'numeric'
+            });
+            const punt = e.puntuacion ? `<span style="color:var(--accent);font-weight:600">★ ${e.puntuacion}</span>` : '';
+            const resena = e.resena
+                ? `<p class="visionado-resena">${escapeHTML(e.resena)}</p>`
+                : '<p class="visionado-resena text-faint">Sin reseña</p>';
+            return `
+                <div class="visionado-item">
+                    <div class="visionado-cabecera">
+                        <span class="visionado-fecha">${fecha}</span>
+                        ${punt}
+                    </div>
+                    ${resena}
+                    <div class="visionado-meta">
+                        ${e.total_likes} ❤  ·  ${e.total_comentarios} 💬
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } catch (err) {
+        console.warn('[pelicula] error mis visionados', err);
+        lista.innerHTML = '<p class="text-faint" style="font-size:13px">Error al cargar visionados.</p>';
     }
 }
 
@@ -772,6 +818,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (auth.estaLogueado()) {
             document.getElementById('accionesPanel').classList.remove('oculto');
             document.getElementById('panelVisitante').classList.add('oculto');
+            document.getElementById('tabVisionados').classList.remove('oculto');
 
             // si el back ya nos manda el estado del user, lo guardamos
             if (pelicula.estado_usuario) {

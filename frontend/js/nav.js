@@ -29,10 +29,11 @@ function renderNav(base = '') {
 
     // links para el menu movil
     const mobileLinksHTML = logueado ? `
-        <a href="${base}pages/diario.html"    class="nav-mobile-link">Diario</a>
-        <a href="${base}pages/watchlist.html" class="nav-mobile-link">Watchlist</a>
-        <a href="${base}pages/listas.html"    class="nav-mobile-link">Listas</a>
-        <a href="${base}pages/logros.html"    class="nav-mobile-link">Logros</a>
+        <a href="${base}pages/diario.html"      class="nav-mobile-link">Diario</a>
+        <a href="${base}pages/watchlist.html"   class="nav-mobile-link">Watchlist</a>
+        <a href="${base}pages/listas.html"      class="nav-mobile-link">Listas</a>
+        <a href="${base}pages/logros.html"      class="nav-mobile-link">Logros</a>
+        <a href="${base}pages/actividad.html"   class="nav-mobile-link">Actividad</a>
         <button class="nav-mobile-link nav-mobile-link--salir" id="btnLogoutMobile">Salir</button>
     ` : `
         <a href="${base}pages/registro.html" class="nav-mobile-link">Registrarse</a>
@@ -60,10 +61,11 @@ function renderNav(base = '') {
 
                 ${logueado ? `
                 <div class="nav-links">
-                    <a href="${base}pages/diario.html"    class="nav-link">Diario</a>
-                    <a href="${base}pages/watchlist.html" class="nav-link">Watchlist</a>
-                    <a href="${base}pages/listas.html"    class="nav-link">Listas</a>
-                    <a href="${base}pages/logros.html"    class="nav-link">Logros</a>
+                    <a href="${base}pages/diario.html"      class="nav-link">Diario</a>
+                    <a href="${base}pages/watchlist.html"   class="nav-link">Watchlist</a>
+                    <a href="${base}pages/listas.html"      class="nav-link">Listas</a>
+                    <a href="${base}pages/logros.html"      class="nav-link">Logros</a>
+                    <a href="${base}pages/actividad.html"   class="nav-link">Actividad</a>
                 </div>
                 ` : ''}
 
@@ -137,10 +139,11 @@ function renderNav(base = '') {
                     dropdown.innerHTML = items.map(it => {
                         const tituloSafe = escapeHTML(it.titulo);
                         const subSafe = escapeHTML(it.sub);
+                        const imgSafe = escapeHTML(it.img);
                         return `
                         <div class="nav-dropdown-item" onclick="location.href='${it.href}'">
                             ${it.img
-                                ? `<img src="${it.img}" alt="" ${it.esAvatar ? 'style="height:28px;border-radius:50%"' : ''}>`
+                                ? `<img src="${imgSafe}" alt="" ${it.esAvatar ? 'style="height:28px;border-radius:50%"' : ''}>`
                                 : `<div style="width:28px;height:42px;background:var(--surface3);border-radius:2px;flex-shrink:0"></div>`
                             }
                             <div class="nav-dropdown-item__info">

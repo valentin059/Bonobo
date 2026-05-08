@@ -106,6 +106,7 @@ const api = {
 
         crearDiario: (tmdbId, body) => _req('POST', `/api/peliculas/${tmdbId}/diario`, body),
         editarDiario: (idEntrada, body) => _req('PUT', `/api/diario/${idEntrada}`, body),
+        borrarDiario: (idEntrada) => _req('DELETE', `/api/diario/${idEntrada}`),
     },
 
     usuarios: {
@@ -122,9 +123,13 @@ const api = {
         perfil: (id) => _req('GET', `/api/usuarios/${id}`),
         vistas: (id, skip = 0, limit = 20) => _req('GET', `/api/usuarios/${id}/vistas?skip=${skip}&limit=${limit}`),
         diario: (id, skip = 0, limit = 20) => _req('GET', `/api/usuarios/${id}/diario?skip=${skip}&limit=${limit}`),
+        diarioPelicula: (id, tmdbId) => _req('GET', `/api/usuarios/${id}/diario/pelicula/${tmdbId}`),
         watchlist: (id, skip = 0, limit = 20) => _req('GET', `/api/usuarios/${id}/watchlist?skip=${skip}&limit=${limit}`),
         favoritas: (id) => _req('GET', `/api/usuarios/${id}/favoritas`),
         listas: (id) => _req('GET', `/api/usuarios/${id}/listas`),
+
+        feed: (skip = 0, limit = 20) => _req('GET', `/api/usuarios/me/feed?skip=${skip}&limit=${limit}`),
+        rankingAmigos: () => _req('GET', '/api/usuarios/me/ranking-amigos'),
     },
 
     social: {
@@ -156,6 +161,11 @@ const api = {
         añadirPelicula: (idLista, tmdbId) => _req('POST', `/api/listas/${idLista}/peliculas/${tmdbId}`),
         quitarPelicula: (idLista, tmdbId) => _req('DELETE', `/api/listas/${idLista}/peliculas/${tmdbId}`),
         listasConPelicula: (tmdbId) => _req('GET', `/api/listas/mis-listas-con-pelicula/${tmdbId}`),
+
+        colaborando: () => _req('GET', '/api/listas/colaborando'),
+        colaboradores: (idLista) => _req('GET', `/api/listas/${idLista}/colaboradores`),
+        añadirColaborador: (idLista, idUsuario) => _req('POST', `/api/listas/${idLista}/colaboradores/${idUsuario}`),
+        quitarColaborador: (idLista, idUsuario) => _req('DELETE', `/api/listas/${idLista}/colaboradores/${idUsuario}`),
     },
 
     logros: {

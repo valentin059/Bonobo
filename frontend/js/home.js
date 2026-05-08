@@ -141,7 +141,6 @@ async function cargarEstrenos() {
     }
 }
 
-
 document.addEventListener('DOMContentLoaded', async () => {
 
     renderNav('');
@@ -172,7 +171,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         buscarPeliculas(navSearch);
     } else {
-        // cargamos cartelera y estrenos en paralelo
         cargarCartelera();
         cargarEstrenos();
     }

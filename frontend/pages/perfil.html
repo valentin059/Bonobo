@@ -89,6 +89,18 @@
             </div>
         </section>
 
+        <!-- RANKING DE AMIGOS -->
+        <section class="seccion">
+            <div class="seccion-header">
+                <h2 class="seccion-titulo">Ranking de amigos</h2>
+                <div class="seccion-linea"></div>
+                <span class="seccion-meta">Por nivel</span>
+            </div>
+            <div class="ranking-amigos" id="rankingAmigos">
+                <p class="text-faint" style="font-size:13px">Sigue a otros usuarios para verlos aquí.</p>
+            </div>
+        </section>
+
     </main>
 
     <!-- MODAL: EDITAR FAVORITAS -->
@@ -144,10 +156,16 @@
                           maxlength="5000"
                           style="resize:vertical;min-height:90px"></textarea>
             </div>
-            <button class="btn btn--primary" style="width:100%;margin-top:8px"
-                    onclick="guardarEdicionDiario()">
-                Guardar cambios
-            </button>
+            <div style="display:flex;gap:8px;margin-top:8px">
+                <button class="btn btn--primary" style="flex:1"
+                        onclick="guardarEdicionDiario()">
+                    Guardar cambios
+                </button>
+                <button class="btn btn--ghost" style="color:var(--error)"
+                        onclick="borrarEntradaDiario()">
+                    Borrar
+                </button>
+            </div>
         </div>
     </div>
 

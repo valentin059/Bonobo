@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BONOBO — Actividad</title>
+    <link rel="stylesheet" href="../css/main.css" />
+</head>
+<body>
+
+    <header id="nav-placeholder"></header>
+
+    <main class="contenedor pagina">
+
+        <div class="seccion-header" style="margin-bottom:32px">
+            <h1 class="seccion-titulo">Actividad</h1>
+            <div class="seccion-linea"></div>
+            <span class="seccion-meta">De a quien sigues</span>
+        </div>
+
+        <div class="feed-lista" id="listaFeed"></div>
+
+        <div style="text-align:center;margin-top:32px">
+            <button class="btn btn--ghost oculto" id="btnMas" onclick="cargarMas()">
+                Cargar más
+            </button>
+        </div>
+
+    </main>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/nav.js"></script>
+    <script src="../js/logros-notif.js"></script>
+    <script>
+        let skip = 0;
+        const LIMIT = 20;
+
+        function mostrarToast(msg, tipo = 'ok') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `toast toast--${tipo} toast--visible`;
+            setTimeout(() => { t.className = 'toast'; }, 2800);
+        }
+
+        function tiempoRelativo(iso) {
+            const ahora = Date.now();
+            const t = new Date(iso).getTime();
+            const seg = Math.max(1, Math.floor((ahora - t) / 1000));
+            if (seg < 60) return 'ahora';
+            if (seg < 3600) return `hace ${Math.floor(seg / 60)}m`;
+            if (seg < 86400) return `hace ${Math.floor(seg / 3600)}h`;
+            if (seg < 604800) return `hace ${Math.floor(seg / 86400)}d`;
+            return new Date(iso).toLocaleDateString('es', { day: 'numeric', month: 'short' });
+        }
+
+        function crearItemFeed(ev) {
+            const userSafe = escapeHTML(ev.username);
+            const peliSafe = escapeHTML(ev.pelicula_titulo);
+            const posterSafe = escapeHTML(ev.pelicula_poster || '');
+            const avatarSafe = escapeHTML(ev.avatar_url || '');
+
+            let accion;
+            if (ev.tipo === 'vista') {
+                accion = ev.puntuacion
+                    ? `vio <a href="pelicula.html?id=${ev.pelicula_tmdb_id}">${peliSafe}</a> y le dio <span style="color:var(--accent)">★ ${ev.puntuacion}</span>`
+                    : `vio <a href="pelicula.html?id=${ev.pelicula_tmdb_id}">${peliSafe}</a>`;
+            } else if (ev.tipo === 'resena') {
+                accion = `escribió una reseña sobre <a href="pelicula.html?id=${ev.pelicula_tmdb_id}">${peliSafe}</a>`;
+            } else {
+                accion = `marcó como me gusta <a href="pelicula.html?id=${ev.pelicula_tmdb_id}">${peliSafe}</a>`;
+            }
+
+            const resenaHTML = ev.resena
+                ? `<p class="feed-item__resena">${escapeHTML(ev.resena)}</p>`
+                : '';
+
+            return `
+                <article class="feed-item">
+                    <a class="feed-item__avatar-link" href="usuario.html?id=${ev.usuario_id}">
+                        ${ev.avatar_url
+                            ? `<img class="feed-item__avatar" src="${avatarSafe}" alt="${userSafe}">`
+                            : `<div class="feed-item__avatar feed-item__avatar--placeholder">${userSafe[0].toUpperCase()}</div>`
+                        }
+                    </a>
+                    <div class="feed-item__contenido">
+                        <div class="feed-item__cabecera">
+                            <a class="feed-item__user" href="usuario.html?id=${ev.usuario_id}">${userSafe}</a>
+                            <span class="feed-item__accion">${accion}</span>
+                            <span class="feed-item__tiempo">${tiempoRelativo(ev.created_at)}</span>
+                        </div>
+                        ${resenaHTML}
+                    </div>
+                    ${ev.pelicula_poster
+                        ? `<a class="feed-item__poster" href="pelicula.html?id=${ev.pelicula_tmdb_id}">
+                               <img src="${posterSafe}" alt="${peliSafe}" loading="lazy">
+                           </a>`
+                        : ''
+                    }
+                </article>
+            `;
+        }
+
+        async function cargarFeed() {
+            const lista = document.getElementById('listaFeed');
+
+            if (skip === 0) {
+                lista.innerHTML = `<div class="skeleton" style="height:80px;border-radius:var(--radius);margin-bottom:8px"></div>`.repeat(4);
+            }
+
+            try {
+                const eventos = await api.usuarios.feed(skip, LIMIT);
+
+                if (skip === 0 && (!eventos || eventos.length === 0)) {
+                    lista.innerHTML = `<div class="estado-vacio">
+                        <p class="estado-vacio__titulo">Sin actividad</p>
+                        <p class="estado-vacio__desc">Sigue a otros usuarios para ver su actividad aquí.</p>
+                    </div>`;
+                    return;
+                }
+
+                if (skip === 0) lista.innerHTML = '';
+                lista.insertAdjacentHTML('beforeend', eventos.map(crearItemFeed).join(''));
+                document.getElementById('btnMas').classList.toggle('oculto', eventos.length < LIMIT);
+                skip += eventos.length;
+            } catch (err) {
+                console.warn('[actividad] error feed', err);
+                mostrarToast('No se pudo cargar la actividad', 'error');
+            }
+        }
+
+        function cargarMas() { cargarFeed(); }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!auth.estaLogueado()) {
+                window.location.href = 'login.html';
+                return;
+            }
+            renderNav('../');
+            actualizarBadgesLogros();
+            cargarFeed();
+        });
+    </script>
+
+</body>
+</html>

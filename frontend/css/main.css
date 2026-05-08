@@ -1150,6 +1150,160 @@ img { display: block; max-width: 100%; }
 }
 .diario-poster img { width: 100%; height: 100%; object-fit: cover; }
 
+/* Feed de actividad (home logueado) */
+.feed-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.feed-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+}
+.feed-item:last-child { border-bottom: none; }
+
+.feed-item__avatar-link { flex-shrink: 0; }
+.feed-item__avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--border);
+}
+.feed-item__avatar--placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface2);
+    color: var(--faint);
+    font-family: var(--font-display);
+    font-size: 16px;
+}
+
+.feed-item__contenido { flex: 1; min-width: 0; }
+.feed-item__cabecera {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+}
+.feed-item__user {
+    color: var(--text);
+    font-weight: 600;
+    text-decoration: none;
+}
+.feed-item__user:hover { color: var(--accent); }
+.feed-item__accion a { color: var(--text); text-decoration: none; }
+.feed-item__accion a:hover { color: var(--accent); }
+.feed-item__tiempo {
+    color: var(--faint);
+    font-size: 11px;
+    margin-left: 6px;
+}
+.feed-item__resena {
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+.feed-item__poster {
+    flex-shrink: 0;
+    width: 48px;
+    aspect-ratio: 2/3;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    border: 1px solid var(--border);
+}
+.feed-item__poster img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Ranking de amigos (perfil propio) */
+.ranking-amigos {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.ranking-amigos__item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.15s ease;
+}
+.ranking-amigos__item:hover { background: var(--surface2); }
+
+.ranking-amigos__pos {
+    flex-shrink: 0;
+    width: 24px;
+    font-family: var(--font-display);
+    font-size: 18px;
+    color: var(--faint);
+    text-align: center;
+}
+.ranking-amigos__avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+}
+.ranking-amigos__avatar--placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface2);
+    color: var(--faint);
+    font-family: var(--font-display);
+    font-size: 14px;
+}
+.ranking-amigos__datos { flex: 1; min-width: 0; }
+.ranking-amigos__name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+}
+.ranking-amigos__meta {
+    font-size: 11px;
+    color: var(--faint);
+    margin-top: 2px;
+}
+
+/* Mis visionados (panel pelicula.html) */
+.visionado-item {
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+}
+.visionado-item:last-child { border-bottom: none; }
+
+.visionado-cabecera {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+}
+.visionado-fecha {
+    font-size: 13px;
+    color: var(--muted);
+}
+.visionado-resena {
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+.visionado-meta {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--faint);
+}
+
 .diario-contenido { flex: 1; }
 .diario-titulo-peli {
     font-size: 14px;

@@ -107,13 +107,13 @@
                 // Foto
                 const fotoEl = document.getElementById('personaFoto');
                 if (persona.foto_url) {
-                    fotoEl.innerHTML = `<img src="${persona.foto_url}" alt="${persona.nombre}"
+                    fotoEl.innerHTML = `<img src="${escapeHTML(persona.foto_url)}" alt="${escapeHTML(persona.nombre)}"
                                              style="width:100%;height:100%;object-fit:cover">`;
                 } else {
                     fotoEl.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;
                                                     justify-content:center;font-family:var(--font-display);
                                                     font-size:40px;color:var(--faint)">
-                                            ${persona.nombre[0].toUpperCase()}
+                                            ${escapeHTML(persona.nombre[0].toUpperCase())}
                                         </div>`;
                 }
 
@@ -156,25 +156,31 @@
                         <p class="estado-vacio__desc">Sin filmografía disponible.</p>
                     </div>`;
                 } else {
-                    grid.innerHTML = filmo.map(p => `
+                    grid.innerHTML = filmo.map(p => {
+                        const titSafe = escapeHTML(p.titulo || '—');
+                        const posterSafe = escapeHTML(p.poster_url || '');
+                        const personajeSafe = escapeHTML(p.personaje || '');
+                        const rolSafe = escapeHTML(p.rol || '');
+                        return `
                         <div class="pelicula-card" onclick="location.href='pelicula.html?id=${p.tmdb_id}'">
                             <div class="pelicula-card__poster">
                                 ${p.poster_url
-                                    ? `<img class="pelicula-card__img" src="${p.poster_url}" alt="${p.titulo}" loading="lazy">`
+                                    ? `<img class="pelicula-card__img" src="${posterSafe}" alt="${titSafe}" loading="lazy">`
                                     : `<div class="pelicula-card__no-img">SIN IMAGEN</div>`
                                 }
                                 <div class="pelicula-card__overlay"></div>
                             </div>
                             <div class="pelicula-card__info">
-                                <div class="pelicula-card__titulo">${p.titulo || '—'}</div>
+                                <div class="pelicula-card__titulo">${titSafe}</div>
                                 <div class="pelicula-card__anio">
                                     ${p.anio_estreno || ''}
-                                    ${p.personaje ? `<span style="color:var(--faint)"> · ${p.personaje}</span>` : ''}
-                                    ${p.rol ? `<span style="color:var(--faint)"> · ${p.rol}</span>` : ''}
+                                    ${p.personaje ? `<span style="color:var(--faint)"> · ${personajeSafe}</span>` : ''}
+                                    ${p.rol ? `<span style="color:var(--faint)"> · ${rolSafe}</span>` : ''}
                                 </div>
                             </div>
                         </div>
-                    `).join('');
+                        `;
+                    }).join('');
                 }
 
             } catch (err) {

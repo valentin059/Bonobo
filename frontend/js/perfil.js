@@ -228,6 +228,48 @@ async function guardarEdicionDiario() {
     }
 }
 
+async function borrarEntradaDiario() {
+    const id = parseInt(document.getElementById('diarioEntradaId').value);
+    if (!id) return;
+    if (!confirm('¿Borrar esta entrada del diario? La película seguirá marcada como vista.')) return;
+
+    try {
+        await api.acciones.borrarDiario(id);
+        delete diarioCache$[id];
+        document.getElementById(`perfil-entrada-${id}`)?.remove();
+        cerrarModalDiarioEntrada();
+        mostrarToast('Entrada borrada');
+    } catch (err) {
+        mostrarToast(err.message || 'Error al borrar', 'error');
+    }
+}
+
+function renderizarRankingAmigos(amigos) {
+    const cont = document.getElementById('rankingAmigos');
+    if (!amigos || amigos.length === 0) {
+        cont.innerHTML = '<p class="text-faint" style="font-size:13px">Sigue a otros usuarios para verlos aquí.</p>';
+        return;
+    }
+
+    cont.innerHTML = amigos.slice(0, 10).map((u, i) => {
+        const nameSafe = escapeHTML(u.username);
+        const avSafe = escapeHTML(u.avatar_url || '');
+        const avatarHTML = u.avatar_url
+            ? `<img class="ranking-amigos__avatar" src="${avSafe}" alt="${nameSafe}">`
+            : `<div class="ranking-amigos__avatar ranking-amigos__avatar--placeholder">${nameSafe[0].toUpperCase()}</div>`;
+        return `
+            <a class="ranking-amigos__item" href="usuario.html?id=${u.id}">
+                <span class="ranking-amigos__pos">${i + 1}</span>
+                ${avatarHTML}
+                <div class="ranking-amigos__datos">
+                    <div class="ranking-amigos__name">${nameSafe}</div>
+                    <div class="ranking-amigos__meta">Nivel ${u.nivel} · ${u.xp_total} XP</div>
+                </div>
+            </a>
+        `;
+    }).join('');
+}
+
 function renderizarListas(listas) {
     const lista = document.getElementById('listaListas');
     if (listas.length === 0) {
@@ -446,11 +488,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderizarCabecera(usuario);
 
         // todo lo que no depende de nada lo cargamos a la vez
-        const [vistas, diario, favoritas, listas] = await Promise.all([
+        const [vistas, diario, favoritas, listas, ranking] = await Promise.all([
             api.usuarios.vistas(usuarioId, 0, 20),
             api.usuarios.diario(usuarioId, 0, 5),
             api.usuarios.favoritas(usuarioId),
             api.usuarios.listas(usuarioId),
+            api.usuarios.rankingAmigos(),
         ]);
 
         renderizarVistas(vistas, usuario.total_vistas);   // construye movieMap
@@ -458,6 +501,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderizarDiario(diario);
         renderizarFavoritas(favoritas);
         renderizarListas(listas);
+        renderizarRankingAmigos(ranking);
 
         // dejamos favSlots con el estado actual para el modal de edicion
         const porOrden = {};

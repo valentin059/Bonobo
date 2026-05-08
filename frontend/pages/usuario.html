@@ -231,14 +231,15 @@
             document.getElementById('favoritasGrid').innerHTML =
                 Array.from({ length: 4 }, (_, i) => {
                     const p = porOrden[i + 1];
-                    return p
-                        ? `<div class="favorita-slot" onclick="irAPelicula(${p.tmdb_id})">
+                    if (!p) return `<div class="favorita-slot favorita-slot--vacio">—</div>`;
+                    const titSafe = escapeHTML(p.titulo || '');
+                    const posterSafe = escapeHTML(p.poster_url || '');
+                    return `<div class="favorita-slot" onclick="irAPelicula(${p.tmdb_id})">
                                ${p.poster_url
-                                   ? `<img src="${p.poster_url}" alt="${p.titulo}">`
+                                   ? `<img src="${posterSafe}" alt="${titSafe}">`
                                    : `<div class="favorita-slot--vacio">?</div>`
                                }
-                           </div>`
-                        : `<div class="favorita-slot favorita-slot--vacio">—</div>`;
+                           </div>`;
                 }).join('');
         }
 
@@ -254,11 +255,13 @@
             grid.innerHTML = vistas.map(v => {
                 const p = v.pelicula;
                 movieMap[v.id_pelicula] = p;
+                const titSafe = escapeHTML(p.titulo || '—');
+                const posterSafe = escapeHTML(p.poster_url || '');
                 return `
                     <div class="pelicula-card" onclick="irAPelicula(${p.tmdb_id})">
                         <div class="pelicula-card__poster">
                             ${p.poster_url
-                                ? `<img class="pelicula-card__img" src="${p.poster_url}" alt="${p.titulo}" loading="lazy">`
+                                ? `<img class="pelicula-card__img" src="${posterSafe}" alt="${titSafe}" loading="lazy">`
                                 : `<div class="pelicula-card__no-img">SIN IMAGEN</div>`
                             }
                             <div class="pelicula-card__overlay">
@@ -266,7 +269,7 @@
                             </div>
                         </div>
                         <div class="pelicula-card__info">
-                            <div class="pelicula-card__titulo">${p.titulo || '—'}</div>
+                            <div class="pelicula-card__titulo">${titSafe}</div>
                             <div class="pelicula-card__anio">${p.anio_estreno || ''}</div>
                         </div>
                     </div>
@@ -297,7 +300,7 @@
                         ${pelicula?.poster_url
                             ? `<div class="diario-poster" style="cursor:pointer"
                                    onclick="irAPelicula(${pelicula.tmdb_id})">
-                                   <img src="${pelicula.poster_url}" alt="">
+                                   <img src="${escapeHTML(pelicula.poster_url)}" alt="">
                                </div>`
                             : `<div class="diario-poster"></div>`
                         }
@@ -379,10 +382,10 @@
 
                 document.title = `BONOBO — ${usuario.username}`;
 
-                // avatar
+                // avatar — el avatar_url lo escribe el usuario, hay que escaparlo siempre
                 const avatarEl = document.getElementById('perfilAvatar');
                 if (usuario.avatar_url) {
-                    avatarEl.innerHTML = `<img class="perfil-avatar" src="${usuario.avatar_url}" alt="${usuario.username}">`;
+                    avatarEl.innerHTML = `<img class="perfil-avatar" src="${escapeHTML(usuario.avatar_url)}" alt="${escapeHTML(usuario.username)}">`;
                     avatarEl.className = '';
                 } else {
                     avatarEl.textContent = usuario.username[0].toUpperCase();

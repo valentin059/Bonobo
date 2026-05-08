@@ -62,11 +62,13 @@
                 const grid = document.getElementById('gridVistas');
                 grid.insertAdjacentHTML('beforeend', vistas.map(v => {
                     const p = v.pelicula;
+                    const titSafe = escapeHTML(p.titulo || '—');
+                    const posterSafe = escapeHTML(p.poster_url || '');
                     return `
                         <div class="pelicula-card" onclick="location.href='pelicula.html?id=${p.tmdb_id}'">
                             <div class="pelicula-card__poster">
                                 ${p.poster_url
-                                    ? `<img class="pelicula-card__img" src="${p.poster_url}" alt="${p.titulo}" loading="lazy">`
+                                    ? `<img class="pelicula-card__img" src="${posterSafe}" alt="${titSafe}" loading="lazy">`
                                     : `<div class="pelicula-card__no-img">SIN IMAGEN</div>`
                                 }
                                 <div class="pelicula-card__overlay">
@@ -77,7 +79,7 @@
                                 </div>
                             </div>
                             <div class="pelicula-card__info">
-                                <div class="pelicula-card__titulo">${p.titulo || '—'}</div>
+                                <div class="pelicula-card__titulo">${titSafe}</div>
                                 <div class="pelicula-card__anio">${p.anio_estreno || ''}</div>
                             </div>
                         </div>

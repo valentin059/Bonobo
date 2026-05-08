@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr, ConfigDict, Field, field_validator
 from datetime import datetime
 from typing import Optional
-from .peliculas import PeliculaCache, EntradaDiarioOut
+from .peliculas import PeliculaCache
 
 
 class UserCreate(BaseModel):

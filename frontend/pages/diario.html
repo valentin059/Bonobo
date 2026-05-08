@@ -54,10 +54,16 @@
 
             <p class="form-error" id="errorEditar"></p>
 
-            <button class="btn btn--primary" style="width:100%;margin-top:8px"
-                    onclick="guardarEdicion()">
-                Guardar cambios
-            </button>
+            <div style="display:flex;gap:8px;margin-top:8px">
+                <button class="btn btn--primary" style="flex:1"
+                        onclick="guardarEdicion()">
+                    Guardar cambios
+                </button>
+                <button class="btn btn--ghost" style="color:var(--error)"
+                        onclick="borrarEntrada()">
+                    Borrar
+                </button>
+            </div>
         </div>
     </div>
 
@@ -119,7 +125,7 @@
                     ${pelicula?.poster_url
                         ? `<div class="diario-poster" style="cursor:pointer"
                                onclick="location.href='pelicula.html?id=${pelicula.tmdb_id}'">
-                               <img src="${pelicula.poster_url}" alt="">
+                               <img src="${escapeHTML(pelicula.poster_url)}" alt="">
                            </div>`
                         : `<div class="diario-poster"></div>`
                     }
@@ -242,6 +248,31 @@
             } catch (err) {
                 errorEl.textContent = err.message || 'Error al guardar';
                 errorEl.className = 'form-error form-error--visible';
+            }
+        }
+
+        async function borrarEntrada() {
+            const idEntrada = parseInt(document.getElementById('editIdEntrada').value);
+            if (!idEntrada) return;
+            if (!confirm('¿Borrar esta entrada del diario? La película seguirá marcada como vista.')) return;
+
+            try {
+                await api.acciones.borrarDiario(idEntrada);
+                delete entradas$[idEntrada];
+                document.getElementById(`entrada-${idEntrada}`)?.remove();
+
+                // recalculamos el contador del label si lo estabamos mostrando
+                const lblTotal = document.getElementById('lblTotal');
+                if (lblTotal && lblTotal.textContent) {
+                    const restantes = document.querySelectorAll('.diario-entrada').length;
+                    lblTotal.textContent = `${restantes} entrada${restantes !== 1 ? 's' : ''}`;
+                }
+
+                cerrarModalEditar();
+                mostrarToast('Entrada borrada');
+            } catch (err) {
+                document.getElementById('errorEditar').textContent = err.message || 'Error al borrar';
+                document.getElementById('errorEditar').className = 'form-error form-error--visible';
             }
         }
 
