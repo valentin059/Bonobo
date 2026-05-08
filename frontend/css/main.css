@@ -2436,15 +2436,19 @@ img { display: block; max-width: 100%; }
     .favoritas-grid   { grid-template-columns: repeat(4, 1fr); }
 }
 
-/* Movil (≤ 768px) */
-@media (max-width: 768px) {
-    /* Navbar: ocultamos busqueda y links, mostramos hamburger */
-    .nav-search-wrap   { display: none; }
+/* Navbar hamburger: se activa antes del breakpoint movil para evitar overflow con 5 links */
+@media (max-width: 900px) {
     .nav-links         { display: none; }
     .nav-hamburger     { display: flex; }
     .nav-username-text { display: none; }
-    .nav-btn--logout   { display: none; }   /* salir va en el menu movil */
-    .nav-btn--registro { display: none; }   /* registrarse va en el menu movil */
+    .nav-btn--logout   { display: none; }
+    .nav-btn--registro { display: none; }
+}
+
+/* Movil (≤ 768px) */
+@media (max-width: 768px) {
+    /* Navbar: ocultamos también la búsqueda */
+    .nav-search-wrap   { display: none; }
 
     /* Layout base */
     .contenedor { padding: 0 14px; }

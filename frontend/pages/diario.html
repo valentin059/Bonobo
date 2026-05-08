@@ -197,7 +197,9 @@
             const e = cached.entrada || cached;
             initEditSelector();
             document.getElementById('editIdEntrada').value = e.id;
-            document.getElementById('editFecha').value = e.fecha_visionado;
+            const editFechaInput = document.getElementById('editFecha');
+            editFechaInput.value = e.fecha_visionado;
+            editFechaInput.max = new Date().toISOString().split('T')[0];
             document.getElementById('editResena').value = e.resena || '';
             document.getElementById('errorEditar').className = 'form-error';
             editPuntuacion = e.puntuacion || null;
@@ -219,6 +221,11 @@
 
             if (!fecha) {
                 errorEl.textContent = 'La fecha es obligatoria';
+                errorEl.className = 'form-error form-error--visible';
+                return;
+            }
+            if (fecha > new Date().toISOString().split('T')[0]) {
+                errorEl.textContent = 'La fecha no puede ser futura';
                 errorEl.className = 'form-error form-error--visible';
                 return;
             }

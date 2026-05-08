@@ -313,7 +313,9 @@ let puntuacionDiario = null;
 function abrirModalDiario() {
     inicializarSelectorPuntuacionDiario();
     const hoy = new Date().toISOString().split('T')[0];
-    document.getElementById('fechaVisionado').value = hoy;
+    const fechaInput = document.getElementById('fechaVisionado');
+    fechaInput.value = hoy;
+    fechaInput.max = hoy;
     document.getElementById('modalDiario').classList.remove('modal-overlay--hidden');
 }
 
@@ -340,9 +342,14 @@ function setPuntuacionDiario(val) {
 async function guardarDiario() {
     const fecha = document.getElementById('fechaVisionado').value;
     const resena = document.getElementById('resena').value.trim();
+    const hoy = new Date().toISOString().split('T')[0];
 
     if (!fecha) {
         mostrarToast('Indica la fecha de visionado', 'error');
+        return;
+    }
+    if (fecha > hoy) {
+        mostrarToast('La fecha no puede ser futura', 'error');
         return;
     }
 
