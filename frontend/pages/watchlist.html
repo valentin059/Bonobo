@@ -74,7 +74,7 @@
                 // La API devuelve { id, pelicula: { tmdb_id, titulo, poster_url, anio_estreno } }
                 const watchlist = await api.usuarios.watchlist(usuario.id, 0, 100);
 
-                const lbl  = document.getElementById('lblTotal');
+                const lbl = document.getElementById('lblTotal');
                 const grid = document.getElementById('gridWatchlist');
 
                 lbl.textContent = `${watchlist.length} película${watchlist.length !== 1 ? 's' : ''}`;
@@ -100,8 +100,7 @@
                                 <div class="pelicula-card__overlay">
                                     <!-- Botón para quitar de watchlist desde la propia tarjeta -->
                                     <button
-                                        class="btn btn--ghost btn--sm"
-                                        style="font-size:10px"
+                                        class="btn btn--ghost btn--sm" style="font-size:10px"
                                         onclick="event.stopPropagation(); quitarDeWatchlist(${p.tmdb_id}, document.getElementById('card-${p.tmdb_id}'))"
                                     >
                                         Quitar

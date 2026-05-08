@@ -34,10 +34,10 @@
     <script src="../js/auth.js"></script>
     <script src="../js/nav.js"></script>
     <script>
-        let skip      = 0;
-        const LIMIT   = 40;
+        let skip = 0;
+        const LIMIT = 40;
         let usuarioId = null;
-        let total     = 0;
+        let total = 0;
 
         function mostrarToast(msg, tipo = 'ok') {
             const t = document.getElementById('toast');
@@ -97,9 +97,9 @@
         document.addEventListener('DOMContentLoaded', async () => {
             renderNav('../');
 
-            const params    = new URLSearchParams(window.location.search);
-            const idParam   = parseInt(params.get('id'));
-            const esAjeno   = !!idParam;
+            const params = new URLSearchParams(window.location.search);
+            const idParam = parseInt(params.get('id'));
+            const esAjeno = !!idParam;
 
             if (!esAjeno && !auth.estaLogueado()) {
                 location.href = 'login.html';
@@ -118,7 +118,7 @@
             } else {
                 const usuario = await api.usuarios.mePerfil();
                 usuarioId = usuario.id;
-                total     = usuario.total_vistas;
+                total = usuario.total_vistas;
                 document.getElementById('lblTotal').textContent =
                     `${total} película${total !== 1 ? 's' : ''}`;
             }

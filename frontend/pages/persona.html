@@ -12,7 +12,7 @@
 
     <main class="contenedor pagina">
 
-        <!--  CABECERA DE LA PERSONA  -->
+        <!-- CABECERA DE LA PERSONA -->
         <div class="perfil-top" style="margin-bottom:40px;padding-bottom:32px;border-bottom:1px solid var(--border)">
 
             <!-- Foto -->
@@ -26,8 +26,8 @@
                 <h1 class="perfil-username" id="personaNombre">—</h1>
 
                 <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px">
-                    <span id="personaRol"   style="font-size:12px;color:var(--faint)"></span>
-                    <span id="personaNac"   style="font-size:12px;color:var(--faint)"></span>
+                    <span id="personaRol" style="font-size:12px;color:var(--faint)"></span>
+                    <span id="personaNac" style="font-size:12px;color:var(--faint)"></span>
                     <span id="personaLugar" style="font-size:12px;color:var(--faint)"></span>
                 </div>
 
@@ -42,7 +42,7 @@
 
         </div>
 
-        <!--  FILMOGRAFÍA  -->
+        <!-- FILMOGRAFÍA -->
         <div class="seccion-header" style="margin-bottom:20px">
             <h2 class="seccion-titulo">Filmografía</h2>
             <div class="seccion-linea"></div>
@@ -73,25 +73,25 @@
             const btn = document.getElementById('btnVerMas');
             bioExpandida = !bioExpandida;
             bio.style.maxHeight = bioExpandida ? 'none' : '120px';
-            btn.textContent    = bioExpandida ? 'Ver menos' : 'Ver más';
+            btn.textContent = bioExpandida ? 'Ver menos' : 'Ver más';
         }
 
         const DEPT_ES = {
-            'Acting':          'Interpretación',
-            'Directing':       'Dirección',
-            'Writing':         'Guion',
-            'Production':      'Producción',
-            'Camera':          'Fotografía',
-            'Editing':         'Montaje',
-            'Sound':           'Música',
-            'Art':             'Dirección de Arte',
-            'Visual Effects':  'Efectos Visuales',
+            'Acting': 'Interpretación',
+            'Directing': 'Dirección',
+            'Writing': 'Guion',
+            'Production': 'Producción',
+            'Camera': 'Fotografía',
+            'Editing': 'Montaje',
+            'Sound': 'Música',
+            'Art': 'Dirección de Arte',
+            'Visual Effects': 'Efectos Visuales',
         };
 
         document.addEventListener('DOMContentLoaded', async () => {
             renderNav('../');
 
-            const params   = new URLSearchParams(window.location.search);
+            const params = new URLSearchParams(window.location.search);
             const personId = parseInt(params.get('id'));
 
             if (!personId) {
@@ -145,9 +145,9 @@
                 }
 
                 // Filmografía
-                const grid   = document.getElementById('gridFilmo');
-                const label  = document.getElementById('lblFilmo');
-                const filmo  = persona.filmografia || [];
+                const grid = document.getElementById('gridFilmo');
+                const label = document.getElementById('lblFilmo');
+                const filmo = persona.filmografia || [];
 
                 label.textContent = `${filmo.length} película${filmo.length !== 1 ? 's' : ''}`;
 
@@ -170,7 +170,7 @@
                                 <div class="pelicula-card__anio">
                                     ${p.anio_estreno || ''}
                                     ${p.personaje ? `<span style="color:var(--faint)"> · ${p.personaje}</span>` : ''}
-                                    ${p.rol        ? `<span style="color:var(--faint)"> · ${p.rol}</span>`       : ''}
+                                    ${p.rol ? `<span style="color:var(--faint)"> · ${p.rol}</span>` : ''}
                                 </div>
                             </div>
                         </div>

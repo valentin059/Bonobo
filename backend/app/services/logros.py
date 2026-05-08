@@ -2,8 +2,8 @@ from sqlalchemy import func, extract, select
 from .. import models
 
 
-# Mira que logros le faltan al user, comprueba si los cumple y los guarda.
-# Solo evaluamos los logros que NO tiene aun para no lanzar queries de mas.
+# mira que logros le faltan al user, comprueba si los cumple y los guarda.
+# solo evaluamos los logros que NO tiene aun para no lanzar queries de mas.
 def comprobar_y_dar_logros(db, usuario_id: int) -> None:
     # codigos de logros que ya tiene desbloqueados
     ya_obtenidos = set(db.execute(

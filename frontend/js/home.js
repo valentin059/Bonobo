@@ -99,7 +99,7 @@ async function cargarHeroBg() {
 async function buscarPeliculas(query) {
     const secBusqueda = document.getElementById('seccionBusqueda');
     const secCartelera = document.getElementById('seccionCartelera');
-    const secEstrenos  = document.getElementById('seccionEstrenos');
+    const secEstrenos = document.getElementById('seccionEstrenos');
     const label = document.getElementById('labelBusqueda');
 
     secBusqueda.classList.remove('oculto');

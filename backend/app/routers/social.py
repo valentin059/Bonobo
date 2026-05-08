@@ -18,14 +18,14 @@ def seguir_usuario(id: int,
 
     if id == current_user.id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail="No puedes seguirte a ti mismo.")
+                            detail="No puedes seguirte a ti mismo")
 
     objetivo = db.execute(
         select(models.Usuario).where(models.Usuario.id == id)
     ).scalar_one_or_none()
 
     if not objetivo:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
 
     ya_sigue = db.execute(
         select(models.Seguidor).where(
@@ -35,7 +35,7 @@ def seguir_usuario(id: int,
     ).scalar_one_or_none()
 
     if ya_sigue:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Ya sigues a este usuario.")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Ya sigues a este usuario")
 
     db.add(models.Seguidor(id_seguidor=current_user.id, id_seguido=id))
     db.commit()
@@ -57,7 +57,7 @@ def dejar_seguir_usuario(id: int,
     ).scalar_one_or_none()
 
     if not seguidor:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No sigues a este usuario.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No sigues a este usuario")
 
     db.delete(seguidor)
     db.commit()

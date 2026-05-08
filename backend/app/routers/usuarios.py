@@ -13,8 +13,7 @@ router = APIRouter(
 )
 
 
-# helper que devuelve total_vistas + seguidores + seguidos en UNA sola query.
-# antes lo haciamos con 3 selects separados y era una tonteria.
+# total_vistas + seguidores + seguidos en una sola query con scalar_subquery
 def _stats_perfil(db: Session, user_id: int):
     return db.execute(
         select(
@@ -71,10 +70,8 @@ def get_mi_perfil(db: Session = Depends(database.get_db),
     )
 
 
-# reemplaza TODAS las favoritas por la lista nueva (max 4 tmdb_ids).
-# primero resolvemos las pelis (esto puede pegarle a TMDB), si peta no
-# tocamos las favoritas viejas. solo cuando ya tenemos todas las pelis
-# en mano hacemos el delete + insert en la misma transaccion.
+# reemplaza las favoritas por la lista nueva (max 4). Resolvemos las pelis
+# antes de borrar las viejas, asi si TMDB peta no perdemos lo que habia
 @router.put("/me/favoritas")
 def configurar_favoritas(tmdb_ids: list[int],
                          db: Session = Depends(database.get_db),
@@ -83,10 +80,10 @@ def configurar_favoritas(tmdb_ids: list[int],
     if len(tmdb_ids) > 4:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Máximo 4 películas favoritas")
 
-    # paso 1: resolvemos todas las pelis ANTES de tocar la tabla de favoritas
+    # primero las resolvemos todas (puede pegarle a TMDB)
     peliculas = [get_or_create_pelicula(tid, db) for tid in tmdb_ids]
 
-    # paso 2: borramos las viejas y metemos las nuevas en una transaccion sola
+    # ahora ya podemos borrar las viejas y meter las nuevas
     db.execute(delete(models.PeliculaFavorita).where(
         models.PeliculaFavorita.id_usuario == current_user.id
     ))
@@ -403,7 +400,7 @@ def get_feed(db: Session = Depends(database.get_db),
     desde = datetime.now(timezone.utc) - timedelta(days=90)
     eventos = []
 
-    # ─── VISTAS ───
+    # vistas
     vistas = db.execute(
         select(models.Vista, models.Usuario, models.Pelicula)
         .join(models.Usuario, models.Vista.id_usuario == models.Usuario.id)
@@ -429,7 +426,7 @@ def get_feed(db: Session = Depends(database.get_db),
             "created_at": v.created_at.isoformat(),
         })
 
-    # ─── RESEÑAS ───
+    # reseñas (solo las que tengan texto)
     resenas = db.execute(
         select(models.EntradaDiario, models.Usuario, models.Pelicula)
         .join(models.Usuario, models.EntradaDiario.id_usuario == models.Usuario.id)
@@ -458,7 +455,7 @@ def get_feed(db: Session = Depends(database.get_db),
             "created_at": e.created_at.isoformat(),
         })
 
-    # ─── ME GUSTA ───
+    # me gustas
     me_gustas = db.execute(
         select(models.MeGusta, models.Usuario, models.Pelicula)
         .join(models.Usuario, models.MeGusta.id_usuario == models.Usuario.id)

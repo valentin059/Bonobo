@@ -12,7 +12,7 @@
 
     <main class="contenedor pagina">
 
-        <!--  VISTA: ÍNDICE DE LISTAS  -->
+        <!-- VISTA: ÍNDICE DE LISTAS -->
         <div id="vistaIndice">
 
             <div class="seccion-header" style="margin-bottom:32px">
@@ -29,7 +29,7 @@
 
         </div>
 
-        <!--  VISTA: DETALLE DE UNA LISTA  -->
+        <!-- VISTA: DETALLE DE UNA LISTA -->
         <div id="vistaDetalle" class="oculto">
 
             <button class="btn btn--ghost btn--sm" style="margin-bottom:24px"
@@ -57,8 +57,7 @@
                     Añadir película
                 </div>
                 <div style="display:flex;gap:8px;max-width:480px">
-                    <input class="form-input" type="text" id="inputBuscarPeli"
-                           placeholder="Buscar por título…"
+                    <input class="form-input" type="text" id="inputBuscarPeli" placeholder="Buscar por título…"
                            oninput="buscarParaAñadir(this.value)"
                            autocomplete="off"
                            style="flex:1" />
@@ -73,7 +72,7 @@
 
     </main>
 
-    <!--  MODAL: CREAR LISTA  -->
+    <!-- MODAL: CREAR LISTA -->
     <div class="modal-overlay modal-overlay--hidden" id="modalCrear">
         <div class="modal">
             <button class="modal-close" onclick="cerrarModal('modalCrear')">✕</button>
@@ -81,13 +80,11 @@
 
             <div class="form-grupo">
                 <label class="form-label">Nombre</label>
-                <input class="form-input" type="text" id="crearNombre"
-                       placeholder="Ej: Películas de los 90" maxlength="100" />
+                <input class="form-input" type="text" id="crearNombre" placeholder="Ej: Películas de los 90" maxlength="100" />
             </div>
             <div class="form-grupo">
                 <label class="form-label">Descripción (opcional)</label>
-                <input class="form-input" type="text" id="crearDesc"
-                       placeholder="Una descripción breve…" maxlength="300" />
+                <input class="form-input" type="text" id="crearDesc" placeholder="Una descripción breve…" maxlength="300" />
             </div>
             <div class="form-grupo">
                 <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
@@ -106,7 +103,7 @@
         </div>
     </div>
 
-    <!--  MODAL: EDITAR LISTA  -->
+    <!-- MODAL: EDITAR LISTA -->
     <div class="modal-overlay modal-overlay--hidden" id="modalEditar">
         <div class="modal">
             <button class="modal-close" onclick="cerrarModal('modalEditar')">✕</button>
@@ -124,8 +121,7 @@
             </div>
             <div class="form-grupo">
                 <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
-                    <input type="checkbox" id="editPublica"
-                           style="width:16px;height:16px;accent-color:var(--accent)" />
+                    <input type="checkbox" id="editPublica" style="width:16px;height:16px;accent-color:var(--accent)" />
                     <span style="font-size:13px;color:var(--muted)">Lista pública</span>
                 </label>
             </div>
@@ -145,10 +141,10 @@
     <script src="../js/auth.js"></script>
     <script src="../js/nav.js"></script>
     <script>
-        let usuarioId    = null;
-        let listaActual  = null;   // datos completos de la lista abierta
+        let usuarioId = null;
+        let listaActual = null;   // datos completos de la lista abierta
         let esListaPropia = false;
-        let buscarTimer  = null;
+        let buscarTimer = null;
 
         function mostrarToast(msg, tipo = 'ok') {
             const t = document.getElementById('toast');
@@ -165,7 +161,7 @@
             location.href = `pelicula.html?id=${tmdbId}`;
         }
 
-        //  Índice de listas 
+        //  Índice de listas
 
         async function cargarListas(idUsuario) {
             const contenedor = document.getElementById('listaListas');
@@ -199,16 +195,13 @@
                     <div class="lista-card__count">${l.total_peliculas ?? 0} pel.</div>
                     ${conAcciones ? `
                     <div class="lista-card__acciones" onclick="event.stopPropagation()">
-                        <button class="btn btn--ghost btn--sm"
-                                data-id="${l.id}"
-                                data-nombre="${escapeHTML(l.nombre)}"
+                        <button class="btn btn--ghost btn--sm" data-id="${l.id}" data-nombre="${escapeHTML(l.nombre)}"
                                 data-desc="${escapeHTML(l.descripcion || '')}"
                                 data-publica="${l.es_publica}"
                                 onclick="abrirModalEditarDesdeBtn(this)">
                             Editar
                         </button>
-                        <button class="btn btn--ghost btn--sm"
-                                style="color:var(--error);border-color:var(--error)"
+                        <button class="btn btn--ghost btn--sm" style="color:var(--error);border-color:var(--error)"
                                 onclick="confirmarBorrar(${l.id})">
                             Borrar
                         </button>
@@ -226,7 +219,7 @@
             );
         }
 
-        //  Detalle de lista 
+        //  Detalle de lista
 
         async function abrirLista(idLista, pushHistory = true) {
             document.getElementById('vistaIndice').classList.add('oculto');
@@ -247,7 +240,7 @@
                 esListaPropia = (lista.id_usuario === usuarioId);
 
                 document.getElementById('detalleNombre').textContent = lista.nombre;
-                document.getElementById('detalleDesc').textContent   = lista.descripcion || '';
+                document.getElementById('detalleDesc').textContent = lista.descripcion || '';
                 document.getElementById('detalleBadge').innerHTML =
                     `<span class="lista-badge lista-badge--${lista.es_publica ? 'publica' : 'privada'}">${lista.es_publica ? 'Pública' : 'Privada'}</span>`;
                 document.getElementById('detalleCuenta').textContent =
@@ -257,16 +250,13 @@
                 const acciones = document.getElementById('detalleAcciones');
                 if (esListaPropia) {
                     acciones.innerHTML = `
-                        <button class="btn btn--ghost btn--sm"
-                                data-id="${lista.id}"
-                                data-nombre="${escapeHTML(lista.nombre)}"
+                        <button class="btn btn--ghost btn--sm" data-id="${lista.id}" data-nombre="${escapeHTML(lista.nombre)}"
                                 data-desc="${escapeHTML(lista.descripcion || '')}"
                                 data-publica="${lista.es_publica}"
                                 onclick="abrirModalEditarDesdeBtn(this)">
                             Editar
                         </button>
-                        <button class="btn btn--ghost btn--sm"
-                                style="color:var(--error);border-color:var(--error)"
+                        <button class="btn btn--ghost btn--sm" style="color:var(--error);border-color:var(--error)"
                                 onclick="confirmarBorrar(${lista.id})">
                             Borrar
                         </button>
@@ -324,7 +314,7 @@
             listaActual = null;
         }
 
-        //  Añadir película a la lista 
+        //  Añadir película a la lista
 
         function buscarParaAñadir(query) {
             clearTimeout(buscarTimer);
@@ -372,21 +362,21 @@
             }
         }
 
-        //  Crear lista 
+        //  Crear lista
 
         function abrirModalCrear() {
             document.getElementById('crearNombre').value = '';
-            document.getElementById('crearDesc').value   = '';
+            document.getElementById('crearDesc').value = '';
             document.getElementById('crearPublica').checked = true;
             document.getElementById('errorCrear').className = 'form-error';
             document.getElementById('modalCrear').classList.remove('modal-overlay--hidden');
         }
 
         async function crearLista() {
-            const nombre    = document.getElementById('crearNombre').value.trim();
-            const desc      = document.getElementById('crearDesc').value.trim() || null;
+            const nombre = document.getElementById('crearNombre').value.trim();
+            const desc = document.getElementById('crearDesc').value.trim() || null;
             const esPublica = document.getElementById('crearPublica').checked;
-            const errorEl   = document.getElementById('errorCrear');
+            const errorEl = document.getElementById('errorCrear');
 
             if (!nombre) {
                 errorEl.textContent = 'El nombre es obligatorio';
@@ -405,23 +395,23 @@
             }
         }
 
-        //  Editar lista 
+        //  Editar lista
 
         function abrirModalEditar(idLista, nombre, desc, esPublica) {
             document.getElementById('editIdLista').value = idLista;
-            document.getElementById('editNombre').value  = nombre;
-            document.getElementById('editDesc').value    = desc;
+            document.getElementById('editNombre').value = nombre;
+            document.getElementById('editDesc').value = desc;
             document.getElementById('editPublica').checked = esPublica;
             document.getElementById('errorEditar').className = 'form-error';
             document.getElementById('modalEditar').classList.remove('modal-overlay--hidden');
         }
 
         async function guardarEdicion() {
-            const idLista   = parseInt(document.getElementById('editIdLista').value);
-            const nombre    = document.getElementById('editNombre').value.trim();
-            const desc      = document.getElementById('editDesc').value.trim() || null;
+            const idLista = parseInt(document.getElementById('editIdLista').value);
+            const nombre = document.getElementById('editNombre').value.trim();
+            const desc = document.getElementById('editDesc').value.trim() || null;
             const esPublica = document.getElementById('editPublica').checked;
-            const errorEl   = document.getElementById('errorEditar');
+            const errorEl = document.getElementById('errorEditar');
 
             if (!nombre) {
                 errorEl.textContent = 'El nombre es obligatorio';
@@ -445,7 +435,7 @@
             }
         }
 
-        //  Borrar lista 
+        //  Borrar lista
 
         async function confirmarBorrar(idLista) {
             if (!confirm('¿Borrar esta lista? No se puede deshacer.')) return;
@@ -459,12 +449,12 @@
             }
         }
 
-        //  Init 
+        //  Init
 
         document.addEventListener('DOMContentLoaded', async () => {
             renderNav('../');
 
-            const params  = new URLSearchParams(window.location.search);
+            const params = new URLSearchParams(window.location.search);
             const idParam = params.get('id');
 
             if (idParam) {

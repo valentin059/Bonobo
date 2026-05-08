@@ -7,7 +7,7 @@ function renderNav(base = '') {
 
     // todo lo que viene del user lo escapamos antes de meterlo en HTML
     const usernameSafe = escapeHTML(usuario?.username || 'Perfil');
-    const avatarSafe   = escapeHTML(usuario?.avatar_url || '');
+    const avatarSafe = escapeHTML(usuario?.avatar_url || '');
 
     const authHTML = logueado ? `
         <div class="nav-user-info">
@@ -92,7 +92,7 @@ function renderNav(base = '') {
     if (placeholder) placeholder.innerHTML = navHTML;
 
     const searchInput = document.getElementById('navSearch');
-    const dropdown    = document.getElementById('navDropdown');
+    const dropdown = document.getElementById('navDropdown');
 
     if (searchInput && dropdown) {
         let navTimer = null;
@@ -114,35 +114,33 @@ function renderNav(base = '') {
                     if (q.startsWith('@')) {
                         const usuarios = await api.usuarios.buscar(q.slice(1), 0, 6);
                         items = usuarios.map(u => ({
-                            img:      u.avatar_url || '',
-                            titulo:   u.username,
-                            sub:      u.bio ? u.bio.slice(0, 40) : '',
-                            href:     `${base}pages/usuario.html?id=${u.id}`,
+                            img: u.avatar_url || '',
+                            titulo: u.username,
+                            sub: u.bio ? u.bio.slice(0, 40) : '',
+                            href: `${base}pages/usuario.html?id=${u.id}`,
                             esAvatar: true,
                         }));
                     } else {
                         const data = await api.peliculas.buscar(q, 0, 6);
                         items = (data.results || []).map(p => ({
-                            img:    p.poster_url || '',
+                            img: p.poster_url || '',
                             titulo: p.titulo,
-                            sub:    p.anio_estreno ? String(p.anio_estreno) : '',
-                            href:   `${base}pages/pelicula.html?id=${p.tmdb_id}`,
+                            sub: p.anio_estreno ? String(p.anio_estreno) : '',
+                            href: `${base}pages/pelicula.html?id=${p.tmdb_id}`,
                         }));
                     }
 
                     if (!items.length) { cerrarDropdown(); return; }
 
-                    // OJO: it.titulo y it.sub vienen del usuario (bios, etc).
-                    // Hay que escapar SI o SI o se cuela un script en una bio.
+                    // OJO: titulo y sub vienen del usuario (bios), hay que escaparlos
+                    // el href lo construyo yo asi que no hace falta
                     dropdown.innerHTML = items.map(it => {
                         const tituloSafe = escapeHTML(it.titulo);
-                        const subSafe    = escapeHTML(it.sub);
-                        const imgSafe    = escapeHTML(it.img);
-                        const hrefSafe   = escapeHTML(it.href);
+                        const subSafe = escapeHTML(it.sub);
                         return `
-                        <div class="nav-dropdown-item" onclick="location.href='${hrefSafe}'">
+                        <div class="nav-dropdown-item" onclick="location.href='${it.href}'">
                             ${it.img
-                                ? `<img src="${imgSafe}" alt="" ${it.esAvatar ? 'style="height:28px;border-radius:50%"' : ''}>`
+                                ? `<img src="${it.img}" alt="" ${it.esAvatar ? 'style="height:28px;border-radius:50%"' : ''}>`
                                 : `<div style="width:28px;height:42px;background:var(--surface3);border-radius:2px;flex-shrink:0"></div>`
                             }
                             <div class="nav-dropdown-item__info">
@@ -200,7 +198,7 @@ function renderNav(base = '') {
     }
 
     // hamburger: abre/cierra el menu movil
-    const hamburger  = document.getElementById('navHamburger');
+    const hamburger = document.getElementById('navHamburger');
     const mobileMenu = document.getElementById('navMobileMenu');
     if (hamburger && mobileMenu) {
         hamburger.addEventListener('click', (e) => {

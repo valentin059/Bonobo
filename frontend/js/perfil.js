@@ -1,9 +1,9 @@
 // perfil.js — pagina de mi perfil
 
 let usuarioId = null;
-let movieMap  = {};
+let movieMap = {};
 // 4 huecos de favoritas, cada uno { tmdb_id, titulo, poster_url } o null
-let favSlots  = [null, null, null, null];
+let favSlots = [null, null, null, null];
 // timers de debounce para los buscadores de favoritas
 let favTimers = [null, null, null, null];
 
@@ -32,22 +32,22 @@ function renderizarCabecera(usuario) {
         avatarEl.className = 'perfil-avatar perfil-avatar--placeholder';
     }
 
-    document.getElementById('perfilUsername').textContent    = usuario.username;
-    document.getElementById('perfilBio').textContent         = usuario.bio || '';
-    document.getElementById('statVistas').textContent        = usuario.total_vistas;
-    document.getElementById('statSeguidores').textContent    = usuario.seguidores;
-    document.getElementById('statSeguidos').textContent      = usuario.seguidos;
-    document.getElementById('statNivel').textContent         = usuario.nivel || 1;
-    document.getElementById('statXP').textContent            = 'Nivel';
+    document.getElementById('perfilUsername').textContent = usuario.username;
+    document.getElementById('perfilBio').textContent = usuario.bio || '';
+    document.getElementById('statVistas').textContent = usuario.total_vistas;
+    document.getElementById('statSeguidores').textContent = usuario.seguidores;
+    document.getElementById('statSeguidos').textContent = usuario.seguidos;
+    document.getElementById('statNivel').textContent = usuario.nivel || 1;
+    document.getElementById('statXP').textContent = 'Nivel';
 }
 
 function renderizarFavoritas(favoritas) {
-    const grid     = document.getElementById('favoritasGrid');
+    const grid = document.getElementById('favoritasGrid');
     const porOrden = {};
     favoritas.forEach(f => { porOrden[f.orden] = f.pelicula; });
 
     grid.innerHTML = Array.from({ length: 4 }, (_, i) => {
-        const orden    = i + 1;
+        const orden = i + 1;
         const pelicula = porOrden[orden];
         if (pelicula) {
             const tituloSafe = escapeHTML(pelicula.titulo);
@@ -69,7 +69,7 @@ function renderizarFavoritas(favoritas) {
 
 function renderizarVistas(vistas, totalVistas) {
     const grid = document.getElementById('gridVistas');
-    const lbl  = document.getElementById('lblVistas');
+    const lbl = document.getElementById('lblVistas');
 
     if (totalVistas > 0) {
         lbl.innerHTML = `<a href="vistas.html" style="color:var(--accent)">Ver todo →</a>`;
@@ -125,8 +125,8 @@ function renderizarDiario(entradas) {
     lista.innerHTML = entradas.slice(0, 5).map(entrada => {
         diarioCache$[entrada.id] = { entrada, pelicula: movieMap[entrada.id_pelicula] };
         const fecha = new Date(entrada.fecha_visionado);
-        const dia   = fecha.getDate();
-        const mes   = fecha.toLocaleString('es', { month: 'short' }).toUpperCase();
+        const dia = fecha.getDate();
+        const mes = fecha.toLocaleString('es', { month: 'short' }).toUpperCase();
         const pelicula = movieMap[entrada.id_pelicula];
         const posterSafe = escapeHTML(pelicula?.poster_url || '');
         const tituloSafe = escapeHTML(pelicula?.titulo || `Película #${entrada.id_pelicula}`);
@@ -177,7 +177,7 @@ function abrirModalDiarioEntrada(id) {
             return `<button class="punt-btn" data-val="${v}" onclick="setPerfilPuntuacion(${v})">${v}</button>`;
         }).join('');
     }
-    document.getElementById('diarioEntradaId').value    = entrada.id;
+    document.getElementById('diarioEntradaId').value = entrada.id;
     document.getElementById('diarioEntradaFecha').value = entrada.fecha_visionado;
     document.getElementById('diarioEntradaResena').value = entrada.resena || '';
     document.getElementById('modalDiarioTitulo').textContent = pelicula?.titulo || 'Entrada del diario';
@@ -200,7 +200,7 @@ function setPerfilPuntuacion(val) {
 }
 
 async function guardarEdicionDiario() {
-    const id    = parseInt(document.getElementById('diarioEntradaId').value);
+    const id = parseInt(document.getElementById('diarioEntradaId').value);
     const fecha = document.getElementById('diarioEntradaFecha').value;
     const resena = document.getElementById('diarioEntradaResena').value.trim() || null;
 
@@ -214,7 +214,7 @@ async function guardarEdicionDiario() {
         });
 
         if (diarioCache$[id]) {
-            diarioCache$[id].entrada.resena     = resena;
+            diarioCache$[id].entrada.resena = resena;
             diarioCache$[id].entrada.puntuacion = perfilEditPuntuacion;
         }
         const puntEl = document.getElementById(`perfil-punt-${id}`);
@@ -237,7 +237,7 @@ function renderizarListas(listas) {
     // OJO: nombre y descripcion de la lista los pone el user, hay que escaparlos
     lista.innerHTML = listas.slice(0, 4).map(l => {
         const nombreSafe = escapeHTML(l.nombre);
-        const descSafe   = escapeHTML(l.descripcion || '');
+        const descSafe = escapeHTML(l.descripcion || '');
         return `
         <div class="lista-card" onclick="location.href='listas.html?id=${l.id}'">
             <div class="lista-card__info">
@@ -388,7 +388,7 @@ function renderUsuariosModal(usuarios) {
         return '<p class="text-faint" style="font-size:13px;padding:8px 0">Ningún usuario.</p>';
     }
     return usuarios.map(u => {
-        const userSafe   = escapeHTML(u.username);
+        const userSafe = escapeHTML(u.username);
         const avatarSafe = escapeHTML(u.avatar_url || '');
         return `
         <a href="usuario.html?id=${u.id}" class="usuario-fila">

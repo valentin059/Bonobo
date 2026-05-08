@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 import httpx
 from ..config import settings
 from ..schemas.peliculas import (
@@ -7,25 +8,24 @@ from ..schemas.peliculas import (
     PeliculaPersona, PersonaDetalle,
 )
 
-# Roles del crew que mostramos en la ficha de la peli, agrupados por departamento.
-# Si TMDB devuelve un rol que no esta aqui, lo ignoramos.
+# roles del crew que mostramos en la ficha. Si llega uno que no esta lo ignoramos
 CREW_ROLES = {
-    "Directing":         {"Director"},
-    "Writing":           {"Screenplay", "Story", "Writer", "Novel", "Characters", "Original Story"},
-    "Camera":            {"Director of Photography"},
-    "Editing":           {"Editor"},
-    "Sound":             {"Original Music Composer"},
-    "Production":        {"Producer"},
-    "Art":               {"Production Designer"},
+    "Directing": {"Director"},
+    "Writing": {"Screenplay", "Story", "Writer", "Novel", "Characters", "Original Story"},
+    "Camera": {"Director of Photography"},
+    "Editing": {"Editor"},
+    "Sound": {"Original Music Composer"},
+    "Production": {"Producer"},
+    "Art": {"Production Designer"},
     "Costume & Make-Up": {"Costume Designer"},
-    "Visual Effects":    {"Visual Effects Supervisor", "VFX Supervisor"},
-    "Lighting":          {"Gaffer"},
+    "Visual Effects": {"Visual Effects Supervisor", "VFX Supervisor"},
+    "Lighting": {"Gaffer"},
 }
 
-TMDB_BASE_URL          = "https://api.themoviedb.org/3"
-TMDB_IMAGE_BASE_URL    = "https://image.tmdb.org/t/p/w500"
+TMDB_BASE_URL = "https://api.themoviedb.org/3"
+TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500"
 TMDB_BACKDROP_BASE_URL = "https://image.tmdb.org/t/p/w1280"
-TMDB_TIMEOUT           = 10.0
+TMDB_TIMEOUT = 10.0
 
 headers = {
     "Authorization": f"Bearer {settings.tmdb_token}",
@@ -33,19 +33,19 @@ headers = {
 }
 
 
-def url_poster(poster_path: str | None) -> str | None:
+def url_poster(poster_path: Optional[str]) -> Optional[str]:
     if not poster_path:
         return None
     return f"{TMDB_IMAGE_BASE_URL}{poster_path}"
 
 
-def url_backdrop(backdrop_path: str | None) -> str | None:
+def url_backdrop(backdrop_path: Optional[str]) -> Optional[str]:
     if not backdrop_path:
         return None
     return f"{TMDB_BACKDROP_BASE_URL}{backdrop_path}"
 
 
-def parsear_anio(release_date: str | None) -> int | None:
+def parsear_anio(release_date: Optional[str]) -> Optional[int]:
     # release_date viene como "YYYY-MM-DD". Si no esta o no se puede parsear, None.
     if not release_date or len(release_date) < 4:
         return None
@@ -118,7 +118,7 @@ def obtener_cartelera(skip: int = 0, limit: int = 20) -> PaginadoCartelera:
     )
 
 
-def _parsear_fecha_estreno(fecha_str: str | None):
+def _parsear_fecha_estreno(fecha_str: Optional[str]):
     # convierte "YYYY-MM-DD" a date, o None si no parsea
     if not fecha_str:
         return None
@@ -183,10 +183,10 @@ def obtener_detalle_pelicula(tmdb_id: int) -> PeliculaDetalle:
         )
         creditos.raise_for_status()
 
-    movie         = detalle.json()
+    movie = detalle.json()
     creditos_data = creditos.json()
-    cast_raw      = creditos_data.get("cast", [])[:15]
-    crew_raw      = creditos_data.get("crew", [])
+    cast_raw = creditos_data.get("cast", [])[:15]
+    crew_raw = creditos_data.get("crew", [])
 
     reparto = [
         PersonaCast(
@@ -256,7 +256,7 @@ def obtener_persona(person_id: int) -> PersonaDetalle:
         )
         creditos_res.raise_for_status()
 
-    persona  = persona_res.json()
+    persona = persona_res.json()
     creditos = creditos_res.json()
 
     # combinamos cast y crew dedupeando por tmdb_id (cast manda).

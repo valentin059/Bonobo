@@ -10,8 +10,8 @@ function mostrarToast(mensaje, tipo = 'ok', duracion = 2800) {
 
 async function guardarPerfil() {
     const avatar_url = document.getElementById('inputAvatar').value.trim() || null;
-    const bio        = document.getElementById('inputBio').value.trim() || null;
-    const errorEl    = document.getElementById('errorPerfil');
+    const bio = document.getElementById('inputBio').value.trim() || null;
+    const errorEl = document.getElementById('errorPerfil');
 
     try {
         await api.usuarios.editarPerfil({ bio, avatar_url });
@@ -31,8 +31,8 @@ async function guardarPerfil() {
 
 
 async function guardarPassword() {
-    const actual  = document.getElementById('inputPasswordActual').value;
-    const nueva   = document.getElementById('inputPasswordNueva').value;
+    const actual = document.getElementById('inputPasswordActual').value;
+    const nueva = document.getElementById('inputPasswordNueva').value;
     const repetir = document.getElementById('inputPasswordRepetir').value;
     const errorEl = document.getElementById('errorPassword');
 
@@ -50,7 +50,7 @@ async function guardarPassword() {
     try {
         await api.usuarios.cambiarPassword(actual, nueva);
         document.getElementById('inputPasswordActual').value = '';
-        document.getElementById('inputPasswordNueva').value  = '';
+        document.getElementById('inputPasswordNueva').value = '';
         document.getElementById('inputPasswordRepetir').value = '';
         errorEl.className = 'form-error';
         mostrarToast('Contraseña actualizada ✓');
@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         const usuario = await api.usuarios.mePerfil();
         document.getElementById('inputAvatar').value = usuario.avatar_url || '';
-        document.getElementById('inputBio').value    = usuario.bio || '';
+        document.getElementById('inputBio').value = usuario.bio || '';
     } catch (err) {
         console.warn('[ajustes] error cargando datos', err);
         mostrarToast('Error al cargar los datos', 'error');

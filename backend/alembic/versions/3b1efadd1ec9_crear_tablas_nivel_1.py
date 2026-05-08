@@ -1,7 +1,7 @@
 """Crear tablas nivel 1
 
 Revision ID: 3b1efadd1ec9
-Revises: 
+Revises:
 Create Date: 2026-03-27 16:28:48.604202
 
 """

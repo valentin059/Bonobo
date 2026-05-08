@@ -16,10 +16,10 @@ function mostrarToast(mensaje, tipo = 'ok', duracion = 2800) {
 
 // pone los botones (vista, like, watchlist) segun el estado actual
 function actualizarBotonesAccion() {
-    const btnVista     = document.getElementById('btnVista');
-    const btnLike      = document.getElementById('btnLike');
+    const btnVista = document.getElementById('btnVista');
+    const btnLike = document.getElementById('btnLike');
     const btnWatchlist = document.getElementById('btnWatchlist');
-    const lblVista     = document.getElementById('lblVista');
+    const lblVista = document.getElementById('lblVista');
 
     if (estado.vista) {
         btnVista.classList.add('accion-btn--watched');
@@ -59,8 +59,8 @@ function renderizarPelicula(pelicula) {
     document.title = `BONOBO — ${pelicula.titulo || 'Película'}`;
 
     // Fondo: si hay backdrop 16:9 lo usamos, sino el poster difuminado
-    const heroBg    = document.getElementById('heroBg');
-    const heroWrap  = document.getElementById('peliculaHero');
+    const heroBg = document.getElementById('heroBg');
+    const heroWrap = document.getElementById('peliculaHero');
     if (pelicula.backdrop_url) {
         heroBg.style.backgroundImage = `url('${pelicula.backdrop_url}')`;
         heroWrap.classList.add('has-backdrop');
@@ -95,8 +95,8 @@ function renderizarPelicula(pelicula) {
     // meta: año, duracion, puntuacion TMDB
     const metas = [];
     if (pelicula.anio_estreno) metas.push(`<span>${pelicula.anio_estreno}</span>`);
-    if (pelicula.duracion)     metas.push(`<span>${pelicula.duracion} min</span>`);
-    if (pelicula.puntuacion)   metas.push(`<span>★ ${pelicula.puntuacion.toFixed(1)} TMDB</span>`);
+    if (pelicula.duracion) metas.push(`<span>${pelicula.duracion} min</span>`);
+    if (pelicula.puntuacion) metas.push(`<span>★ ${pelicula.puntuacion.toFixed(1)} TMDB</span>`);
     document.getElementById('meta').innerHTML = metas.join('<span>·</span>');
 
     // generos como pastillas (escapados por si TMDB devuelve algo raro)
@@ -133,16 +133,16 @@ function renderizarPelicula(pelicula) {
 
     // equipo tecnico (crew). Traduccion de departamentos al español.
     const DEPT_ES = {
-        'Directing':         'Dirección',
-        'Writing':           'Guion',
-        'Camera':            'Fotografía',
-        'Editing':           'Montaje',
-        'Sound':             'Música',
-        'Production':        'Producción',
-        'Art':               'Dirección de Arte',
+        'Directing': 'Dirección',
+        'Writing': 'Guion',
+        'Camera': 'Fotografía',
+        'Editing': 'Montaje',
+        'Sound': 'Música',
+        'Production': 'Producción',
+        'Art': 'Dirección de Arte',
         'Costume & Make-Up': 'Vestuario',
-        'Visual Effects':    'Efectos Visuales',
-        'Lighting':          'Iluminación',
+        'Visual Effects': 'Efectos Visuales',
+        'Lighting': 'Iluminación',
     };
 
     const gridEquipo = document.getElementById('gridEquipo');
@@ -188,7 +188,7 @@ function renderizarPelicula(pelicula) {
     function formatearDinero(n) {
         if (!n) return null;
         if (n >= 1_000_000_000) return `$${(n / 1_000_000_000).toFixed(2)}B`;
-        if (n >= 1_000_000)     return `$${Math.round(n / 1_000_000)}M`;
+        if (n >= 1_000_000) return `$${Math.round(n / 1_000_000)}M`;
         return `$${n.toLocaleString('es-ES')}`;
     }
 
@@ -338,7 +338,7 @@ function setPuntuacionDiario(val) {
 }
 
 async function guardarDiario() {
-    const fecha  = document.getElementById('fechaVisionado').value;
+    const fecha = document.getElementById('fechaVisionado').value;
     const resena = document.getElementById('resena').value.trim();
 
     if (!fecha) {
@@ -379,10 +379,10 @@ function activarTab(nombre) {
     document.querySelectorAll('.tab').forEach(btn => {
         btn.classList.toggle('tab--activo', btn.dataset.tab === nombre);
     });
-    document.getElementById('panelReparto').classList.toggle('oculto',  nombre !== 'reparto');
-    document.getElementById('panelEquipo').classList.toggle('oculto',   nombre !== 'equipo');
+    document.getElementById('panelReparto').classList.toggle('oculto', nombre !== 'reparto');
+    document.getElementById('panelEquipo').classList.toggle('oculto', nombre !== 'equipo');
     document.getElementById('panelDetalles').classList.toggle('oculto', nombre !== 'detalles');
-    document.getElementById('panelResenas').classList.toggle('oculto',  nombre !== 'resenas');
+    document.getElementById('panelResenas').classList.toggle('oculto', nombre !== 'resenas');
 
     if (nombre === 'resenas' && !resenasCargadas) {
         resenasCargadas = true;
@@ -410,7 +410,7 @@ function cerrarModalListas() {
 async function cargarModalListas() {
     const contenedor = document.getElementById('listasUsuario');
     try {
-        const usuario  = await api.usuarios.mePerfil();
+        const usuario = await api.usuarios.mePerfil();
         const [listas, yaEn] = await Promise.all([
             api.usuarios.listas(usuario.id),
             api.listas.listasConPelicula(tmdbId),
@@ -563,10 +563,10 @@ function abrirModalResena(id) {
     avatarEl.innerHTML = r.avatar_url
         ? `<img src="${escapeHTML(r.avatar_url)}" alt="${escapeHTML(r.username)}">`
         : escapeHTML(r.username[0].toUpperCase());
-    document.getElementById('resenaModalUsername').textContent   = r.username;
-    document.getElementById('resenaModalFecha').textContent      = fecha;
+    document.getElementById('resenaModalUsername').textContent = r.username;
+    document.getElementById('resenaModalFecha').textContent = fecha;
     document.getElementById('resenaModalPuntuacion').textContent = r.puntuacion ? `★ ${r.puntuacion}` : '';
-    document.getElementById('resenaModalTexto').textContent      = r.resena || '';
+    document.getElementById('resenaModalTexto').textContent = r.resena || '';
     document.getElementById('modalVerResena').classList.remove('modal-overlay--hidden');
 }
 
@@ -706,8 +706,8 @@ async function enviarComentario(idEntrada) {
         const nuevo = await api.resenas.crearComentario(idEntrada, texto);
         input.value = '';
         const lista = document.getElementById(`lista-comentarios-${idEntrada}`);
-        const miId  = auth.getUsuario()?.id;
-        const item  = document.createElement('div');
+        const miId = auth.getUsuario()?.id;
+        const item = document.createElement('div');
         item.className = 'comentario-item';
         item.id = `comentario-${nuevo.id}`;
         const userSafe = escapeHTML(nuevo.username);

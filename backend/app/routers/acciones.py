@@ -11,8 +11,7 @@ router = APIRouter(
 )
 
 
-# helper: si la peli estaba en watchlist, la quitamos al marcarla como vista o puntuarla.
-# si no estaba, no hace nada.
+# helper: si la peli estaba en watchlist la quitamos al marcarla como vista
 def quitar_de_watchlist(id_usuario: int, id_pelicula: int, db: Session):
     wl = db.execute(select(models.Watchlist).where(
         models.Watchlist.id_usuario == id_usuario,
@@ -48,8 +47,7 @@ def marcar_vista(tmdb_id: int, db: Session = Depends(database.get_db),
     return {"detail": "Película marcada como vista"}
 
 
-# si tiene puntuacion, diario o me gusta NO se puede desmarcar (devolvemos 409).
-# tendria que borrar todo eso primero.
+# si tiene puntuacion, diario o me gusta NO se puede desmarcar -> 409
 @router.delete("/{tmdb_id}/vista", status_code=status.HTTP_204_NO_CONTENT)
 def desmarcar_vista(tmdb_id: int, db: Session = Depends(database.get_db),
                     current_user: models.Usuario = Depends(oauth2.get_current_user)):
@@ -69,10 +67,12 @@ def desmarcar_vista(tmdb_id: int, db: Session = Depends(database.get_db),
     if not vista:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="La película no está marcada como vista")
 
+    # OJO: aqui usabamos scalar_one_or_none y petaba si habia mas de una entrada
+    # de diario para la misma peli (MultipleResultsFound). Con scalars().first() ya no
     tiene_diario = db.execute(select(models.EntradaDiario).where(
         models.EntradaDiario.id_usuario == current_user.id,
         models.EntradaDiario.id_pelicula == pelicula.id
-    )).scalar_one_or_none()
+    )).scalars().first()
 
     tiene_me_gusta = db.execute(select(models.MeGusta).where(
         models.MeGusta.id_usuario == current_user.id,
@@ -87,7 +87,7 @@ def desmarcar_vista(tmdb_id: int, db: Session = Depends(database.get_db),
     db.commit()
 
 
-# si la peli no estaba vista, la marca tambien (o sea: puntuar implica vista)
+# si la peli no estaba vista, la marca tambien (puntuar implica vista)
 @router.put("/{tmdb_id}/puntuacion")
 def puntuar(tmdb_id: int, puntuacion_data: schemas.PuntuacionCreate,
             db: Session = Depends(database.get_db),
@@ -115,6 +115,7 @@ def puntuar(tmdb_id: int, puntuacion_data: schemas.PuntuacionCreate,
         db.refresh(vista)
         quitar_de_watchlist(current_user.id, pelicula.id, db)
 
+    comprobar_y_dar_logros(db, current_user.id)
     return {"detail": "Puntuación guardada", "puntuacion": vista.puntuacion}
 
 
@@ -157,10 +158,20 @@ def crear_entrada_diario(tmdb_id: int, entrada_data: schemas.EntradaDiarioCreate
     )).scalar_one_or_none()
 
     if not vista:
-        vista = models.Vista(id_usuario=current_user.id, id_pelicula=pelicula.id)
+        # si no la habia visto la creamos con la puntuacion de la entrada (si la hay)
+        vista = models.Vista(
+            id_usuario=current_user.id,
+            id_pelicula=pelicula.id,
+            puntuacion=entrada_data.puntuacion
+        )
         db.add(vista)
         db.commit()
         quitar_de_watchlist(current_user.id, pelicula.id, db)
+    elif entrada_data.puntuacion is not None:
+        # si la entrada nueva trae puntuacion la sincronizamos con la vista
+        # (sino la ficha mostraba la nota antigua, era un bug)
+        vista.puntuacion = entrada_data.puntuacion
+        db.commit()
 
     nueva_entrada = models.EntradaDiario(
         id_usuario=current_user.id,

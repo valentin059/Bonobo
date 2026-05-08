@@ -21,10 +21,7 @@
                 <div class="form-grupo">
                     <label class="form-label" for="username">Nombre de usuario</label>
                     <input
-                        class="form-input"
-                        type="text"
-                        id="username"
-                        placeholder="tuusuario"
+                        class="form-input" type="text" id="username" placeholder="tuusuario"
                         autocomplete="username"
                         minlength="3"
                         required
@@ -34,10 +31,7 @@
                 <div class="form-grupo">
                     <label class="form-label" for="email">Email</label>
                     <input
-                        class="form-input"
-                        type="email"
-                        id="email"
-                        placeholder="tucorreo@ejemplo.com"
+                        class="form-input" type="email" id="email" placeholder="tucorreo@ejemplo.com"
                         autocomplete="email"
                         required
                     />
@@ -46,10 +40,7 @@
                 <div class="form-grupo">
                     <label class="form-label" for="password">Contraseña</label>
                     <input
-                        class="form-input"
-                        type="password"
-                        id="password"
-                        placeholder="Mínimo 8 caracteres"
+                        class="form-input" type="password" id="password" placeholder="Mínimo 8 caracteres"
                         autocomplete="new-password"
                         minlength="8"
                         required
@@ -85,8 +76,8 @@
                 return;
             }
 
-            const form    = document.getElementById('formRegistro');
-            const btn     = document.getElementById('btnRegistro');
+            const form = document.getElementById('formRegistro');
+            const btn = document.getElementById('btnRegistro');
             const errorEl = document.getElementById('errorMsg');
 
             form.addEventListener('submit', async (e) => {
@@ -94,7 +85,7 @@
                 errorEl.className = 'form-error';
 
                 const username = document.getElementById('username').value.trim();
-                const email    = document.getElementById('email').value.trim();
+                const email = document.getElementById('email').value.trim();
                 const password = document.getElementById('password').value;
 
                 btn.textContent = 'Creando cuenta…';

@@ -1,58 +1,54 @@
-/* ═══════════════════════════════════════════════════════════
-   BONOBO — Diario Cinematográfico
-   Estética: Dark Cinema · Ámbar dorado · Minimalista
-   Fuentes: Bebas Neue (display) · Inter (cuerpo)
-   ═══════════════════════════════════════════════════════════ */
+/* BONOBO — diario cinematografico
+   Fuentes: Bebas Neue (titulares) + Inter (cuerpo)
+   Acento ambar/dorado sobre tema oscuro */
 
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap');
 
-/*  VARIABLES GLOBALES 
-   Todos los colores y medidas del sistema en un solo lugar.
-   Cambiar un valor aquí lo aplica en toda la app. */
+/* Variables globales: colores y medidas del sistema en un solo sitio */
 :root {
     /* Fondos — de más oscuro a más claro */
-    --bg:        #0e0e12;
-    --surface:   #16161e;
-    --surface2:  #1e1e2a;
-    --surface3:  #26263a;
+    --bg: #0e0e12;
+    --surface: #16161e;
+    --surface2: #1e1e2a;
+    --surface3: #26263a;
 
     /* Bordes */
-    --border:    #2a2a3c;
-    --border2:   #36364e;
+    --border: #2a2a3c;
+    --border2: #36364e;
 
     /* Textos */
-    --text:      #e8e8f2;
-    --muted:     #7878a0;
-    --faint:     #46466a;
+    --text: #e8e8f2;
+    --muted: #7878a0;
+    --faint: #46466a;
 
     /* Acento principal: ámbar/dorado — da sensación de cine, diferente del morado de la versión anterior */
-    --accent:        #e8a020;
-    --accent-hover:  #f0b030;
-    --accent-bg:     rgba(232, 160, 32, 0.10);
+    --accent: #e8a020;
+    --accent-hover: #f0b030;
+    --accent-bg: rgba(232, 160, 32, 0.10);
     --accent-border: rgba(232, 160, 32, 0.25);
 
     /* Colores de estado */
-    --watched:   #22c55e;   /* verde — película vista */
-    --liked:     #f43f5e;   /* rojo — me gusta */
-    --wl:        #38bdf8;   /* azul — watchlist */
-    --rating:    #f59e0b;   /* ámbar — estrellas y puntuaciones */
+    --watched: #22c55e;   /* verde — película vista */
+    --liked: #f43f5e;   /* rojo — me gusta */
+    --wl: #38bdf8;   /* azul — watchlist */
+    --rating: #f59e0b;   /* ámbar — estrellas y puntuaciones */
 
     /* Errores y éxito */
-    --error:     #f43f5e;
-    --success:   #22c55e;
+    --error: #f43f5e;
+    --success: #22c55e;
 
     /* Medidas */
-    --navbar-h:  56px;
-    --radius:    10px;
+    --navbar-h: 56px;
+    --radius: 10px;
     --radius-sm: 6px;
     --radius-lg: 16px;
 
     /* Fuentes */
     --font-display: 'Bebas Neue', cursive;
-    --font-body:    'Inter', sans-serif;
+    --font-body: 'Inter', sans-serif;
 }
 
-/*  RESET 
+/* RESET
    Elimina márgenes y paddings por defecto del navegador. */
 *, *::before, *::after {
     box-sizing: border-box;
@@ -77,7 +73,7 @@ a { text-decoration: none; color: inherit; }
 button { font-family: var(--font-body); cursor: pointer; border: none; background: none; }
 img { display: block; max-width: 100%; }
 
-/*  LAYOUT PRINCIPAL 
+/* LAYOUT PRINCIPAL
    El contenido se centra con un ancho máximo, igual que Letterboxd. */
 .contenedor {
     max-width: 1100px;
@@ -91,9 +87,7 @@ img { display: block; max-width: 100%; }
     padding-bottom: 64px;
 }
 
-/* ══════════════════════════════════════════════════════════════
-   NAVBAR
-   ══════════════════════════════════════════════════════════════ */
+/* NAVBAR */
 .navbar {
     position: fixed;
     top: 0; left: 0; right: 0;
@@ -275,9 +269,7 @@ img { display: block; max-width: 100%; }
     border: 1px solid var(--border2);
 }
 
-/* ══════════════════════════════════════════════════════════════
-   HERO — Pantalla de bienvenida para visitantes no registrados
-   ══════════════════════════════════════════════════════════════ */
+/* HERO — Pantalla de bienvenida para visitantes no registrados */
 .hero {
     position: relative;
     /* 62vh para que la cartelera de abajo ya se vea al cargar la página */
@@ -369,9 +361,7 @@ img { display: block; max-width: 100%; }
     flex-wrap: wrap;
 }
 
-/* ══════════════════════════════════════════════════════════════
-   BOTONES GLOBALES
-   ══════════════════════════════════════════════════════════════ */
+/* BOTONES GLOBALES */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -403,9 +393,7 @@ img { display: block; max-width: 100%; }
 .btn--sm { font-size: 12px; padding: 6px 14px; }
 .btn--lg { font-size: 16px; padding: 13px 28px; }
 
-/* ══════════════════════════════════════════════════════════════
-   SECCIONES DE CONTENIDO
-   ══════════════════════════════════════════════════════════════ */
+/* SECCIONES DE CONTENIDO */
 .seccion {
     margin-bottom: 48px;
 }
@@ -438,9 +426,7 @@ img { display: block; max-width: 100%; }
     flex-shrink: 0;
 }
 
-/* ══════════════════════════════════════════════════════════════
-   TARJETAS DE PELÍCULA
-   ══════════════════════════════════════════════════════════════ */
+/* TARJETAS DE PELÍCULA */
 
 /* Grid de tarjetas: columnas de ~140px que se ajustan al ancho disponible */
 .peliculas-grid {
@@ -560,9 +546,7 @@ img { display: block; max-width: 100%; }
 .badge--liked     { background: var(--liked);   color: #fff; }
 .badge--watchlist { background: var(--wl);      color: #000; }
 
-/* ══════════════════════════════════════════════════════════════
-   FORMULARIOS — Login y Registro
-   ══════════════════════════════════════════════════════════════ */
+/* FORMULARIOS — Login y Registro */
 .form-pagina {
     min-height: calc(100vh - var(--navbar-h));
     display: flex;
@@ -646,9 +630,7 @@ img { display: block; max-width: 100%; }
 .form-footer a { color: var(--accent); }
 .form-footer a:hover { color: var(--accent-hover); }
 
-/* ══════════════════════════════════════════════════════════════
-   DETALLE DE PELÍCULA
-   ══════════════════════════════════════════════════════════════ */
+/* DETALLE DE PELÍCULA */
 
 /* Cabecera con el póster como fondo difuminado */
 .pelicula-hero {
@@ -878,9 +860,7 @@ img { display: block; max-width: 100%; }
     color-scheme: dark;   /* hace que el selector de fecha tenga tema oscuro */
 }
 
-/* ══════════════════════════════════════════════════════════════
-   PESTAÑAS (tabs)
-   ══════════════════════════════════════════════════════════════ */
+/* PESTAÑAS (tabs) */
 
 /* Barra de pestañas */
 .tabs {
@@ -916,7 +896,7 @@ img { display: block; max-width: 100%; }
 /* Contenido de cada pestaña */
 .tab-panel { /* visible por defecto */ }
 
-/*  Equipo técnico  */
+/* Equipo técnico */
 
 /* Agrupa las personas de un mismo departamento */
 .crew-grupo {
@@ -966,7 +946,7 @@ img { display: block; max-width: 100%; }
 .crew-nombre { font-size: 13px; font-weight: 500; color: var(--text); }
 .crew-rol    { font-size: 11px; color: var(--faint); margin-top: 1px; }
 
-/*  Detalles  */
+/* Detalles */
 
 /* Lista de pares clave-valor para los detalles de la película */
 .detalles-lista {
@@ -1023,9 +1003,7 @@ img { display: block; max-width: 100%; }
 .actor-nombre { font-size: 13px; font-weight: 500; color: var(--text); line-height: 1.3; }
 .actor-personaje { font-size: 11px; color: var(--faint); margin-top: 1px; }
 
-/* ══════════════════════════════════════════════════════════════
-   PERFIL DE USUARIO
-   ══════════════════════════════════════════════════════════════ */
+/* PERFIL DE USUARIO */
 .perfil-cabecera {
     padding: 32px 0 40px;
     border-bottom: 1px solid var(--border);
@@ -1129,9 +1107,7 @@ img { display: block; max-width: 100%; }
 }
 .peliculas-grid--sm .pelicula-card__info { display: none; }
 
-/* ══════════════════════════════════════════════════════════════
-   DIARIO
-   ══════════════════════════════════════════════════════════════ */
+/* DIARIO */
 .diario-lista { display: flex; flex-direction: column; gap: 0; }
 
 .diario-entrada {
@@ -1203,14 +1179,10 @@ img { display: block; max-width: 100%; }
     font-weight: 500;
 }
 
-/* ══════════════════════════════════════════════════════════════
-   WATCHLIST
-   ══════════════════════════════════════════════════════════════ */
+/* WATCHLIST */
 /* Reutiliza el grid de tarjetas de película */
 
-/* ══════════════════════════════════════════════════════════════
-   BUSCADOR DE USUARIOS
-   ══════════════════════════════════════════════════════════════ */
+/* BUSCADOR DE USUARIOS */
 .buscar-input-wrap {
     position: relative;
     margin-bottom: 32px;
@@ -1275,9 +1247,7 @@ img { display: block; max-width: 100%; }
 }
 .usuario-fila__username { font-size: 14px; font-weight: 500; }
 
-/* ══════════════════════════════════════════════════════════════
-   ESTADOS DE CARGA Y VACÍO
-   ══════════════════════════════════════════════════════════════ */
+/* ESTADOS DE CARGA Y VACÍO */
 .estado-vacio {
     text-align: center;
     padding: 48px 24px;
@@ -1303,9 +1273,7 @@ img { display: block; max-width: 100%; }
     100% { background-position: -200% 0; }
 }
 
-/* ══════════════════════════════════════════════════════════════
-   MODAL
-   ══════════════════════════════════════════════════════════════ */
+/* MODAL */
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -1352,9 +1320,7 @@ img { display: block; max-width: 100%; }
 }
 .modal-close:hover { color: var(--text); }
 
-/* ══════════════════════════════════════════════════════════════
-   NOTIFICACIÓN TOAST (feedback rápido al usuario)
-   ══════════════════════════════════════════════════════════════ */
+/* NOTIFICACIÓN TOAST (feedback rápido al usuario) */
 .toast {
     position: fixed;
     bottom: 24px;
@@ -1375,9 +1341,7 @@ img { display: block; max-width: 100%; }
 .toast--ok    { border-color: var(--success); color: var(--success); }
 .toast--error { border-color: var(--error);   color: var(--error);   }
 
-/* ══════════════════════════════════════════════════════════════
-   UTILIDADES
-   ══════════════════════════════════════════════════════════════ */
+/* UTILIDADES */
 .oculto { display: none !important; }
 .text-muted { color: var(--muted); }
 .text-faint  { color: var(--faint); }
@@ -1386,11 +1350,9 @@ img { display: block; max-width: 100%; }
 .mt-16 { margin-top: 16px; }
 .mt-32 { margin-top: 32px; }
 
-/* ══════════════════════════════════════════════════════════════
-   NIVEL 2 — SOCIAL, RESEÑAS, LISTAS
-   ══════════════════════════════════════════════════════════════ */
+/* NIVEL 2 — SOCIAL, RESEÑAS, LISTAS */
 
-/*  Botón seguir / dejar de seguir  */
+/* Botón seguir / dejar de seguir */
 .btn--seguir {
     background: var(--accent);
     color: #000;
@@ -1408,7 +1370,7 @@ img { display: block; max-width: 100%; }
     border-color: var(--error);
 }
 
-/*  Reseñas (comunidad y amigos)  */
+/* Reseñas (comunidad y amigos) */
 .resenas-subtitulo {
     font-size: 11px;
     font-weight: 600;
@@ -1556,7 +1518,7 @@ img { display: block; max-width: 100%; }
     font-style: italic;
 }
 
-/*  Sección de comentarios  */
+/* Sección de comentarios */
 .comentarios-seccion {
     margin-top: 12px;
     border-top: 1px solid var(--border);
@@ -1632,7 +1594,7 @@ img { display: block; max-width: 100%; }
 .comentario-form input:focus { border-color: var(--accent-border); }
 .comentario-form input::placeholder { color: var(--faint); }
 
-/*  Listas  */
+/* Listas */
 .lista-card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -1693,7 +1655,7 @@ img { display: block; max-width: 100%; }
 
 .listas-lista { display: flex; flex-direction: column; gap: 8px; }
 
-/*  Detalle de lista  */
+/* Detalle de lista */
 .lista-detalle-header {
     display: flex;
     align-items: flex-start;
@@ -1720,7 +1682,7 @@ img { display: block; max-width: 100%; }
     align-items: center;
 }
 
-/*  Modal ancho (para favoritas y búsqueda en listas)  */
+/* Modal ancho (para favoritas y búsqueda en listas) */
 .modal--wide { max-width: 680px; }
 
 /* Slots de favoritas en el modal de edición */
@@ -1832,14 +1794,14 @@ img { display: block; max-width: 100%; }
 /* Wrapper para posicionar los resultados relativo al slot */
 .fav-search-wrap { position: relative; }
 
-/*  Modal de usuarios (seguidores/seguidos)  */
+/* Modal de usuarios (seguidores/seguidos) */
 .modal-usuarios-lista {
     max-height: 360px;
     overflow-y: auto;
     margin-top: 8px;
 }
 
-/*  Entrada del diario con acciones de editar  */
+/* Entrada del diario con acciones de editar */
 .diario-acciones {
     display: flex;
     gap: 8px;
@@ -1859,7 +1821,7 @@ img { display: block; max-width: 100%; }
 }
 .diario-accion-btn:hover { color: var(--muted); background: var(--surface2); }
 
-/*  Overlay póster ampliado  */
+/* Overlay póster ampliado */
 .poster-overlay {
     position: fixed;
     inset: 0;
@@ -1878,7 +1840,7 @@ img { display: block; max-width: 100%; }
     box-shadow: 0 8px 40px rgba(0,0,0,.6);
 }
 
-/*  Puntuación en entrada de diario  */
+/* Puntuación en entrada de diario */
 .diario-puntuacion {
     display: inline-block;
     margin-left: 8px;
@@ -1888,7 +1850,7 @@ img { display: block; max-width: 100%; }
     vertical-align: middle;
 }
 
-/*  Botón lista ya añadida en modal  */
+/* Botón lista ya añadida en modal */
 .lista-modal-btn--añadida {
     background: rgba(232, 160, 32, 0.12);
     border: 1px solid var(--accent);
@@ -1897,11 +1859,9 @@ img { display: block; max-width: 100%; }
     opacity: 0.85;
 }
 
-/* ══════════════════════════════════════════════════════════════
-   NIVEL 3 — LOGROS (pantalla al estilo Steam/PlayStation)
-   ══════════════════════════════════════════════════════════════ */
+/* NIVEL 3 — LOGROS (pantalla al estilo Steam/PlayStation) */
 
-/*  Cabecera: nivel + barra de progreso  */
+/* Cabecera: nivel + barra de progreso */
 .logros-cabecera {
     display: flex;
     align-items: center;
@@ -1980,7 +1940,7 @@ img { display: block; max-width: 100%; }
     letter-spacing: 0.06em;
 }
 
-/*  Filtros  */
+/* Filtros */
 .logros-filtros {
     display: flex;
     gap: 8px;
@@ -2027,14 +1987,14 @@ img { display: block; max-width: 100%; }
     color: #000;
 }
 
-/*  Grid de tarjetas  */
+/* Grid de tarjetas */
 .logros-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
     gap: 16px;
 }
 
-/*  Tarjeta individual  */
+/* Tarjeta individual */
 .logro-card {
     position: relative;
     display: flex;
@@ -2188,9 +2148,7 @@ img { display: block; max-width: 100%; }
     .logro-nombre { font-size: 15px; }
     .logro-desc { font-size: 11px; }
 }
-/* ══════════════════════════════════════════════════════════════
-   BADGE DE NOTIFICACIÓN — Contador de logros pendientes
-   ══════════════════════════════════════════════════════════════ */
+/* BADGE DE NOTIFICACIÓN — Contador de logros pendientes */
 
 /* Círculo rojo tipo WhatsApp posicionado sobre otro elemento */
 
@@ -2235,9 +2193,7 @@ img { display: block; max-width: 100%; }
 .perfil-stat { position: relative; }
 .nav-link    { position: relative; }
 
-/* ══════════════════════════════════════════════════════════════
-   RESPONSIVE — MOVIL Y TABLET
-   ══════════════════════════════════════════════════════════════ */
+/* RESPONSIVE — MOVIL Y TABLET */
 
 /* Fix hero: el navbar fijo (56px) tapaba el contenido en monitores pequeños */
 .hero {

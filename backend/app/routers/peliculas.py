@@ -1,7 +1,6 @@
 from fastapi import APIRouter, HTTPException, Query, status, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func, and_
-from collections import defaultdict
 import httpx
 from typing import Optional
 from .. import services, schemas, models, database, oauth2
@@ -150,8 +149,10 @@ def get_resenas_amigos(tmdb_id: int,
         .order_by(models.EntradaDiario.fecha_visionado.desc())
     ).scalars().all()
 
-    entradas_por_usuario = defaultdict(list)
+    entradas_por_usuario = {}
     for e in todas_entradas:
+        if e.id_usuario not in entradas_por_usuario:
+            entradas_por_usuario[e.id_usuario] = []
         entradas_por_usuario[e.id_usuario].append(e)
 
     result = []
@@ -160,8 +161,12 @@ def get_resenas_amigos(tmdb_id: int,
         usuario = row.Usuario
         entradas = entradas_por_usuario.get(vista.id_usuario, [])
 
-        # cogemos la primera entrada que tenga reseña (sin break, con next)
-        primera_con_resena = next((e for e in entradas if e.resena), None)
+        # cogemos la primera entrada que tenga reseña
+        primera_con_resena = None
+        for e in entradas:
+            if e.resena:
+                primera_con_resena = e
+                break
         ultima_resena = primera_con_resena.resena[:200] if primera_con_resena else None
         ultima_entrada_id = primera_con_resena.id if primera_con_resena else None
 

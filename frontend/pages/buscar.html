@@ -24,10 +24,7 @@
                 <path d="M13 13l3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
             </svg>
             <input
-                class="buscar-input"
-                type="text"
-                id="inputBuscar"
-                placeholder="Busca por nombre de usuario…"
+                class="buscar-input" type="text" id="inputBuscar" placeholder="Busca por nombre de usuario…"
                 autocomplete="off"
             />
         </div>
@@ -50,7 +47,7 @@
 
         // Renderiza la lista de usuarios encontrados.
         function renderizarUsuarios(usuarios) {
-            const lista     = document.getElementById('listaResultados');
+            const lista = document.getElementById('listaResultados');
             const estadoIni = document.getElementById('estadoInicial');
 
             estadoIni.classList.add('oculto');
@@ -63,17 +60,21 @@
                 return;
             }
 
-            lista.innerHTML = usuarios.map(u => `
+            lista.innerHTML = usuarios.map(u => {
+                const userSafe = escapeHTML(u.username);
+                const avatarSafe = escapeHTML(u.avatar_url || '');
+                return `
                 <a class="usuario-fila" href="usuario.html?id=${u.id}">
                     ${u.avatar_url
-                        ? `<img class="usuario-fila__avatar" src="${u.avatar_url}" alt="${u.username}">`
+                        ? `<img class="usuario-fila__avatar" src="${avatarSafe}" alt="${userSafe}">`
                         : `<div class="usuario-fila__avatar usuario-fila__avatar--placeholder">
-                               ${u.username[0].toUpperCase()}
+                               ${userSafe[0].toUpperCase()}
                            </div>`
                     }
-                    <span class="usuario-fila__username">${u.username}</span>
+                    <span class="usuario-fila__username">${userSafe}</span>
                 </a>
-            `).join('');
+            `;
+            }).join('');
         }
 
         async function buscar(q) {
@@ -91,7 +92,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             renderNav('../');
 
-            const input  = document.getElementById('inputBuscar');
+            const input = document.getElementById('inputBuscar');
             // si venimos desde el buscador del nav con @usuario, pre-cargamos
             const params = new URLSearchParams(window.location.search);
             const qParam = params.get('q');

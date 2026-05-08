@@ -5,28 +5,28 @@
 // Si el back añade un logro nuevo cuyo codigo no este aqui se ve el de por defecto.
 const ICONOS_LOGROS = {
     // vistas
-    PRIMERA_FUNCION:   '🎬',
-    CINEFILO:          '🎞️',
+    PRIMERA_FUNCION: '🎬',
+    CINEFILO: '🎞️',
     CINEFILO_PROGRESO: '📽️',
-    MAESTRO_CINEFILO:  '🏆',
+    MAESTRO_CINEFILO: '🏆',
     // reseñas
-    CRITICO_PROCESO:   '✍️',
-    PERIODISTA:        '📰',
-    PLUMA_DE_ORO:      '🖋️',
+    CRITICO_PROCESO: '✍️',
+    PERIODISTA: '📰',
+    PLUMA_DE_ORO: '🖋️',
     // perfil
-    CON_CRITERIO:      '⭐',
-    PLANIFICADOR:      '📋',
+    CON_CRITERIO: '⭐',
+    PLANIFICADOR: '📋',
     // especiales
-    MARATONISTA:       '🏃',
-    DOBLE_FUNCION:     '🎭',
-    TRASNOCHADOR:      '🌙',
-    NOSTALGICO:        '📺',
+    MARATONISTA: '🏃',
+    DOBLE_FUNCION: '🎭',
+    TRASNOCHADOR: '🌙',
+    NOSTALGICO: '📺',
     HATER_PROFESIONAL: '💀',
     // sociales
-    SOCIABLE:          '🤝',
-    CONVERSADOR:       '💬',
-    CONEXION_MUTUA:    '🔗',
-    INFLUENCER:        '👑',
+    SOCIABLE: '🤝',
+    CONVERSADOR: '💬',
+    CONEXION_MUTUA: '🔗',
+    INFLUENCER: '👑',
 };
 
 const ICONO_POR_DEFECTO = '🏆';
@@ -62,14 +62,14 @@ function formatearFecha(iso) {
 // Misma formula que el back: si tienes 250 XP estas a nivel 3 con 50/100 hacia el 4.
 function renderizarCabecera(perfil, logros) {
     const xpTotal = perfil.xp_total || 0;
-    const nivel   = perfil.nivel    || 1;
+    const nivel = perfil.nivel || 1;
 
-    const xpEnNivel        = xpTotal % XP_POR_NIVEL;
+    const xpEnNivel = xpTotal % XP_POR_NIVEL;
     const xpSiguienteNivel = XP_POR_NIVEL;
-    const porcentaje       = (xpEnNivel / xpSiguienteNivel) * 100;
+    const porcentaje = (xpEnNivel / xpSiguienteNivel) * 100;
 
-    document.getElementById('lblNivel').textContent    = nivel;
-    document.getElementById('lblXpTotal').textContent  = `${xpTotal} XP`;
+    document.getElementById('lblNivel').textContent = nivel;
+    document.getElementById('lblXpTotal').textContent = `${xpTotal} XP`;
     document.getElementById('lblXpSiguiente').textContent =
         `${xpEnNivel} / ${xpSiguienteNivel} XP para nivel ${nivel + 1}`;
 
@@ -88,7 +88,7 @@ function renderizarCabecera(perfil, logros) {
 function renderizarTarjeta(logro) {
     const icono = ICONOS_LOGROS[logro.codigo] || ICONO_POR_DEFECTO;
     const desbloqueado = logro.desbloqueado;
-    const yaReclamado  = logro.xp_reclamado === true;
+    const yaReclamado = logro.xp_reclamado === true;
     const pendienteReclamar = desbloqueado && !yaReclamado;
 
     const claseCard = desbloqueado
@@ -134,13 +134,12 @@ function renderizarTarjeta(logro) {
 }
 
 
-// Pinta el grid segun el filtro activo.
-// Hacemos un mapa de filtros para no usar switch/case con breaks.
+// pinta el grid segun el filtro activo
 const FILTROS = {
-    todos:          () => true,
-    desbloqueados:  l => l.desbloqueado,
-    bloqueados:     l => !l.desbloqueado,
-    reclamables:    l => l.desbloqueado && l.xp_reclamado === false,
+    todos: () => true,
+    desbloqueados: l => l.desbloqueado,
+    bloqueados: l => !l.desbloqueado,
+    reclamables: l => l.desbloqueado && l.xp_reclamado === false,
 };
 
 function renderizarGrid() {
@@ -181,7 +180,7 @@ async function reclamarXP(codigo, boton) {
         boton.textContent = 'Reclamando...';
 
         const misLogros = await api.logros.misLogros();
-        const registro  = misLogros.find(ul => ul.codigo === codigo);
+        const registro = misLogros.find(ul => ul.codigo === codigo);
 
         if (!registro) {
             mostrarToast('No se encontró el logro', 'error');

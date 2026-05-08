@@ -13,7 +13,7 @@ router = APIRouter(
 
 # si la lista es privada, solo el dueño la ve. tira 403 si intentas mirar
 # la lista de otro user. Se añadió para crear lista compartidas
-def comprobar_permisos_lista(lista: models.Lista, current_user: Optional[models.Usuario], db: Session) -> None:
+def check_lista_access(lista: models.Lista, current_user: Optional[models.Usuario], db: Session) -> None:
     if not lista.es_publica:
         if not current_user:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
@@ -29,7 +29,7 @@ def comprobar_permisos_lista(lista: models.Lista, current_user: Optional[models.
                                 detail="Esta lista es privada.")
 
 
-def _es_dueno_o_colaborador(lista: models.Lista, current_user: models.Usuario, db: Session) -> bool:
+def is_owner_or_collab(lista: models.Lista, current_user: models.Usuario, db: Session) -> bool:
     if lista.id_usuario == current_user.id:
         return True
     return db.execute(select(models.ListaColaborador).where(
@@ -39,7 +39,7 @@ def _es_dueno_o_colaborador(lista: models.Lista, current_user: models.Usuario, d
 
 
 # arma el schema ListaOut con el total de peliculas (lo necesitamos en POST y PUT)
-def armar_lista_out(lista: models.Lista, db: Session) -> schemas.ListaOut:
+def build_lista_out(lista: models.Lista, db: Session) -> schemas.ListaOut:
     total = db.execute(
         select(func.count(models.ListaPelicula.id)).where(
             models.ListaPelicula.id_lista == lista.id
@@ -70,7 +70,7 @@ def crear_lista(lista_data: schemas.ListaCreate,
     db.commit()
     db.refresh(lista)
 
-    return armar_lista_out(lista, db)
+    return build_lista_out(lista, db)
 
 # GET /api/listas/colaborando
 # Listas en las que el usuario es colaborador (no dueño)
@@ -122,7 +122,7 @@ def get_lista(id_lista: int,
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail="Lista no encontrada.")
 
-    comprobar_permisos_lista(lista, current_user, db)
+    check_lista_access(lista, current_user, db)
 
     dueno = db.execute(
         select(models.Usuario).where(models.Usuario.id == lista.id_usuario)
@@ -195,7 +195,7 @@ def editar_lista(id_lista: int,
     db.commit()
     db.refresh(lista)
 
-    return armar_lista_out(lista, db)
+    return build_lista_out(lista, db)
 
 
 @router.delete("/{id_lista}", status_code=status.HTTP_204_NO_CONTENT)
@@ -257,7 +257,7 @@ def añadir_pelicula_lista(id_lista: int,
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail="Lista no encontrada.")
 
-    if not _es_dueno_o_colaborador(lista, current_user, db):
+    if not is_owner_or_collab(lista, current_user, db):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail="No puedes modificar esta lista.")
 
@@ -294,7 +294,7 @@ def quitar_pelicula_lista(id_lista: int,
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail="Lista no encontrada.")
 
-    if not _es_dueno_o_colaborador(lista, current_user, db):
+    if not is_owner_or_collab(lista, current_user, db):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail="No puedes modificar esta lista.")
 
@@ -403,7 +403,7 @@ def get_colaboradores(id_lista: int,
     if not lista:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lista no encontrada.")
 
-    if not _es_dueno_o_colaborador(lista, current_user, db):
+    if not is_owner_or_collab(lista, current_user, db):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No tienes acceso a esta lista.")
 
     colaboradores = db.execute(

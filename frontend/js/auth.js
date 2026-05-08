@@ -4,7 +4,7 @@
 const auth = {
 
     TOKEN_KEY: 'bonobo_token',
-    USER_KEY:  'bonobo_user',
+    USER_KEY: 'bonobo_user',
 
     guardarToken(token) {
         localStorage.setItem(this.TOKEN_KEY, token);

@@ -14,7 +14,7 @@ def get_or_create_pelicula(tmdb_id: int, db: Session) -> models.Pelicula:
     if pelicula:
         return pelicula
 
-    # no esta en cache: pedimos los datos a TMDB
+    # no esta en cache, pedimos a TMDB
     try:
         datos = obtener_detalle_pelicula(tmdb_id)
     except Exception:
@@ -31,8 +31,8 @@ def get_or_create_pelicula(tmdb_id: int, db: Session) -> models.Pelicula:
     )
     db.add(pelicula)
 
-    # si dos peticiones llegan a la vez puede saltar la UNIQUE de tmdb_id.
-    # en ese caso hacemos rollback y volvemos a leer la fila que ya existe.
+    # si dos peticiones simultaneas crean la misma peli salta la UNIQUE de tmdb_id.
+    # rollback y volvemos a leer la fila que ya esta
     try:
         db.commit()
         db.refresh(pelicula)
